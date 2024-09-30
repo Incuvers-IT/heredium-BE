@@ -1,0 +1,21 @@
+package art.heredium.payment.tosspayments.dto.request;
+
+import art.heredium.payment.inf.PaymentTicketRequest;
+import art.heredium.payment.type.PaymentType;
+import lombok.Getter;
+import lombok.Setter;
+
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+
+@Getter
+@Setter
+public class TossPaymentsPayRequest implements PaymentTicketRequest {
+    @NotBlank
+    private String orderId;
+    @NotBlank
+    private String paymentKey;
+    @NotNull
+    private Long amount;
+    private PaymentType type;
+}
