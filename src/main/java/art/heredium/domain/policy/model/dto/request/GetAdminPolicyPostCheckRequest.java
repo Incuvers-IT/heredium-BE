@@ -1,17 +1,17 @@
 package art.heredium.domain.policy.model.dto.request;
 
-import art.heredium.domain.policy.type.PolicyType;
+import java.time.LocalDateTime;
+
+import javax.validation.constraints.NotNull;
+
 import lombok.Getter;
 import lombok.Setter;
 
-import javax.validation.constraints.NotNull;
-import java.time.LocalDateTime;
+import art.heredium.domain.policy.type.PolicyType;
 
 @Getter
 @Setter
 public class GetAdminPolicyPostCheckRequest {
-    @NotNull
-    private LocalDateTime postDate;
-    @NotNull
-    private PolicyType type;
+  @NotNull private LocalDateTime postDate;
+  @NotNull private PolicyType type;
 }

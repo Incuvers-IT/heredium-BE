@@ -8,7 +8,7 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 public class PostLoginResponse {
-    private String token;
-    private Boolean isSleeper;
-    private String name;
+  private String token;
+  private Boolean isSleeper;
+  private String name;
 }

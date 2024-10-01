@@ -8,8 +8,8 @@ import lombok.ToString;
 @Setter
 @ToString
 public class RecipientForRequest {
-    private String address = null;
-    private String name = null;
-    private String type = "R";
-    private Object parameters = null;
+  private String address = null;
+  private String name = null;
+  private String type = "R";
+  private Object parameters = null;
 }

@@ -8,5 +8,5 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 public class Message { // 최대 100개
-    private String to, subject, content;
+  private String to, subject, content;
 }

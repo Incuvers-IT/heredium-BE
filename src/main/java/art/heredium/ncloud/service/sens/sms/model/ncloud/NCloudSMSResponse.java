@@ -6,8 +6,8 @@ import lombok.Setter;
 @Getter
 @Setter
 public class NCloudSMSResponse {
-    private String requestId;
-    private String requestTime;
-    private String statusCode;
-    private String statusName;
+  private String requestId;
+  private String requestTime;
+  private String statusCode;
+  private String statusName;
 }

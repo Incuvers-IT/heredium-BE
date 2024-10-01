@@ -15,6 +15,7 @@ plugins {
     id 'java'
     id 'war'
     id 'org.hidetake.ssh' version '2.10.1'
+    id "com.diffplug.spotless" version "6.18.0"
 }
 
 apply plugin: 'io.spring.dependency-management'
@@ -167,5 +168,42 @@ task scp_prod_jar {
                 println "${toJarPath} 로 Jar 전송 완료"
             }
         }
+    }
+}
+
+spotless {
+    java {
+        googleJavaFormat()
+        removeUnusedImports()
+        importOrder('java', 'jakarta', 'javax', 'lombok', 'org.springframework', '', 'org.junit', 'art.heredium', '\\#', '\\#org.junit', '\\#art.heredium')
+        target 'src/main/java/**/*.java'
+        targetExclude 'build/generated/**/*.java'
+        indentWithSpaces(4)
+        trimTrailingWhitespace()
+        endWithNewline()
+    }
+    
+    format('yaml') {
+        target('**/*.yaml', '**/*.yml')
+        targetExclude('.idea/**/*.*', '.vscode/**/*.*')
+        prettier()
+    }
+    
+    format('xml') {
+        target('**/*.xml')
+        targetExclude('.idea/**/*.*', '.vscode/**/*.*')
+        prettier().config(['parser': 'html', 'printWidth': 160])
+    }
+    
+    format('md') {
+        target('**/*.md')
+        targetExclude('.idea/**/*.*', '.vscode/**/*.*', '.github/*.md')
+        prettier().config(['parser': 'markdown', 'printWidth': 160])
+    }
+    
+    format('json') {
+        target('**/*.json')
+        targetExclude('.idea/**/*.*', '.vscode/**/*.*')
+        prettier()
     }
 }

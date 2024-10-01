@@ -1,13 +1,13 @@
 package art.heredium.ncloud.service.sens.biz.model.ncloud;
 
+import java.util.List;
+
 import lombok.Getter;
 import lombok.Setter;
-
-import java.util.List;
 
 @Getter
 @Setter
 public class NCloudBizAlimTalkItem {
-    private List<NCloudBizAlimTalkArticle> list;
-    private NCloudBizAlimTalkArticle summary;
+  private List<NCloudBizAlimTalkArticle> list;
+  private NCloudBizAlimTalkArticle summary;
 }

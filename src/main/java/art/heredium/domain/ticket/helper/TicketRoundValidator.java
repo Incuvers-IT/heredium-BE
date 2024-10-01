@@ -4,17 +4,15 @@ import art.heredium.domain.ticket.helper.chain.AbstractRoundValidator;
 
 public class TicketRoundValidator {
 
-    private AbstractRoundValidator head;
+  private AbstractRoundValidator head;
 
-    public TicketRoundValidator chain(AbstractRoundValidator validator) {
-        if(this.head == null)
-            this.head = validator;
-        else
-            this.head.chain(validator);
-        return this;
-    }
+  public TicketRoundValidator chain(AbstractRoundValidator validator) {
+    if (this.head == null) this.head = validator;
+    else this.head.chain(validator);
+    return this;
+  }
 
-    public void validate() {
-        this.head.run();
-    }
+  public void validate() {
+    this.head.run();
+  }
 }
