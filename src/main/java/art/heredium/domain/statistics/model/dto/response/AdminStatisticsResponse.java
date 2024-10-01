@@ -6,13 +6,13 @@ import lombok.Setter;
 @Getter
 @Setter
 public class AdminStatisticsResponse {
-    private Long visitNumber;
-    private Long totalPrice;
-    private Long signUp;
+  private Long visitNumber;
+  private Long totalPrice;
+  private Long signUp;
 
-    public AdminStatisticsResponse(Long visitNumber, Long totalPrice, Long signUp) {
-        this.visitNumber = visitNumber;
-        this.totalPrice = totalPrice;
-        this.signUp = signUp;
-    }
+  public AdminStatisticsResponse(Long visitNumber, Long totalPrice, Long signUp) {
+    this.visitNumber = visitNumber;
+    this.totalPrice = totalPrice;
+    this.signUp = signUp;
+  }
 }

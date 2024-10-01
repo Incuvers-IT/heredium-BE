@@ -6,7 +6,7 @@ import lombok.Setter;
 @Getter
 @Setter
 public class NCloudSMSMessage {
-    private String to;
-    private String subject;
-    private String content;
+  private String to;
+  private String subject;
+  private String content;
 }

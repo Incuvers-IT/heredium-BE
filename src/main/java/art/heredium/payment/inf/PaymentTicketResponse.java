@@ -1,9 +1,9 @@
 package art.heredium.payment.inf;
 
 public interface PaymentTicketResponse {
-    Long getAmount();
+  Long getAmount();
 
-    String getPaymentKey();
+  String getPaymentKey();
 
-    String getPayMethod();
+  String getPayMethod();
 }

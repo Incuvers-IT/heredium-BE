@@ -4,7 +4,7 @@ import lombok.Getter;
 
 @Getter
 public enum NCloudSMSType {
-    SMS,
-    LMS,
-    MMS
+  SMS,
+  LMS,
+  MMS
 }

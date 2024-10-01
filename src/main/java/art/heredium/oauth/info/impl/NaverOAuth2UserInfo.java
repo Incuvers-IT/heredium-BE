@@ -1,99 +1,99 @@
 package art.heredium.oauth.info.impl;
 
-import art.heredium.domain.account.type.GenderType;
-import art.heredium.oauth.info.OAuth2UserInfo;
-
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
 
+import art.heredium.domain.account.type.GenderType;
+import art.heredium.oauth.info.OAuth2UserInfo;
+
 public class NaverOAuth2UserInfo extends OAuth2UserInfo {
 
-    public NaverOAuth2UserInfo(Map<String, Object> attributes) {
-        super(attributes);
+  public NaverOAuth2UserInfo(Map<String, Object> attributes) {
+    super(attributes);
+  }
+
+  @Override
+  public String getId() {
+    Map<String, Object> response = (Map<String, Object>) attributes.get("response");
+
+    if (response == null || response.get("id") == null) {
+      return null;
     }
 
-    @Override
-    public String getId() {
-        Map<String, Object> response = (Map<String, Object>) attributes.get("response");
+    return (String) response.get("id");
+  }
 
-        if (response == null || response.get("id") == null) {
-            return null;
-        }
+  @Override
+  public String getName() {
+    Map<String, Object> response = (Map<String, Object>) attributes.get("response");
 
-        return (String) response.get("id");
+    if (response == null || response.get("name") == null) {
+      return null;
     }
 
-    @Override
-    public String getName() {
-        Map<String, Object> response = (Map<String, Object>) attributes.get("response");
+    return (String) response.get("name");
+  }
 
-        if (response == null || response.get("name") == null) {
-            return null;
-        }
+  @Override
+  public String getEmail() {
+    Map<String, Object> response = (Map<String, Object>) attributes.get("response");
 
-        return (String) response.get("name");
+    if (response == null || response.get("email") == null) {
+      return null;
     }
 
-    @Override
-    public String getEmail() {
-        Map<String, Object> response = (Map<String, Object>) attributes.get("response");
+    return (String) response.get("email");
+  }
 
-        if (response == null || response.get("email") == null) {
-            return null;
-        }
+  @Override
+  public String getImageUrl() {
+    Map<String, Object> response = (Map<String, Object>) attributes.get("response");
 
-        return (String) response.get("email");
+    if (response == null || response.get("profile_image") == null) {
+      return null;
     }
 
-    @Override
-    public String getImageUrl() {
-        Map<String, Object> response = (Map<String, Object>) attributes.get("response");
+    return (String) response.get("profile_image");
+  }
 
-        if (response == null || response.get("profile_image") == null) {
-            return null;
-        }
+  @Override
+  public String getPhone() {
+    Map<String, Object> response = (Map<String, Object>) attributes.get("response");
 
-        return (String) response.get("profile_image");
+    if (response == null || response.get("mobile") == null) {
+      return null;
     }
 
-    @Override
-    public String getPhone() {
-        Map<String, Object> response = (Map<String, Object>) attributes.get("response");
+    String mobile = (String) response.get("mobile");
+    return mobile.replaceAll("\\-", "");
+  }
 
-        if (response == null || response.get("mobile") == null) {
-            return null;
-        }
+  @Override
+  public GenderType getGender() {
+    Map<String, Object> response = (Map<String, Object>) attributes.get("response");
 
-        String mobile = (String) response.get("mobile");
-        return mobile.replaceAll("\\-", "");
+    if (response == null || response.get("gender") == null) {
+      return null;
     }
 
-    @Override
-    public GenderType getGender() {
-        Map<String, Object> response = (Map<String, Object>) attributes.get("response");
+    String gender = (String) response.get("gender");
+    return gender.equals("M") ? GenderType.MAN : GenderType.WOMAN;
+  }
 
-        if (response == null || response.get("gender") == null) {
-            return null;
-        }
+  @Override
+  public LocalDate getBirthday() {
+    Map<String, Object> response = (Map<String, Object>) attributes.get("response");
 
-        String gender = (String) response.get("gender");
-        return gender.equals("M") ? GenderType.MAN : GenderType.WOMAN;
+    if (response == null) {
+      return null;
     }
 
-    @Override
-    public LocalDate getBirthday() {
-        Map<String, Object> response = (Map<String, Object>) attributes.get("response");
-
-        if (response == null) {
-            return null;
-        }
-
-        if (response.get("birthyear") == null || response.get("birthday") == null) {
-            return null;
-        }
-
-        String birthday = String.format("%s-%s", response.get("birthyear"), response.get("birthday"));
-        return LocalDate.parse(birthday, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+    if (response.get("birthyear") == null || response.get("birthday") == null) {
+      return null;
     }
+
+    String birthday = String.format("%s-%s", response.get("birthyear"), response.get("birthday"));
+    return LocalDate.parse(birthday, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+  }
 }

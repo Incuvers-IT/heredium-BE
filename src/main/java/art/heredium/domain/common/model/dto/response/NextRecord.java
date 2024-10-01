@@ -6,11 +6,11 @@ import lombok.Setter;
 @Getter
 @Setter
 public class NextRecord {
-    private Long id;
-    private String title;
+  private Long id;
+  private String title;
 
-    public NextRecord(Long id, String title) {
-        this.id = id;
-        this.title = title;
-    }
+  public NextRecord(Long id, String title) {
+    this.id = id;
+    this.title = title;
+  }
 }

@@ -6,6 +6,6 @@ import lombok.Setter;
 @Getter
 @Setter
 public class PostNiceIdEncryptRequest {
-    private String returnUrl;
-    private String errorUrl;
+  private String returnUrl;
+  private String errorUrl;
 }

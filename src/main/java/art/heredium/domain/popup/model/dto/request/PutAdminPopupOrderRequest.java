@@ -1,15 +1,13 @@
 package art.heredium.domain.popup.model.dto.request;
 
+import javax.validation.constraints.NotNull;
+
 import lombok.Getter;
 import lombok.Setter;
-
-import javax.validation.constraints.NotNull;
 
 @Getter
 @Setter
 public class PutAdminPopupOrderRequest extends GetAdminPopupRequest {
-    @NotNull
-    private Long dragId;
-    @NotNull
-    private Long dropId;
+  @NotNull private Long dragId;
+  @NotNull private Long dropId;
 }

@@ -1,29 +1,26 @@
 package art.heredium.domain.ticket.model.dto.request;
 
-import art.heredium.domain.ticket.type.TicketKindType;
-import lombok.Getter;
-import lombok.Setter;
+import java.util.List;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
-import java.util.List;
+
+import lombok.Getter;
+import lombok.Setter;
+
+import art.heredium.domain.ticket.type.TicketKindType;
 
 @Getter
 @Setter
 public class PostTicketQrRequest {
-    @NotNull
-    private Long id;
-    @NotNull
-    private String uuid;
-    @NotNull
-    private List<@Valid Allow> allows;
+  @NotNull private Long id;
+  @NotNull private String uuid;
+  @NotNull private List<@Valid Allow> allows;
 
-    @Getter
-    @Setter
-    public static class Allow {
-        @NotNull
-        private Long id;
-        @NotNull
-        private TicketKindType kind;
-    }
+  @Getter
+  @Setter
+  public static class Allow {
+    @NotNull private Long id;
+    @NotNull private TicketKindType kind;
+  }
 }

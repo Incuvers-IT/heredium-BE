@@ -6,10 +6,10 @@ import lombok.Setter;
 @Getter
 @Setter
 public class NCloudBizAlimTalkButton {
-    protected String type;
-    protected String name;
-    protected String linkMobile;
-    protected String linkPc;
-    protected String schemeIos;
-    protected String schemeAndroid;
+  protected String type;
+  protected String name;
+  protected String linkMobile;
+  protected String linkPc;
+  protected String schemeIos;
+  protected String schemeAndroid;
 }

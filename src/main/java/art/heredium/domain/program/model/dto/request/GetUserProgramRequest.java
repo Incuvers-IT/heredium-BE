@@ -1,15 +1,16 @@
 package art.heredium.domain.program.model.dto.request;
 
-import art.heredium.domain.common.type.ProjectStateType;
+import java.util.List;
+
+import javax.validation.constraints.NotNull;
+
 import lombok.Getter;
 import lombok.Setter;
 
-import javax.validation.constraints.NotNull;
-import java.util.List;
+import art.heredium.domain.common.type.ProjectStateType;
 
 @Getter
 @Setter
 public class GetUserProgramRequest {
-    @NotNull
-    private List<ProjectStateType> states;
+  @NotNull private List<ProjectStateType> states;
 }

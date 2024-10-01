@@ -6,6 +6,6 @@ import lombok.Setter;
 @Getter
 @Setter
 public class NCloudBizAlimTalkArticle {
-    private String title;
-    private String description;
+  private String title;
+  private String description;
 }

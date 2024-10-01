@@ -1,75 +1,76 @@
 package art.heredium.payment.tosspayments.dto.response;
 
-import art.heredium.payment.inf.PaymentTicketResponse;
 import lombok.Getter;
 import lombok.Setter;
+
+import art.heredium.payment.inf.PaymentTicketResponse;
 
 @Getter
 @Setter
 public class TossPaymentsPayResponse implements PaymentTicketResponse {
 
-    private String mId;
-    private String version;
-    private String lastTransactionKey;
-    private String paymentKey;
-    private String orderId;
-    private String orderName;
-    private String currency;
-    private String method;
-    private String status;
-    private String requestedAt;
-    private String approvedAt;
-    private boolean useEscrow;
-    private boolean cultureExpense;
-    private Card card;
-    private Receipt receipt;
-    private Checkout checkout;
-    private String type;
-    private String country;
-    private int totalAmount;
-    private int balanceAmount;
-    private int suppliedAmount;
-    private int vat;
-    private int taxFreeAmount;
-    private int taxExemptionAmount;
+  private String mId;
+  private String version;
+  private String lastTransactionKey;
+  private String paymentKey;
+  private String orderId;
+  private String orderName;
+  private String currency;
+  private String method;
+  private String status;
+  private String requestedAt;
+  private String approvedAt;
+  private boolean useEscrow;
+  private boolean cultureExpense;
+  private Card card;
+  private Receipt receipt;
+  private Checkout checkout;
+  private String type;
+  private String country;
+  private int totalAmount;
+  private int balanceAmount;
+  private int suppliedAmount;
+  private int vat;
+  private int taxFreeAmount;
+  private int taxExemptionAmount;
 
-    @Override
-    public Long getAmount() {
-        return (long) totalAmount;
-    }
+  @Override
+  public Long getAmount() {
+    return (long) totalAmount;
+  }
 
-    @Override
-    public String getPayMethod() {
-        return method;
-    }
+  @Override
+  public String getPayMethod() {
+    return method;
+  }
 
-    @Getter
-    @Setter
-    public static class Checkout {
-        private String url;
-    }
+  @Getter
+  @Setter
+  public static class Checkout {
+    private String url;
+  }
 
-    @Getter
-    @Setter
-    public static class Receipt {
-        private String url;
-    }
+  @Getter
+  @Setter
+  public static class Receipt {
+    private String url;
+  }
 
-    @Getter
-    @Setter
-    public static class Card {
-        private String acquireStatus;
-        private String ownerType;
-        private String cardType;
-        private boolean useCardPoint;
-        private String approveNo;
-        private boolean isInterestFree;
-        private int installmentPlanMonths;
-        private String number;
-        private String acquirerCode;
-        private String issuerCode;
-        private int amount;
-    }
+  @Getter
+  @Setter
+  public static class Card {
+    private String acquireStatus;
+    private String ownerType;
+    private String cardType;
+    private boolean useCardPoint;
+    private String approveNo;
+    private boolean isInterestFree;
+    private int installmentPlanMonths;
+    private String number;
+    private String acquirerCode;
+    private String issuerCode;
+    private int amount;
+  }
 }
 /*
 {

@@ -8,11 +8,11 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 public class NCloudSMSFile {
-    private String name;
-    private String body;
+  private String name;
+  private String body;
 
-    public NCloudSMSFile(String name, String body) {
-        this.name = name;
-        this.body = body;
-    }
+  public NCloudSMSFile(String name, String body) {
+    this.name = name;
+    this.body = body;
+  }
 }
