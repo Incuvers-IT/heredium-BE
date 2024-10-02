@@ -16,6 +16,7 @@ import org.hibernate.annotations.DynamicInsert;
 import org.hibernate.annotations.TypeDef;
 
 import art.heredium.domain.common.entity.BaseEntity;
+import art.heredium.domain.membership.entity.Membership;
 
 @Entity
 @Getter
@@ -59,4 +60,8 @@ public class Coupon extends BaseEntity {
   @Comment("이미지 URL")
   @Column(name = "image_url")
   private String imageUrl;
+
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "membership_id")
+  private Membership membership;
 }
