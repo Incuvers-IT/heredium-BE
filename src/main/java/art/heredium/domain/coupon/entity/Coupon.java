@@ -1,5 +1,7 @@
 package art.heredium.domain.coupon.entity;
 
+import java.time.LocalDateTime;
+
 import javax.persistence.*;
 
 import lombok.AccessLevel;
@@ -39,6 +41,22 @@ public class Coupon extends BaseEntity {
   private CouponType couponType;
 
   @Comment("할인 퍼센트")
-  @Column(name = "discount_percent", nullable = false)
+  @Column(name = "discount_percent")
   private Integer discountPercent;
+
+  @Comment("유효 기간 (일)")
+  @Column(name = "period_in_days")
+  private Integer periodInDays;
+
+  @Comment("시작 날짜")
+  @Column(name = "started_date")
+  private LocalDateTime startedDate;
+
+  @Comment("종료 날짜")
+  @Column(name = "ended_date")
+  private LocalDateTime endedDate;
+
+  @Comment("이미지 URL")
+  @Column(name = "image_url")
+  private String imageUrl;
 }
