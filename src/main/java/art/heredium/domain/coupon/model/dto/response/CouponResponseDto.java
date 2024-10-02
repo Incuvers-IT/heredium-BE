@@ -16,17 +16,17 @@ public class CouponResponseDto {
   private String couponType;
   private Integer discountPercent;
   private String imageUrl;
-  private List<CouponUsageDto> usedCouponUsages;
-  private List<CouponUsageDto> unusedCouponUsages;
+  private List<CouponUsageDto> usedCoupons;
+  private List<CouponUsageDto> unusedCoupons;
 
   public CouponResponseDto(
-      Coupon coupon, List<CouponUsage> usedCouponUsages, List<CouponUsage> unusedCouponUsages) {
+      Coupon coupon, List<CouponUsage> usedCoupons, List<CouponUsage> unusedCoupons) {
     this.id = coupon.getId();
     this.name = coupon.getName();
     this.couponType = coupon.getCouponType().name();
     this.discountPercent = coupon.getDiscountPercent();
     this.imageUrl = coupon.getImageUrl();
-    this.usedCouponUsages = usedCouponUsages.stream().map(CouponUsageDto::new).toList();
-    this.unusedCouponUsages = unusedCouponUsages.stream().map(CouponUsageDto::new).toList();
+    this.usedCoupons = usedCoupons.stream().map(CouponUsageDto::new).toList();
+    this.unusedCoupons = unusedCoupons.stream().map(CouponUsageDto::new).toList();
   }
 }

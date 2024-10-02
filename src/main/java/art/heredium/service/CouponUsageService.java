@@ -3,7 +3,6 @@ package art.heredium.service;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import lombok.RequiredArgsConstructor;
 
@@ -24,19 +23,20 @@ public class CouponUsageService {
     List<CouponResponseDto> responseDtos = new ArrayList<>();
 
     for (Coupon coupon : coupons) {
-      List<CouponUsage> usedCouponUsages =
-          couponUsageRepository.findByAccountIdAndCouponId(accountId, coupon.getId()).stream()
-              .filter(CouponUsage::getIsUsed)
-              .collect(Collectors.toList());
+      List<CouponUsage> usedCoupons =
+          couponUsageRepository
+              .findByAccountIdAndCouponIdAndIsUsed(accountId, coupon.getId(), true)
+              .stream()
+              .toList();
 
-      List<CouponUsage> unusedCouponUsages =
-          couponUsageRepository.findByAccountIdAndCouponId(accountId, coupon.getId()).stream()
-              .filter(couponUsage -> !couponUsage.getIsUsed())
-              .sorted(
-                  Comparator.comparing(CouponUsage::getExpirationDate)) // Sort by expirationDate
-              .collect(Collectors.toList());
+      List<CouponUsage> unusedCoupons =
+          couponUsageRepository
+              .findByAccountIdAndCouponIdAndIsUsed(accountId, coupon.getId(), false)
+              .stream()
+              .sorted(Comparator.comparing(CouponUsage::getExpirationDate))
+              .toList();
 
-      responseDtos.add(new CouponResponseDto(coupon, usedCouponUsages, unusedCouponUsages));
+      responseDtos.add(new CouponResponseDto(coupon, usedCoupons, unusedCoupons));
     }
 
     return responseDtos;
