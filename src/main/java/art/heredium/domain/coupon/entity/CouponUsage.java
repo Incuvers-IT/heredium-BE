@@ -52,4 +52,8 @@ public class CouponUsage extends BaseEntity {
   @Comment("만료 일자")
   @Column(name = "expiration_date", nullable = false)
   private LocalDateTime expirationDate;
+
+  @Comment("쿠폰 uuid")
+  @Column(name = "uuid", nullable = false, length = 36, unique = true, updatable = false)
+  private String uuid;
 }
