@@ -18,12 +18,12 @@ import art.heredium.domain.common.entity.BaseEntity;
 
 @Entity
 @Getter
-@Table(name = "user_coupon")
+@Table(name = "coupon_usage")
 @DynamicInsert
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @ToString(exclude = {"coupon", "account"})
-public class UserCoupon extends BaseEntity {
+public class CouponUsage extends BaseEntity {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
