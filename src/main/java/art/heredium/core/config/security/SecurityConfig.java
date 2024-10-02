@@ -80,6 +80,8 @@ public class SecurityConfig {
         .authorizeRequests()
         .antMatchers(permitAll)
         .permitAll()
+        .antMatchers("/swagger-ui/**", "/v3/api-docs/**")
+        .permitAll()
         .antMatchers("/api/**")
         .hasAnyRole(AuthType.getAPIRole())
         .anyRequest()

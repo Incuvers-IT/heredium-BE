@@ -86,6 +86,9 @@ dependencies {
     implementation 'org.jsoup:jsoup:1.15.3'
     implementation 'io.github.openfeign:feign-gson'
 
+    // Swagger
+    implementation 'org.springdoc:springdoc-openapi-ui:1.6.15'
+
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
     runtimeOnly 'mysql:mysql-connector-java:8.0.28'
     runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.2'
