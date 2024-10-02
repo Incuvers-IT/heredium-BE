@@ -37,6 +37,10 @@ public class MembershipRegistration {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
+  @Comment("티켓 uuid")
+  @Column(name = "uuid", nullable = false, length = 36, unique = true, updatable = false)
+  private String uuid;
+
   @OneToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "account_id", nullable = false)
   private Account account;
