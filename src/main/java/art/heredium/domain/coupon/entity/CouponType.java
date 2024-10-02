@@ -1,8 +1,8 @@
 package art.heredium.domain.coupon.entity;
 
 public enum CouponType {
-  COFFEE("커피"),
-  TICKET("티켓"),
+  DRINK("마시다"),
+  ARTSHOP("아트숍"),
   PROGRAM("프로그램"),
   EXHIBITION("전시"),
   ;
