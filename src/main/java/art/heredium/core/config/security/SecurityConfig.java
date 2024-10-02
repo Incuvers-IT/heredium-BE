@@ -55,7 +55,9 @@ public class SecurityConfig {
     "/api/user/common/**",
     "/api/health-check",
     "/api/file/**",
-    "/api/nice/**"
+    "/api/nice/**",
+    "/swagger-ui/**",
+    "/v3/api-docs/**"
   };
 
   @Bean
@@ -79,8 +81,6 @@ public class SecurityConfig {
         .and()
         .authorizeRequests()
         .antMatchers(permitAll)
-        .permitAll()
-        .antMatchers("/swagger-ui/**", "/v3/api-docs/**")
         .permitAll()
         .antMatchers("/api/**")
         .hasAnyRole(AuthType.getAPIRole())
