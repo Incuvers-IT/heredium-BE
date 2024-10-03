@@ -5,15 +5,16 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import art.heredium.domain.account.entity.UserPrincipal;
+import art.heredium.core.config.error.entity.ApiException;
+import art.heredium.core.util.AuthUtil;
 import art.heredium.domain.coupon.model.dto.response.CouponResponseDto;
 import art.heredium.service.CouponUsageService;
+
+import static art.heredium.core.config.error.entity.ErrorCode.ANONYMOUS_USER;
 
 @RestController
 @RequiredArgsConstructor
@@ -24,9 +25,8 @@ public class UserCouponController {
 
   @GetMapping("/usage")
   public ResponseEntity<List<CouponResponseDto>> getCouponsWithUsageByAccountId() {
-    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-
-    Long accountId = ((UserPrincipal) authentication.getPrincipal()).getId();
+    final long accountId =
+        AuthUtil.getCurrentUserAccountId().orElseThrow(() -> new ApiException(ANONYMOUS_USER));
 
     List<CouponResponseDto> couponResponseDtos =
         couponUsageService.getCouponsWithUsageByAccountId(accountId);
