@@ -56,4 +56,12 @@ public class CouponUsage extends BaseEntity {
   @Comment("쿠폰 uuid")
   @Column(name = "uuid", nullable = false, length = 36, unique = true, updatable = false)
   private String uuid;
+
+  @Comment("사용된 횟수")
+  @Column(name = "used_count")
+  private Long usedCount;
+
+  @Comment("상시할인")
+  @Column(name = "is_permanent")
+  private boolean isPermanent;
 }

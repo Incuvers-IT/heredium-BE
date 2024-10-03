@@ -48,14 +48,14 @@ public class Membership extends BaseEntity implements Serializable {
   private Post post;
 
   @OneToMany(mappedBy = "membership", cascade = CascadeType.ALL, orphanRemoval = true)
-  @OrderBy("order ASC")
+  @OrderBy("name ASC")
   private List<Coupon> coupons;
 
   @Comment("멤버십명")
   @Column(name = "name", nullable = false)
   private String name;
 
-  @Comment("멤버십기간 (날)")
+  @Comment("멤버십기간 (월)")
   @Column(name = "membership_period", nullable = false)
   private Long period;
 
@@ -63,11 +63,7 @@ public class Membership extends BaseEntity implements Serializable {
   @Column(name = "price", nullable = false)
   private Integer price;
 
-  @Comment("이미지 URL")
-  @Column(name = "image_url", nullable = false)
-  private String imageUrl;
-
   @Comment("가능")
-  @Column(name = "enabled", nullable = false)
-  private Boolean enabled;
+  @Column(name = "is_enabled", nullable = false)
+  private Boolean isEnabled;
 }

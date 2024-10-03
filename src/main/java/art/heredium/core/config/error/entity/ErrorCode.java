@@ -62,6 +62,7 @@ public enum ErrorCode {
   UNDER_FOURTEEN(HttpStatus.BAD_REQUEST),
   TIMEOUT(HttpStatus.BAD_REQUEST),
   MEMBERSHIP_REGISTRATION_NOT_FOUND(HttpStatus.BAD_REQUEST),
+  POST_NOT_FOUND(HttpStatus.NOT_FOUND),
   ANONYMOUS_USER(HttpStatus.FORBIDDEN),
   ;
   private HttpStatus status;

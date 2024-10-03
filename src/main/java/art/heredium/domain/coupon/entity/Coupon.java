@@ -61,6 +61,14 @@ public class Coupon extends BaseEntity {
   @Column(name = "image_url")
   private String imageUrl;
 
+  @Comment("사용횟수")
+  @Column(name = "number_of_uses", nullable = true)
+  private Long numberOfUses;
+
+  @Comment("상시할인")
+  @Column(name = "is_permanent")
+  private Boolean isPermanent;
+
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "membership_id")
   private Membership membership;
