@@ -16,10 +16,9 @@ public interface CouponUsageRepository extends JpaRepository<CouponUsage, Long> 
   @Query("SELECT DISTINCT cu.coupon FROM CouponUsage cu WHERE cu.account.id = :accountId")
   List<Coupon> findDistinctCouponsByAccountId(@Param("accountId") Long accountId);
 
-  @Query(
-      "SELECT cu FROM CouponUsage cu WHERE cu.account.id = :accountId AND cu.coupon.id = :couponId AND cu.isUsed = :isUsed")
-  List<CouponUsage> findByAccountIdAndCouponIdAndIsUsed(
-      @Param("accountId") Long accountId,
-      @Param("couponId") Long couponId,
-      @Param("isUsed") boolean isUsed);
+  List<CouponUsage> findByAccountIdAndCouponIdAndIsUsedTrue(
+      @Param("accountId") Long accountId, @Param("couponId") Long couponId);
+
+  List<CouponUsage> findByAccountIdAndCouponIdAndIsUsedFalse(
+      @Param("accountId") Long accountId, @Param("couponId") Long couponId);
 }

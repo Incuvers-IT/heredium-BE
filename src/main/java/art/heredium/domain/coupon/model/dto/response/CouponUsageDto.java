@@ -19,7 +19,7 @@ public class CouponUsageDto {
   public CouponUsageDto(CouponUsage couponUsage) {
     this.id = couponUsage.getId();
     this.deliveredDate = couponUsage.getDeliveredDate();
-    this.usedDate = couponUsage.getUsedDate() != null ? couponUsage.getUsedDate() : null;
+    this.usedDate = couponUsage.getUsedDate();
     this.expirationDate = couponUsage.getExpirationDate();
     this.uuid = couponUsage.getUuid();
   }

@@ -25,13 +25,13 @@ public class CouponUsageService {
     for (Coupon coupon : coupons) {
       List<CouponUsage> usedCoupons =
           couponUsageRepository
-              .findByAccountIdAndCouponIdAndIsUsed(accountId, coupon.getId(), true)
+              .findByAccountIdAndCouponIdAndIsUsedTrue(accountId, coupon.getId())
               .stream()
               .toList();
 
       List<CouponUsage> unusedCoupons =
           couponUsageRepository
-              .findByAccountIdAndCouponIdAndIsUsed(accountId, coupon.getId(), false)
+              .findByAccountIdAndCouponIdAndIsUsedFalse(accountId, coupon.getId())
               .stream()
               .sorted(Comparator.comparing(CouponUsage::getExpirationDate))
               .toList();
