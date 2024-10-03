@@ -55,7 +55,9 @@ public class SecurityConfig {
     "/api/user/common/**",
     "/api/health-check",
     "/api/file/**",
-    "/api/nice/**"
+    "/api/nice/**",
+    "/swagger-ui/**",
+    "/v3/api-docs/**"
   };
 
   @Bean
