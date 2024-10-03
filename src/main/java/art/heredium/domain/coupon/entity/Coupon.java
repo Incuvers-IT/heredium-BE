@@ -6,6 +6,7 @@ import javax.persistence.*;
 
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
@@ -72,4 +73,20 @@ public class Coupon extends BaseEntity {
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "membership_id")
   private Membership membership;
+
+  @Builder
+  public Coupon(
+      String name,
+      CouponType couponType,
+      Integer discountPercent,
+      Integer periodInDays,
+      String imageUrl,
+      Membership membership) {
+    this.name = name;
+    this.couponType = couponType;
+    this.discountPercent = discountPercent;
+    this.periodInDays = periodInDays;
+    this.imageUrl = imageUrl;
+    this.membership = membership;
+  }
 }

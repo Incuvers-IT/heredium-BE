@@ -17,6 +17,8 @@ import javax.persistence.OrderBy;
 import javax.persistence.Table;
 
 import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
@@ -36,6 +38,7 @@ import art.heredium.domain.post.entity.Post;
 @DynamicInsert
 @TypeDef(name = "json", typeClass = JsonStringType.class)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor
 @ToString
 // 멤버십
 public class Membership extends BaseEntity implements Serializable {
@@ -68,6 +71,14 @@ public class Membership extends BaseEntity implements Serializable {
   private Boolean isEnabled;
 
   public void updateIsEnabled(boolean isEnabled) {
+    this.isEnabled = isEnabled;
+  }
+
+  @Builder
+  public Membership(String name, Long period, Integer price, Boolean isEnabled) {
+    this.name = name;
+    this.period = period;
+    this.price = price;
     this.isEnabled = isEnabled;
   }
 }

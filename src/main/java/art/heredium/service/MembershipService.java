@@ -1,5 +1,6 @@
 package art.heredium.service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import lombok.RequiredArgsConstructor;
@@ -10,7 +11,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import art.heredium.core.config.error.entity.ApiException;
 import art.heredium.core.config.error.entity.ErrorCode;
+import art.heredium.domain.coupon.entity.Coupon;
+import art.heredium.domain.coupon.model.dto.request.MembershipCouponCreateRequest;
+import art.heredium.domain.coupon.repository.CouponRepository;
 import art.heredium.domain.membership.entity.Membership;
+import art.heredium.domain.membership.model.dto.request.MembershipCreateRequest;
 import art.heredium.domain.membership.repository.MembershipRepository;
 import art.heredium.domain.post.entity.Post;
 import art.heredium.domain.post.repository.PostRepository;
@@ -20,11 +25,49 @@ import art.heredium.domain.post.repository.PostRepository;
 @RequiredArgsConstructor
 public class MembershipService {
 
+  private static final Boolean DEFAULT_ENABLED_STATUS = true;
+
   private final MembershipRepository membershipRepository;
   private final PostRepository postRepository;
+  private final CouponRepository couponRepository;
 
-  public List<Membership> findByPostIdAndIsEnabledTrue(long postId) {
-    return this.membershipRepository.findByPostIdAndIsEnabledTrue(postId);
+    public List<Membership> findByPostIdAndIsEnabledTrue(long postId) {
+        return this.membershipRepository.findByPostIdAndIsEnabledTrue(postId);
+    }
+
+  @Transactional
+  public List<Long> createMemberships(List<MembershipCreateRequest> membershipRequests) {
+    List<Long> membershipIds = new ArrayList<>();
+
+    for (MembershipCreateRequest request : membershipRequests) {
+      Membership membership =
+          Membership.builder()
+              .name(request.getName())
+              .period(request.getPeriod())
+              .price(request.getPrice())
+              .imageUrl(request.getImageUrl())
+              .enabled(DEFAULT_ENABLED_STATUS)
+              .build();
+
+      Membership savedMembership = membershipRepository.save(membership);
+      membershipIds.add(savedMembership.getId());
+
+      for (MembershipCouponCreateRequest couponRequest : request.getCoupons()) {
+        Coupon coupon =
+            Coupon.builder()
+                .name(couponRequest.getName())
+                .couponType(couponRequest.getCouponType())
+                .discountPercent(couponRequest.getDiscountPercent())
+                .periodInDays(couponRequest.getPeriodInDays())
+                .imageUrl(couponRequest.getImageUrl())
+                .membership(savedMembership)
+                .build();
+
+        couponRepository.save(coupon);
+      }
+    }
+
+    return membershipIds;
   }
 
   @Transactional(rollbackFor = Exception.class)
