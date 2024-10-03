@@ -5,6 +5,7 @@ import java.util.Optional;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
+import art.heredium.domain.account.entity.Account;
 import art.heredium.domain.account.entity.UserPrincipal;
 
 public class AuthUtil {
@@ -14,9 +15,6 @@ public class AuthUtil {
       return Optional.empty();
     }
     UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
-    if (userPrincipal.getAccount() == null) {
-      return Optional.empty();
-    }
-    return Optional.of(userPrincipal.getAccount().getId());
+    return Optional.ofNullable(userPrincipal.getAccount()).map(Account::getId);
   }
 }
