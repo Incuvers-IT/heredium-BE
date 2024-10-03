@@ -1,13 +1,18 @@
 package art.heredium.service;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import art.heredium.domain.account.entity.Account;
 import art.heredium.domain.coupon.entity.Coupon;
 import art.heredium.domain.coupon.entity.CouponUsage;
 import art.heredium.domain.coupon.model.dto.response.CouponResponseDto;
@@ -40,5 +45,41 @@ public class CouponUsageService {
     }
 
     return responseDtos;
+  }
+
+  @Transactional(rollbackFor = Exception.class)
+  public List<CouponUsage> distributeCoupons(
+      @NonNull Account account, @NonNull List<Coupon> coupons) {
+    LocalDateTime distributionDateTime = LocalDateTime.now();
+    List<CouponUsage> couponUsages = new ArrayList<>();
+    coupons.forEach(
+        coupon -> {
+          long numberOfUses = Optional.ofNullable(coupon.getNumberOfUses()).orElse(1L);
+          boolean isPermanentCoupon = Boolean.TRUE.equals(coupon.getIsPermanent());
+          if (isPermanentCoupon) {
+            CouponUsage couponUsage =
+                new CouponUsage(
+                    coupon,
+                    account,
+                    distributionDateTime,
+                    distributionDateTime.plusDays(coupon.getPeriodInDays()),
+                    true,
+                    0L);
+            couponUsages.add(couponUsage);
+          } else {
+            for (int i = 0; i < numberOfUses; i++) {
+              CouponUsage couponUsage =
+                  new CouponUsage(
+                      coupon,
+                      account,
+                      distributionDateTime,
+                      distributionDateTime.plusDays(coupon.getPeriodInDays()),
+                      false,
+                      null);
+              couponUsages.add(couponUsage);
+            }
+          }
+        });
+    return this.couponUsageRepository.saveAll(couponUsages);
   }
 }
