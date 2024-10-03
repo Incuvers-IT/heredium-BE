@@ -61,6 +61,8 @@ public enum ErrorCode {
   NOT_EQ_PHONE(HttpStatus.BAD_REQUEST),
   UNDER_FOURTEEN(HttpStatus.BAD_REQUEST),
   TIMEOUT(HttpStatus.BAD_REQUEST),
+  MEMBERSHIP_REGISTRATION_NOT_FOUND(HttpStatus.BAD_REQUEST),
+  ANONYMOUS_USER(HttpStatus.FORBIDDEN),
   ;
   private HttpStatus status;
 
