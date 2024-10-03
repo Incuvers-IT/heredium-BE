@@ -14,6 +14,9 @@ public class AuthUtil {
       return Optional.empty();
     }
     UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
-    return Optional.ofNullable(userPrincipal.getAccount().getId());
+    if (userPrincipal.getAccount() == null) {
+      return Optional.empty();
+    }
+    return Optional.of(userPrincipal.getAccount().getId());
   }
 }
