@@ -66,4 +66,8 @@ public class Membership extends BaseEntity implements Serializable {
   @Comment("가능")
   @Column(name = "is_enabled", nullable = false)
   private Boolean isEnabled;
+
+  public void updateIsEnabled(boolean isEnabled) {
+    this.isEnabled = isEnabled;
+  }
 }
