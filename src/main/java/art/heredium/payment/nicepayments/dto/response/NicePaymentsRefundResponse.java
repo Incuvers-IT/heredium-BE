@@ -1,23 +1,23 @@
 package art.heredium.payment.nicepayments.dto.response;
 
-public class NicePaymentsPayResponse extends NicePaymentsBaseResponse {}
+public class NicePaymentsRefundResponse extends NicePaymentsBaseResponse {}
 
 /*
 {
     "resultCode": "0000",
     "resultMsg": "정상 처리되었습니다.",
     "tid": "UT0000113m01012111051714341073",
-    "cancelledTid": null,
+    "cancelledTid": "UT0000113m01012111051714341073",
     "orderId": "c74a5960-830b-4cd8-82a9-fa1ce739a18f",
-    "ediDate": "2024-10-02T17:47:00.554+0900",
-    "signature": "b67d4fa22292329043c1d428d49d022907cb6b2c86cb757007e199837fef2e34",
-    "status": "paid",
+    "ediDate": "2024-10-03T19:06:12.040+0900",
+    "signature": "bee79ef6ab938c0e4683f3cf15e0fc100494d1668523729925f2cf790dd693ab",
+    "status": "cancelled",
     "paidAt": "2021-11-05T17:14:35.000+0900",
     "failedAt": "0",
-    "cancelledAt": "0",
+    "cancelledAt": "2024-10-03T19:06:11.000+0900",
     "payMethod": "card",
     "amount": 1004,
-    "balanceAmt": 1004,
+    "balanceAmt": 0,
     "goodsName": "나이스페이-상품",
     "mallReserved": null,
     "useEscrow": false,
@@ -47,8 +47,17 @@ public class NicePaymentsPayResponse extends NicePaymentsBaseResponse {}
     "vbank": null,
     "bank": null,
     "cellphone": null,
-    "cancels": null,
+    "cancels": [
+        {
+            "tid": "UT0000113m01012111051714341073",
+            "amount": 1004,
+            "cancelledAt": "2024-10-03T19:06:11.000+0900",
+            "reason": "고객요청",
+            "receiptUrl": "https://npg.nicepay.co.kr/issue/IssueLoader.do?type=0&innerWin=Y&TID=UT0000113m01012111051714341073",
+            "couponAmt": 0
+        }
+    ],
     "cashReceipts": null,
     "messageSource": "nicepay"
 }
-*/
+ */
