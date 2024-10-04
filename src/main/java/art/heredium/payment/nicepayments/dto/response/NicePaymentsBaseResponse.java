@@ -7,7 +7,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public abstract class NicePaymentsBaseResponse {
+public class NicePaymentsBaseResponse {
   private String resultCode;
   private String resultMsg;
   private String tid;
