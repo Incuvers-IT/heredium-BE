@@ -12,7 +12,6 @@ import javax.persistence.OneToMany;
 import javax.persistence.OrderBy;
 import javax.persistence.Table;
 
-import art.heredium.domain.common.entity.BaseEntity;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -23,6 +22,7 @@ import com.vladmihalcea.hibernate.type.json.JsonStringType;
 import org.hibernate.annotations.DynamicInsert;
 import org.hibernate.annotations.TypeDef;
 
+import art.heredium.domain.common.entity.BaseEntity;
 import art.heredium.domain.membership.entity.Membership;
 
 @Entity
