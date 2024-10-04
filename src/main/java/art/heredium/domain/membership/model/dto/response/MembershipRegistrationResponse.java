@@ -23,13 +23,9 @@ public class MembershipRegistrationResponse {
   @JsonProperty("expiration_date")
   private LocalDate expirationDate;
 
-  @JsonProperty("image_url")
-  private String imageUrl;
-
   public MembershipRegistrationResponse(@NonNull MembershipRegistration membershipRegistration) {
     this.membershipName = membershipRegistration.getMembership().getName();
     this.registrationDate = membershipRegistration.getRegistrationDate();
     this.expirationDate = membershipRegistration.getExpirationDate();
-    this.imageUrl = membershipRegistration.getMembership().getImageUrl();
   }
 }
