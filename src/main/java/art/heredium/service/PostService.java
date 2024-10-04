@@ -12,8 +12,6 @@ import art.heredium.domain.post.entity.Post;
 import art.heredium.domain.post.model.dto.response.PostResponse;
 import art.heredium.domain.post.repository.PostRepository;
 
-import java.util.Optional;
-
 @Service
 @RequiredArgsConstructor
 public class PostService {
@@ -35,7 +33,7 @@ public class PostService {
         .toList();
   }
 
-    public Optional<Post> findByIdAndIsEnabledTrue(long postId) {
-        return this.postRepository.findByIdAndIsEnabledTrue(postId);
-    }
+  public Optional<Post> findByIdAndIsEnabledTrue(long postId) {
+    return this.postRepository.findByIdAndIsEnabledTrue(postId);
+  }
 }
