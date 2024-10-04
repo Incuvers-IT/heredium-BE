@@ -81,12 +81,16 @@ public class Coupon extends BaseEntity {
       Integer discountPercent,
       Integer periodInDays,
       String imageUrl,
-      Membership membership) {
+      Membership membership,
+      Long numberOfUses,
+      Boolean isPermanent) {
     this.name = name;
     this.couponType = couponType;
     this.discountPercent = discountPercent;
     this.periodInDays = periodInDays;
     this.imageUrl = imageUrl;
     this.membership = membership;
+    this.numberOfUses = numberOfUses;
+    this.isPermanent = isPermanent;
   }
 }

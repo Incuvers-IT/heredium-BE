@@ -6,19 +6,37 @@ import javax.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import art.heredium.domain.coupon.entity.CouponType;
 
 @Getter
 @Setter
 public class MembershipCouponCreateRequest {
 
-  @NotBlank() private String name;
+  @NotBlank(message = " can not be blank")
+  private String name;
 
-  @NotNull() private CouponType couponType;
+  @JsonProperty("coupon_type")
+  @NotNull(message = " can not be null")
+  private CouponType couponType;
 
-  @NotNull() private Integer discountPercent;
+  @JsonProperty("discount_percent")
+  @NotNull(message = " can not be null")
+  private Integer discountPercent;
 
-  @NotNull() private Integer periodInDays;
+  @JsonProperty("period_in_days")
+  @NotNull(message = " can not be null")
+  private Integer periodInDays;
 
-  @NotBlank() private String imageUrl;
+  @JsonProperty("image_url")
+  @NotBlank(message = " can not be blank")
+  private String imageUrl;
+
+  @JsonProperty("number_of_uses")
+  private Long numberOfUses;
+
+  @JsonProperty("is_permanent")
+  @NotNull(message = " can not be null")
+  private Boolean isPermanent;
 }

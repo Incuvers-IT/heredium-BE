@@ -25,19 +25,30 @@ import art.heredium.domain.post.repository.PostRepository;
 @RequiredArgsConstructor
 public class MembershipService {
 
-  private static final Boolean DEFAULT_ENABLED_STATUS = true;
+  private static final boolean DEFAULT_ENABLED_STATUS = true;
 
   private final MembershipRepository membershipRepository;
   private final PostRepository postRepository;
   private final CouponRepository couponRepository;
+  private final PostRepository postRepository;
 
-    public List<Membership> findByPostIdAndIsEnabledTrue(long postId) {
-        return this.membershipRepository.findByPostIdAndIsEnabledTrue(postId);
-    }
+  public List<Membership> findByPostIdAndIsEnabledTrue(long postId) {
+    return this.membershipRepository.findByPostIdAndIsEnabledTrue(postId);
+  }
 
   @Transactional
-  public List<Long> createMemberships(List<MembershipCreateRequest> membershipRequests) {
-    List<Long> membershipIds = new ArrayList<>();
+  public List<Long> createMemberships(
+      Long postId, List<MembershipCreateRequest> membershipRequests) {
+    final List<Long> membershipIds = new ArrayList<>();
+    final Post post =
+        postRepository
+            .findById(postId)
+            .orElseThrow(() -> new ApiException(ErrorCode.POST_NOT_FOUND));
+
+    if (!post.getIsEnabled()) {
+      throw new ApiException(
+          ErrorCode.POST_NOT_ALLOW, String.format("Post number '%d' is disable", postId));
+    }
 
     for (MembershipCreateRequest request : membershipRequests) {
       Membership membership =
@@ -45,14 +56,22 @@ public class MembershipService {
               .name(request.getName())
               .period(request.getPeriod())
               .price(request.getPrice())
-              .imageUrl(request.getImageUrl())
-              .enabled(DEFAULT_ENABLED_STATUS)
+              .isEnabled(DEFAULT_ENABLED_STATUS)
+              .post(post)
               .build();
 
       Membership savedMembership = membershipRepository.save(membership);
       membershipIds.add(savedMembership.getId());
 
       for (MembershipCouponCreateRequest couponRequest : request.getCoupons()) {
+        if ((!couponRequest.getIsPermanent() && couponRequest.getNumberOfUses() == null)
+            || (couponRequest.getIsPermanent() && couponRequest.getNumberOfUses() != null)) {
+          throw new ApiException(
+              ErrorCode.BAD_VALID,
+              String.format(
+                  "Invalid coupon request for '%s': If 'isPermanent' is false, 'numberOfUses' must be provided. If 'isPermanent' is true, 'numberOfUses' must not be provided.",
+                  couponRequest.getName()));
+        }
         Coupon coupon =
             Coupon.builder()
                 .name(couponRequest.getName())
@@ -61,6 +80,8 @@ public class MembershipService {
                 .periodInDays(couponRequest.getPeriodInDays())
                 .imageUrl(couponRequest.getImageUrl())
                 .membership(savedMembership)
+                .numberOfUses(couponRequest.getNumberOfUses())
+                .isPermanent(couponRequest.getIsPermanent())
                 .build();
 
         couponRepository.save(coupon);

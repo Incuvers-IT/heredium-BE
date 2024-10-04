@@ -75,10 +75,11 @@ public class Membership extends BaseEntity implements Serializable {
   }
 
   @Builder
-  public Membership(String name, Long period, Integer price, Boolean isEnabled) {
+  public Membership(String name, Long period, Integer price, Boolean isEnabled, Post post) {
     this.name = name;
     this.period = period;
     this.price = price;
     this.isEnabled = isEnabled;
+    this.post = post;
   }
 }

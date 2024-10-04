@@ -13,4 +13,6 @@ public interface PostRepository extends JpaRepository<Post, Long> {
   List<Post> findAllByIsEnabledTrue();
 
   Optional<Post> findByIdAndIsEnabledTrue(long id);
+
+  Optional<Post> findById(long id);
 }

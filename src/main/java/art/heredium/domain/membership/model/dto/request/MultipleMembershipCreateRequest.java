@@ -11,5 +11,7 @@ import lombok.Setter;
 @Getter
 @Setter
 public class MultipleMembershipCreateRequest {
-  @NotEmpty() @Valid private List<MembershipCreateRequest> memberships;
+  @NotEmpty(message = " can not be empty")
+  @Valid
+  private List<MembershipCreateRequest> memberships;
 }

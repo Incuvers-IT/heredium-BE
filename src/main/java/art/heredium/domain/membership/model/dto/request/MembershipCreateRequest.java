@@ -18,13 +18,15 @@ public class MembershipCreateRequest {
 
   private static final Long DEFAULT_MEMBERSHIP_PERIOD = 12L;
 
-  @NotBlank() private String name;
+  @NotBlank(message = " can not be blank")
+  private String name;
 
   private Long period = DEFAULT_MEMBERSHIP_PERIOD;
 
-  @NotNull() private Integer price;
+  @NotNull(message = " can not be null")
+  private Integer price;
 
-  @NotBlank() private String imageUrl;
-
-  @NotEmpty @Valid private List<MembershipCouponCreateRequest> coupons;
+  @NotEmpty(message = " can not be empty")
+  @Valid
+  private List<MembershipCouponCreateRequest> coupons;
 }
