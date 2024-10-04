@@ -7,7 +7,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @AllArgsConstructor
-public class GetEnabledPostsResponse {
+public class PostResponse {
   private Long id;
   private String name;
   private String imageUrl;
