@@ -6,9 +6,12 @@ import java.util.List;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.OrderBy;
 import javax.persistence.Table;
@@ -25,6 +28,7 @@ import org.hibernate.annotations.TypeDef;
 
 import art.heredium.domain.common.entity.BaseEntity;
 import art.heredium.domain.coupon.entity.Coupon;
+import art.heredium.domain.post.entity.Post;
 
 @Entity
 @Getter
@@ -38,6 +42,10 @@ public class Membership extends BaseEntity implements Serializable {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
+
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "post_id", nullable = false)
+  private Post post;
 
   @OneToMany(mappedBy = "membership", cascade = CascadeType.ALL, orphanRemoval = true)
   @OrderBy("order ASC")
