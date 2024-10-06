@@ -15,6 +15,7 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.OrderBy;
 import javax.persistence.Table;
+import javax.validation.constraints.Min;
 
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -60,10 +61,12 @@ public class Membership extends BaseEntity implements Serializable {
 
   @Comment("멤버십기간 (월)")
   @Column(name = "membership_period", nullable = false)
+  @Min(1)
   private Long period;
 
   @Comment("가격")
   @Column(name = "price", nullable = false)
+  @Min(1)
   private Integer price;
 
   @Comment("가능")

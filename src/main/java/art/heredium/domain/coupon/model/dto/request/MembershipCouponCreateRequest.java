@@ -1,5 +1,6 @@
 package art.heredium.domain.coupon.model.dto.request;
 
+import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 
@@ -14,29 +15,30 @@ import art.heredium.domain.coupon.entity.CouponType;
 @Setter
 public class MembershipCouponCreateRequest {
 
-  @NotBlank(message = " can not be blank")
-  private String name;
+  @NotBlank private String name;
 
   @JsonProperty("coupon_type")
-  @NotNull(message = " can not be null")
+  @NotNull
   private CouponType couponType;
 
   @JsonProperty("discount_percent")
-  @NotNull(message = " can not be null")
+  @NotNull
   private Integer discountPercent;
 
   @JsonProperty("period_in_days")
-  @NotNull(message = " can not be null")
+  @NotNull
+  @Min(1)
   private Integer periodInDays;
 
   @JsonProperty("image_url")
-  @NotBlank(message = " can not be blank")
+  @NotBlank
   private String imageUrl;
 
   @JsonProperty("number_of_uses")
+  @Min(1)
   private Long numberOfUses;
 
   @JsonProperty("is_permanent")
-  @NotNull(message = " can not be null")
+  @NotNull
   private Boolean isPermanent;
 }
