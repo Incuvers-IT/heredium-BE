@@ -17,6 +17,7 @@ import art.heredium.domain.membership.entity.Membership;
 import art.heredium.domain.membership.entity.MembershipRegistration;
 import art.heredium.domain.membership.repository.MembershipRegistrationRepository;
 import art.heredium.domain.membership.repository.MembershipRepository;
+import art.heredium.domain.post.repository.PostRepository;
 
 import static art.heredium.core.config.error.entity.ErrorCode.ANONYMOUS_USER;
 
@@ -26,6 +27,7 @@ public class MembershipRegistrationService {
 
   private final MembershipRegistrationRepository membershipRegistrationRepository;
   private final MembershipRepository membershipRepository;
+  private final PostRepository postRepository;
   private final AccountRepository accountRepository;
   private final CouponUsageService couponUsageService;
 
@@ -51,6 +53,9 @@ public class MembershipRegistrationService {
         this.membershipRepository
             .findByIdAndIsEnabledTrue(membershipId)
             .orElseThrow(() -> new ApiException(ErrorCode.MEMBERSHIP_NOT_FOUND));
+    this.postRepository
+        .findByMembershipIdAndIsEnabledTrue(membershipId)
+        .orElseThrow(() -> new ApiException(ErrorCode.POST_NOT_FOUND));
     final Account account =
         this.accountRepository
             .findById(accountId)

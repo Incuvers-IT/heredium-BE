@@ -75,7 +75,7 @@ public class CouponUsageService {
                       distributionDateTime,
                       distributionDateTime.plusDays(coupon.getPeriodInDays()),
                       false,
-                      null);
+                      0L);
               couponUsages.add(couponUsage);
             }
           }
