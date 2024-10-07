@@ -39,12 +39,10 @@ import art.heredium.payment.inf.PaymentTicketResponse;
 import art.heredium.payment.inicis.dto.request.InicisTicketRequest;
 import art.heredium.payment.inicis.dto.response.InicisPayMobileResponse;
 import art.heredium.payment.inicis.dto.response.InicisPayResponse;
-import art.heredium.payment.inicis.dto.response.InicisValidResponse;
-import art.heredium.payment.type.PaymentType;
 
 @Slf4j
 @Service
-public class Inicis implements PaymentService<InicisValidResponse, InicisTicketRequest> {
+public class Inicis implements PaymentService<InicisTicketRequest> {
 
   @Value("${inicis.mid}")
   private String MID;
@@ -54,35 +52,6 @@ public class Inicis implements PaymentService<InicisValidResponse, InicisTicketR
 
   @Value("${inicis.api-key}")
   private String API_KEY;
-
-  @Override
-  public PaymentType getPaymentType(InicisTicketRequest dto) {
-    return PaymentType.INICIS;
-  }
-
-  @Override
-  public InicisValidResponse valid(Ticket ticket) {
-
-    try {
-      String mid = MID; // 가맹점 ID(가맹점 수정후 고정)
-      String signKey = SIGN_KEY; // 가맹점에 제공된 웹 표준 사인키(가맹점 수정후 고정)
-      String timestamp = SignatureUtil.getTimestamp(); // util에 의해서 자동생성
-
-      String oid = ticket.getUuid(); // 가맹점 주문번호(가맹점에서 직접 설정)
-      Long price = ticket.getPrice(); // 상품가격(특수기호 제외, 가맹점에서 직접 설정)
-      String mKey = SignatureUtil.hash(signKey, "SHA-256");
-
-      Map<String, String> signParam = new HashMap<>();
-      signParam.put("oid", oid);
-      signParam.put("price", price.toString());
-      signParam.put("timestamp", timestamp);
-      String signature = SignatureUtil.makeSignature(signParam);
-
-      return new InicisValidResponse(ticket, timestamp, oid, price, mid, mKey, signature);
-    } catch (Exception e) {
-      throw new ApiException(ErrorCode.BAD_REQUEST);
-    }
-  }
 
   @Override
   public PaymentTicketResponse pay(InicisTicketRequest dto, Long amount) {

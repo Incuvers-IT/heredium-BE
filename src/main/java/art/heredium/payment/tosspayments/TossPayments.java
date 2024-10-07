@@ -1,7 +1,5 @@
 package art.heredium.payment.tosspayments;
 
-import java.util.Base64;
-
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.core.env.Environment;
@@ -11,39 +9,29 @@ import feign.FeignException;
 
 import art.heredium.core.config.error.entity.ApiException;
 import art.heredium.core.config.error.entity.ErrorCode;
+import art.heredium.core.util.Base64Encoder;
 import art.heredium.domain.ticket.entity.Ticket;
+import art.heredium.payment.dto.TicketPaymentsPayRequest;
 import art.heredium.payment.inf.PaymentService;
 import art.heredium.payment.tosspayments.dto.request.TossPaymentsPayRequest;
 import art.heredium.payment.tosspayments.dto.request.TossPaymentsRefundRequest;
 import art.heredium.payment.tosspayments.dto.response.TossPaymentsPayResponse;
-import art.heredium.payment.tosspayments.dto.response.TossPaymentsValidResponse;
 import art.heredium.payment.tosspayments.feign.client.TossPaymentsClient;
 import art.heredium.payment.type.PaymentType;
 
 @Service
 @RequiredArgsConstructor
-public class TossPayments
-    implements PaymentService<TossPaymentsValidResponse, TossPaymentsPayRequest> {
+public class TossPayments implements PaymentService<TicketPaymentsPayRequest> {
 
   private final TossPaymentsClient client;
 
   private final Environment environment;
 
   @Override
-  public PaymentType getPaymentType(TossPaymentsPayRequest dto) {
-    return dto.getType();
-  }
-
-  @Override
-  public TossPaymentsValidResponse valid(Ticket ticket) {
-    return new TossPaymentsValidResponse(ticket);
-  }
-
-  @Override
-  public TossPaymentsPayResponse pay(TossPaymentsPayRequest dto, Long amount) {
+  public TossPaymentsPayResponse pay(TicketPaymentsPayRequest dto, Long amount) {
     try {
       String authorization = getAuthorization(dto.getType());
-      return client.pay(authorization, dto);
+      return client.pay(authorization, TossPaymentsPayRequest.from(dto));
     } catch (FeignException e) {
       e.printStackTrace();
       throw new ApiException(ErrorCode.BAD_REQUEST, e.responseBody());
@@ -51,7 +39,7 @@ public class TossPayments
   }
 
   @Override
-  public void cancel(Ticket ticket, TossPaymentsPayRequest dto) {
+  public void cancel(Ticket ticket, TicketPaymentsPayRequest dto) {
     refund(ticket);
   }
 
@@ -70,6 +58,6 @@ public class TossPayments
 
   private String getAuthorization(PaymentType type) {
     String secretKey = environment.getProperty(type.getPropertyKeyName());
-    return "Basic " + Base64.getEncoder().encodeToString((secretKey + ":").getBytes());
+    return Base64Encoder.encodeAuthorization(secretKey + ":");
   }
 }
