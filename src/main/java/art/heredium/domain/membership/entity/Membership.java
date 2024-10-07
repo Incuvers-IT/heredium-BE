@@ -15,8 +15,11 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.OrderBy;
 import javax.persistence.Table;
+import javax.validation.constraints.Min;
 
 import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
@@ -36,6 +39,7 @@ import art.heredium.domain.post.entity.Post;
 @DynamicInsert
 @TypeDef(name = "json", typeClass = JsonStringType.class)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor
 @ToString
 // 멤버십
 public class Membership extends BaseEntity implements Serializable {
@@ -57,10 +61,12 @@ public class Membership extends BaseEntity implements Serializable {
 
   @Comment("멤버십기간 (월)")
   @Column(name = "membership_period", nullable = false)
+  @Min(1)
   private Long period;
 
   @Comment("가격")
   @Column(name = "price", nullable = false)
+  @Min(1)
   private Integer price;
 
   @Comment("가능")
@@ -69,5 +75,14 @@ public class Membership extends BaseEntity implements Serializable {
 
   public void updateIsEnabled(boolean isEnabled) {
     this.isEnabled = isEnabled;
+  }
+
+  @Builder
+  public Membership(String name, Long period, Integer price, Boolean isEnabled, Post post) {
+    this.name = name;
+    this.period = period;
+    this.price = price;
+    this.isEnabled = isEnabled;
+    this.post = post;
   }
 }
