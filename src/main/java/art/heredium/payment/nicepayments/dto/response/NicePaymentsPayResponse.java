@@ -1,6 +1,24 @@
 package art.heredium.payment.nicepayments.dto.response;
 
-public class NicePaymentsPayResponse extends NicePaymentsBaseResponse {}
+import art.heredium.payment.inf.PaymentTicketResponse;
+
+public class NicePaymentsPayResponse extends NicePaymentsBaseResponse
+    implements PaymentTicketResponse {
+  @Override
+  public Long getPaymentAmount() {
+    return super.getAmount().longValue();
+  }
+
+  @Override
+  public String getPaymentKey() {
+    return super.getTid();
+  }
+
+  @Override
+  public String getPayMethod() {
+    return super.getPayMethod();
+  }
+}
 
 /*
 {

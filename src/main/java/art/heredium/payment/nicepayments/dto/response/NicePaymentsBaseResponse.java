@@ -5,9 +5,11 @@ import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
 
+import art.heredium.payment.inf.PaymentResponse;
+
 @Getter
 @Setter
-public class NicePaymentsBaseResponse {
+public class NicePaymentsBaseResponse implements PaymentResponse {
   private String resultCode;
   private String resultMsg;
   private String tid;

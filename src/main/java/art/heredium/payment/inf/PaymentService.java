@@ -1,16 +1,11 @@
 package art.heredium.payment.inf;
 
 import art.heredium.domain.ticket.entity.Ticket;
-import art.heredium.payment.type.PaymentType;
 
-public interface PaymentService<PayValid, TicketRequest> {
-  PaymentType getPaymentType(TicketRequest dto);
+public interface PaymentService<PaymentRequest> {
+  PaymentResponse pay(PaymentRequest dto, Long amount);
 
-  PayValid valid(Ticket ticket);
-
-  PaymentTicketResponse pay(TicketRequest dto, Long amount);
-
-  void cancel(Ticket ticket, TicketRequest dto);
+  void cancel(Ticket ticket, PaymentRequest dto);
 
   void refund(Ticket ticket);
 }

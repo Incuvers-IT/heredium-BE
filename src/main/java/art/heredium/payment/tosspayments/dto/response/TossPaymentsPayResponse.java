@@ -35,7 +35,7 @@ public class TossPaymentsPayResponse implements PaymentTicketResponse {
   private int taxExemptionAmount;
 
   @Override
-  public Long getAmount() {
+  public Long getPaymentAmount() {
     return (long) totalAmount;
   }
 

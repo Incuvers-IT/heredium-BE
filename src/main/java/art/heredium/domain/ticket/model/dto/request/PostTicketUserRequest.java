@@ -6,10 +6,10 @@ import javax.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 
-import art.heredium.payment.tosspayments.dto.request.TossPaymentsPayRequest;
+import art.heredium.payment.dto.TicketPaymentsPayRequest;
 
 @Getter
 @Setter
 public class PostTicketUserRequest {
-  @NotNull private @Valid TossPaymentsPayRequest payRequest;
+  @NotNull private @Valid TicketPaymentsPayRequest payRequest;
 }

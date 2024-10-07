@@ -43,9 +43,9 @@ import art.heredium.ncloud.bean.CloudMail;
 import art.heredium.ncloud.bean.HerediumAlimTalk;
 import art.heredium.ncloud.type.AlimTalkTemplate;
 import art.heredium.ncloud.type.MailTemplate;
+import art.heredium.payment.dto.PaymentsValidResponse;
+import art.heredium.payment.dto.TicketPaymentsPayRequest;
 import art.heredium.payment.inf.PaymentTicketResponse;
-import art.heredium.payment.tosspayments.TossPayments;
-import art.heredium.payment.tosspayments.dto.request.TossPaymentsPayRequest;
 
 @Slf4j
 @Service
@@ -56,8 +56,6 @@ public class TicketPayService {
   private final HerediumProperties herediumProperties;
   private final RestTemplate restTemplate = new RestTemplate();
   private final HerediumAlimTalk alimTalk;
-  private final TossPayments payment;
-
   private final AccountRepository accountRepository;
   private final NonUserRepository nonUserRepository;
   private final TicketRepository ticketRepository;
@@ -84,11 +82,11 @@ public class TicketPayService {
     Ticket entity = createTicket(ticketOrderInfo, ticketUserInfo, Constants.getUUID());
     jwtRedisUtil.setDataExpire(entity.getUuid(), ticketOrderInfo, 15 * 60);
     jwtRedisUtil.setDataExpire("ticketUserInfo-" + entity.getUuid(), ticketUserInfo, 15 * 60);
-    return payment.valid(entity);
+    return PaymentsValidResponse.from(entity);
   }
 
   @Transactional(noRollbackFor = ApiException.class)
-  public PostUserTicketResponse insert(TossPaymentsPayRequest dto) {
+  public PostUserTicketResponse insert(TicketPaymentsPayRequest dto) {
     // 결제모듈에서 결제완료후 시작전 저장한 데이터와 매칭
     TicketOrderInfo info = jwtRedisUtil.getData(dto.getOrderId(), TicketOrderInfo.class);
     TicketUserInfo ticketUserInfo =
@@ -107,8 +105,8 @@ public class TicketPayService {
     }
 
     Ticket entity = createTicket(info, ticketUserInfo, dto.getOrderId());
-    PaymentTicketResponse pay = payment.pay(dto, entity.getPrice());
-    entity.initPay(pay, payment.getPaymentType(dto));
+    PaymentTicketResponse pay = (PaymentTicketResponse) dto.getType().pay(dto, entity.getPrice());
+    entity.initPay(pay, dto.getType());
 
     try {
       ticketRepository.saveAndFlush(entity);
@@ -132,7 +130,7 @@ public class TicketPayService {
       ticketRepository.saveAndFlush(entity);
     } catch (Exception e) {
       log.error("티켓구매 에러", e);
-      payment.cancel(entity, dto);
+      dto.getType().cancel(entity, dto);
       throw new ApiException(ErrorCode.DB_ERROR, e.getMessage());
     }
     return new PostUserTicketResponse(entity);
