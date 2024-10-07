@@ -26,12 +26,11 @@ import art.heredium.domain.post.repository.PostRepository;
 public class MembershipService {
 
   private static final boolean DEFAULT_ENABLED_STATUS = true;
-  private static final Long DEFAULT_MEMBERSHIP_PERIOD = 12L;
+  private static final Long DEFAULT_MEMBERSHIP_PERIOD = 12L; // months
 
   private final MembershipRepository membershipRepository;
   private final PostRepository postRepository;
   private final CouponRepository couponRepository;
-  private final PostRepository postRepository;
 
   public List<Membership> findByPostIdAndIsEnabledTrue(long postId) {
     return this.membershipRepository.findByPostIdAndIsEnabledTrue(postId);
@@ -55,7 +54,7 @@ public class MembershipService {
       Membership membership =
           Membership.builder()
               .name(request.getName())
-              .period(request.getPeriod() != null ? request.getPeriod() : DEFAULT_MEMBERSHIP_PERIOD)
+              .period(DEFAULT_MEMBERSHIP_PERIOD)
               .price(request.getPrice())
               .isEnabled(DEFAULT_ENABLED_STATUS)
               .post(post)
