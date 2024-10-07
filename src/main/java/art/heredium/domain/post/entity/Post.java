@@ -14,6 +14,7 @@ import javax.persistence.Table;
 
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
@@ -59,5 +60,19 @@ public class Post extends BaseEntity {
 
   public void updateIsEnabled(boolean isEnabled) {
     this.isEnabled = isEnabled;
+  }
+
+  @Builder
+  public Post(
+      String name,
+      String imageUrl,
+      Boolean isEnabled,
+      String contentDetail,
+      String navigationLink) {
+    this.name = name;
+    this.imageUrl = imageUrl;
+    this.isEnabled = isEnabled;
+    this.contentDetail = contentDetail;
+    this.navigationLink = navigationLink;
   }
 }

@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import art.heredium.core.config.error.entity.ApiException;
 import art.heredium.core.config.error.entity.ErrorCode;
 import art.heredium.domain.post.entity.Post;
+import art.heredium.domain.post.model.dto.request.PostCreateRequest;
 import art.heredium.domain.post.model.dto.response.PostResponse;
 import art.heredium.domain.post.repository.PostRepository;
 
@@ -18,6 +19,7 @@ import art.heredium.domain.post.repository.PostRepository;
 @RequiredArgsConstructor
 public class PostService {
   private final PostRepository postRepository;
+  private final MembershipService membershipService;
 
   @Transactional(readOnly = true)
   public List<PostResponse> getEnabledPosts() {
@@ -49,5 +51,25 @@ public class PostService {
       return;
     }
     existingPost.updateIsEnabled(isEnabled);
+  }
+
+  @Transactional
+  public Long createPost(PostCreateRequest request) {
+    final Post post =
+        Post.builder()
+            .name(request.getName())
+            .imageUrl(request.getImageUrl())
+            .isEnabled(request.getIsEnabled())
+            .contentDetail(request.getContentDetail())
+            .navigationLink(request.getNavigationLink())
+            .build();
+    final Post savedPost = postRepository.save(post);
+
+    if (request.getIsEnabled() && request.getMemberships() != null) {
+      membershipService.createMemberships(
+          savedPost.getId(), request.getMemberships().getMemberships());
+    }
+
+    return savedPost.getId();
   }
 }
