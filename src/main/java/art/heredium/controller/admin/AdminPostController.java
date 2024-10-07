@@ -8,16 +8,14 @@ import lombok.RequiredArgsConstructor;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
 
 import art.heredium.core.annotation.ManagerPermission;
+import art.heredium.core.config.error.entity.ApiException;
+import art.heredium.core.config.error.entity.ErrorCode;
 import art.heredium.domain.membership.model.dto.request.MembershipUpdateRequest;
 import art.heredium.domain.membership.model.dto.request.MultipleMembershipCreateRequest;
 import art.heredium.domain.membership.model.dto.response.MultipleMembershipCreateResponse;
+import art.heredium.domain.post.model.dto.request.PostCreateRequest;
 import art.heredium.domain.post.model.dto.request.PostUpdateRequest;
 import art.heredium.service.MembershipService;
 import art.heredium.service.PostService;
@@ -53,5 +51,17 @@ public class AdminPostController {
       @PathVariable("post-id") long postId, @RequestBody PostUpdateRequest request) {
     this.postService.updateIsEnabled(postId, request.getIsEnabled());
     return ResponseEntity.ok().build();
+  }
+
+  @PostMapping
+  public ResponseEntity<Long> createPost(@Valid @RequestBody PostCreateRequest request) {
+    if (!request.getIsEnabled() && request.getMemberships() != null) {
+      throw new ApiException(
+          ErrorCode.BAD_VALID, "Memberships cannot be created for disabled posts");
+    }
+
+    Long postId = postService.createPost(request);
+
+    return ResponseEntity.ok(postId);
   }
 }
