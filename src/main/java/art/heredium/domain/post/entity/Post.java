@@ -56,4 +56,8 @@ public class Post extends BaseEntity {
   @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
   @OrderBy("order ASC")
   private List<Membership> memberships;
+
+  public void updateIsEnabled(boolean isEnabled) {
+    this.isEnabled = isEnabled;
+  }
 }
