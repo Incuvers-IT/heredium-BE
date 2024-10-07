@@ -1,6 +1,7 @@
 package art.heredium.domain.coupon.model.dto.response;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -26,7 +27,8 @@ public class CouponResponseDto {
     this.couponType = coupon.getCouponType().name();
     this.discountPercent = coupon.getDiscountPercent();
     this.imageUrl = coupon.getImageUrl();
-    this.usedCoupons = usedCoupons.stream().map(CouponUsageDto::new).toList();
-    this.unusedCoupons = unusedCoupons.stream().map(CouponUsageDto::new).toList();
+    this.usedCoupons = usedCoupons.stream().map(CouponUsageDto::new).collect(Collectors.toList());
+    this.unusedCoupons =
+        unusedCoupons.stream().map(CouponUsageDto::new).collect(Collectors.toList());
   }
 }
