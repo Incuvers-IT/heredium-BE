@@ -1,6 +1,7 @@
 package art.heredium.domain.coupon.entity;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 import javax.persistence.*;
 
@@ -8,7 +9,10 @@ import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.NonNull;
 import lombok.ToString;
+
+import org.springframework.lang.Nullable;
 
 import org.hibernate.annotations.Comment;
 import org.hibernate.annotations.DynamicInsert;
@@ -64,4 +68,21 @@ public class CouponUsage extends BaseEntity {
   @Comment("상시할인")
   @Column(name = "is_permanent")
   private boolean isPermanent;
+
+  public CouponUsage(
+      @NonNull Coupon coupon,
+      @NonNull Account account,
+      @NonNull LocalDateTime deliveredDate,
+      @NonNull LocalDateTime expirationDate,
+      boolean isPermanent,
+      @Nullable Long usedCount) {
+    this.coupon = coupon;
+    this.account = account;
+    this.deliveredDate = deliveredDate;
+    this.expirationDate = expirationDate;
+    this.uuid = UUID.randomUUID().toString();
+    this.isUsed = false;
+    this.isPermanent = isPermanent;
+    this.usedCount = usedCount;
+  }
 }

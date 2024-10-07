@@ -1,6 +1,7 @@
 package art.heredium.domain.membership.entity;
 
 import java.time.LocalDate;
+import java.util.UUID;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -15,6 +16,7 @@ import javax.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.NonNull;
 import lombok.ToString;
 
 import com.vladmihalcea.hibernate.type.json.JsonStringType;
@@ -56,4 +58,16 @@ public class MembershipRegistration {
   @Comment("만료일시")
   @Column(name = "expiration_date", nullable = false)
   private LocalDate expirationDate;
+
+  public MembershipRegistration(
+      @NonNull Account account,
+      @NonNull Membership membership,
+      @NonNull LocalDate registrationDate,
+      @NonNull LocalDate expirationDate) {
+    this.uuid = UUID.randomUUID().toString();
+    this.account = account;
+    this.membership = membership;
+    this.registrationDate = registrationDate;
+    this.expirationDate = expirationDate;
+  }
 }
