@@ -38,14 +38,6 @@ public class AdminPostController {
     return ResponseEntity.ok(new MultipleMembershipCreateResponse(membershipIds));
   }
 
-  @PutMapping("/{membership-id}/update-is-enabled")
-  public ResponseEntity updateIsEnabled(
-      @PathVariable("membership-id") long membershipId,
-      @RequestBody MembershipUpdateRequest request) {
-    this.membershipService.updateIsEnabled(membershipId, request.getIsEnabled());
-    return ResponseEntity.ok().build();
-  }
-
   @PutMapping("/{post-id}/update-is-enabled")
   public ResponseEntity updateIsEnabled(
       @PathVariable("post-id") long postId, @RequestBody PostUpdateRequest request) {
