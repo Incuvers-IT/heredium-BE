@@ -68,6 +68,10 @@ public enum ErrorCode {
   INVALID_POST_STATUS_TO_ENABLE_MEMBERSHIP(HttpStatus.BAD_REQUEST),
   ANONYMOUS_USER(HttpStatus.FORBIDDEN),
   POST_NOT_ALLOW(HttpStatus.BAD_REQUEST),
+
+  COUPON_NOT_FOUND(HttpStatus.NOT_FOUND),
+  COUPON_EXPIRED(HttpStatus.BAD_REQUEST),
+  COUPON_ALREADY_USED(HttpStatus.BAD_REQUEST),
   ;
   private HttpStatus status;
 

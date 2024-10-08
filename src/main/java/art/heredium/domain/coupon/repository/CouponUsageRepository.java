@@ -1,6 +1,7 @@
 package art.heredium.domain.coupon.repository;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -21,4 +22,6 @@ public interface CouponUsageRepository extends JpaRepository<CouponUsage, Long> 
 
   List<CouponUsage> findByAccountIdAndCouponIdAndIsUsedFalse(
       @Param("accountId") Long accountId, @Param("couponId") Long couponId);
+
+  Optional<CouponUsage> findByUuid(String uuid);
 }

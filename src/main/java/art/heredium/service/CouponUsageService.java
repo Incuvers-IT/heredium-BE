@@ -12,6 +12,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import art.heredium.core.config.error.entity.ApiException;
+import art.heredium.core.config.error.entity.ErrorCode;
 import art.heredium.domain.account.entity.Account;
 import art.heredium.domain.coupon.entity.Coupon;
 import art.heredium.domain.coupon.entity.CouponUsage;
@@ -81,5 +83,29 @@ public class CouponUsageService {
           }
         });
     return this.couponUsageRepository.saveAll(couponUsages);
+  }
+
+  @Transactional(rollbackFor = Exception.class)
+  public void checkoutCouponUsage(String uuid) {
+    CouponUsage couponUsage =
+        couponUsageRepository
+            .findByUuid(uuid)
+            .orElseThrow(() -> new ApiException(ErrorCode.COUPON_NOT_FOUND, "Coupon not found"));
+
+    LocalDateTime now = LocalDateTime.now();
+
+    if (couponUsage.getExpirationDate().isBefore(now)) {
+      throw new ApiException(ErrorCode.COUPON_EXPIRED, "Coupon is expired");
+    }
+
+    if (couponUsage.getIsUsed() && !couponUsage.isPermanent()) {
+      throw new ApiException(ErrorCode.COUPON_ALREADY_USED, "Coupon is already used");
+    }
+
+    couponUsage.setUsedCount(couponUsage.getUsedCount() + 1);
+    couponUsage.setIsUsed(true);
+
+    couponUsage.setUsedDate(now);
+    couponUsageRepository.save(couponUsage);
   }
 }
