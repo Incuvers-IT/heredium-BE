@@ -82,8 +82,7 @@ public class MembershipRegistrationService {
     final Ticket ticket =
         Optional.ofNullable(this.ticketRepository.findByUuid(payment.getOrderId()))
             .orElseThrow(() -> new ApiException(ErrorCode.TICKET_NOT_FOUND));
-    final long amount = payment.getAmount();
-    payment.getType().pay(payment, amount);
+    payment.getType().pay(payment, payment.getAmount());
     final MembershipRegistration membershipRegistration =
         this.membershipRegistrationRepository.save(
             new MembershipRegistration(

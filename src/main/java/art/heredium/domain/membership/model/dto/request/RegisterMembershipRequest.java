@@ -5,7 +5,7 @@ import lombok.Setter;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import art.heredium.payment.dto.TicketPaymentsPayRequest;
+import art.heredium.payment.dto.PaymentsPayRequest;
 
 @Getter
 @Setter
@@ -14,5 +14,5 @@ public class RegisterMembershipRequest {
   private long membershipId;
 
   @JsonProperty("payment")
-  private TicketPaymentsPayRequest payment;
+  private PaymentsPayRequest payment;
 }
