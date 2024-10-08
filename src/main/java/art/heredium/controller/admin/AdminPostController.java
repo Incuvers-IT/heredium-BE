@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.*;
 import art.heredium.core.annotation.ManagerPermission;
 import art.heredium.core.config.error.entity.ApiException;
 import art.heredium.core.config.error.entity.ErrorCode;
-import art.heredium.domain.membership.model.dto.request.MembershipUpdateRequest;
 import art.heredium.domain.membership.model.dto.request.MultipleMembershipCreateRequest;
 import art.heredium.domain.membership.model.dto.response.MultipleMembershipCreateResponse;
 import art.heredium.domain.post.model.dto.request.PostCreateRequest;

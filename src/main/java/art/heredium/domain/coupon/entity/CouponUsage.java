@@ -10,6 +10,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
+import lombok.Setter;
 import lombok.ToString;
 
 import org.springframework.lang.Nullable;
@@ -22,6 +23,7 @@ import art.heredium.domain.common.entity.BaseEntity;
 
 @Entity
 @Getter
+@Setter
 @Table(name = "coupon_usage")
 @DynamicInsert
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
