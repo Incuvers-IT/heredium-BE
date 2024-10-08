@@ -43,8 +43,8 @@ import art.heredium.ncloud.bean.CloudMail;
 import art.heredium.ncloud.bean.HerediumAlimTalk;
 import art.heredium.ncloud.type.AlimTalkTemplate;
 import art.heredium.ncloud.type.MailTemplate;
+import art.heredium.payment.dto.PaymentsPayRequest;
 import art.heredium.payment.dto.PaymentsValidResponse;
-import art.heredium.payment.dto.TicketPaymentsPayRequest;
 import art.heredium.payment.inf.PaymentTicketResponse;
 
 @Slf4j
@@ -86,7 +86,7 @@ public class TicketPayService {
   }
 
   @Transactional(noRollbackFor = ApiException.class)
-  public PostUserTicketResponse insert(TicketPaymentsPayRequest dto) {
+  public PostUserTicketResponse insert(PaymentsPayRequest dto) {
     // 결제모듈에서 결제완료후 시작전 저장한 데이터와 매칭
     TicketOrderInfo info = jwtRedisUtil.getData(dto.getOrderId(), TicketOrderInfo.class);
     TicketUserInfo ticketUserInfo =

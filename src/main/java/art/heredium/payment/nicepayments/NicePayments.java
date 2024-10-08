@@ -12,7 +12,7 @@ import art.heredium.core.config.error.entity.ApiException;
 import art.heredium.core.config.error.entity.ErrorCode;
 import art.heredium.core.util.Base64Encoder;
 import art.heredium.domain.ticket.entity.Ticket;
-import art.heredium.payment.dto.TicketPaymentsPayRequest;
+import art.heredium.payment.dto.PaymentsPayRequest;
 import art.heredium.payment.inf.PaymentService;
 import art.heredium.payment.nicepayments.dto.request.NicePaymentsPayRequest;
 import art.heredium.payment.nicepayments.dto.request.NicePaymentsRefundRequest;
@@ -24,13 +24,13 @@ import art.heredium.payment.type.PaymentType;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class NicePayments implements PaymentService<TicketPaymentsPayRequest> {
+public class NicePayments implements PaymentService<PaymentsPayRequest> {
   private static final String NICE_PAYMENT_SUCCESS_CODE = "0000";
   private final NicePaymentsClient nicePaymentsClient;
   private final Environment environment;
 
   @Override
-  public NicePaymentsPayResponse pay(TicketPaymentsPayRequest dto, Long amount) {
+  public NicePaymentsPayResponse pay(PaymentsPayRequest dto, Long amount) {
     String authorization = getAuthorization();
 
     try {
@@ -57,7 +57,7 @@ public class NicePayments implements PaymentService<TicketPaymentsPayRequest> {
   }
 
   @Override
-  public void cancel(Ticket ticket, TicketPaymentsPayRequest dto) {
+  public void cancel(Ticket ticket, PaymentsPayRequest dto) {
     refund(ticket);
   }
 

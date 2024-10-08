@@ -7,7 +7,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 
-import art.heredium.payment.dto.TicketPaymentsPayRequest;
+import art.heredium.payment.dto.PaymentsPayRequest;
 
 @Getter
 @Setter
@@ -16,7 +16,7 @@ import art.heredium.payment.dto.TicketPaymentsPayRequest;
 public class NicePaymentsPayRequest {
   @NotNull private Long amount;
 
-  public static NicePaymentsPayRequest from(TicketPaymentsPayRequest payRequest) {
+  public static NicePaymentsPayRequest from(PaymentsPayRequest payRequest) {
     return NicePaymentsPayRequest.builder().amount(payRequest.getAmount()).build();
   }
 }
