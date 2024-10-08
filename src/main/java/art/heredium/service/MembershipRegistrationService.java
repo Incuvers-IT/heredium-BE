@@ -70,9 +70,7 @@ public class MembershipRegistrationService {
     final Ticket ticket =
         Optional.ofNullable(this.ticketRepository.findByUuid(payment.getOrderId()))
             .orElseThrow(() -> new ApiException(ErrorCode.TICKET_NOT_FOUND));
-    final long amount = payment.getAmount();
-    this.validatePaymentAmount(amount);
-    payment.getType().pay(payment, amount);
+    payment.getType().pay(payment, payment.getAmount());
     final MembershipRegistration membershipRegistration =
         this.membershipRegistrationRepository.save(
             new MembershipRegistration(
@@ -80,11 +78,5 @@ public class MembershipRegistrationService {
     this.couponUsageService.distributeCoupons(account, membership.getCoupons());
     // TODO: IH-6 Send notification
     return membershipRegistration.getId();
-  }
-
-  private void validatePaymentAmount(long amount) {
-    if (amount < 0) {
-      throw new ApiException(ErrorCode.INVALID_PAYMENT_AMOUNT, "Payment amount cannot be negative");
-    }
   }
 }

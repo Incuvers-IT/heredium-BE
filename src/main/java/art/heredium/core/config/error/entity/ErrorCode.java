@@ -69,7 +69,6 @@ public enum ErrorCode {
   INVALID_POST_STATUS_TO_ENABLE_MEMBERSHIP(HttpStatus.BAD_REQUEST),
   ANONYMOUS_USER(HttpStatus.FORBIDDEN),
   POST_NOT_ALLOW(HttpStatus.BAD_REQUEST),
-  INVALID_PAYMENT_AMOUNT(HttpStatus.BAD_REQUEST),
   ;
   private HttpStatus status;
 
