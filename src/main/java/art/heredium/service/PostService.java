@@ -2,6 +2,7 @@ package art.heredium.service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import lombok.RequiredArgsConstructor;
 
@@ -34,7 +35,7 @@ public class PostService {
                     post.getIsEnabled(),
                     post.getContentDetail(),
                     post.getNavigationLink()))
-        .toList();
+        .collect(Collectors.toList());
   }
 
   public Optional<Post> findByIdAndIsEnabledTrue(long postId) {

@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -34,14 +35,14 @@ public class CouponUsageService {
           couponUsageRepository
               .findByAccountIdAndCouponIdAndIsUsedTrue(accountId, coupon.getId())
               .stream()
-              .toList();
+              .collect(Collectors.toList());
 
       List<CouponUsage> unusedCoupons =
           couponUsageRepository
               .findByAccountIdAndCouponIdAndIsUsedFalse(accountId, coupon.getId())
               .stream()
               .sorted(Comparator.comparing(CouponUsage::getExpirationDate))
-              .toList();
+              .collect(Collectors.toList());
 
       responseDtos.add(new CouponResponseDto(coupon, usedCoupons, unusedCoupons));
     }
