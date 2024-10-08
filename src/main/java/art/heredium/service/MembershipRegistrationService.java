@@ -79,12 +79,12 @@ public class MembershipRegistrationService {
     final Ticket ticket =
         Optional.ofNullable(this.ticketRepository.findByUuid(payment.getOrderId()))
             .orElseThrow(() -> new ApiException(ErrorCode.TICKET_NOT_FOUND));
-    payment.getType().pay(payment, payment.getAmount());
     final MembershipRegistration membershipRegistration =
         this.membershipRegistrationRepository.save(
             new MembershipRegistration(
                 account, membership, registrationDate, expirationDate, ticket));
     this.couponUsageService.distributeCoupons(account, membership.getCoupons());
+    payment.getType().pay(payment, payment.getAmount());
     // TODO: IH-6 Send notification
     return membershipRegistration.getId();
   }
