@@ -13,8 +13,6 @@ import lombok.NonNull;
 import lombok.Setter;
 import lombok.ToString;
 
-import org.springframework.lang.Nullable;
-
 import org.hibernate.annotations.Comment;
 import org.hibernate.annotations.DynamicInsert;
 
@@ -65,7 +63,7 @@ public class CouponUsage extends BaseEntity {
 
   @Comment("사용된 횟수")
   @Column(name = "used_count")
-  private Long usedCount;
+  private long usedCount;
 
   @Comment("상시할인")
   @Column(name = "is_permanent")
@@ -77,7 +75,7 @@ public class CouponUsage extends BaseEntity {
       @NonNull LocalDateTime deliveredDate,
       @NonNull LocalDateTime expirationDate,
       boolean isPermanent,
-      @Nullable Long usedCount) {
+      long usedCount) {
     this.coupon = coupon;
     this.account = account;
     this.deliveredDate = deliveredDate;

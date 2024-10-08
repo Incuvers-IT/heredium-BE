@@ -102,11 +102,8 @@ public class CouponUsageService {
       throw new ApiException(ErrorCode.COUPON_ALREADY_USED, "Coupon is already used");
     }
 
-    if (couponUsage.isPermanent()) {
-      couponUsage.setUsedCount(couponUsage.getUsedCount() + 1);
-    } else {
-      couponUsage.setIsUsed(true);
-    }
+    couponUsage.setUsedCount(couponUsage.getUsedCount() + 1);
+    couponUsage.setIsUsed(true);
 
     couponUsage.setUsedDate(now);
     couponUsageRepository.save(couponUsage);

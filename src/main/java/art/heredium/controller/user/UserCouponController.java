@@ -35,9 +35,10 @@ public class UserCouponController {
     return ResponseEntity.ok(couponResponseDtos);
   }
 
-  @PostMapping("/checkout/{uuid}")
-  public ResponseEntity<Void> checkoutCouponUsage(@PathVariable String uuid) {
-    couponUsageService.checkoutCouponUsage(uuid);
+  @PostMapping("/checkout/{coupon-uuid}")
+  public ResponseEntity<Void> checkoutCouponUsage(
+      @PathVariable(value = "coupon-uuid") String couponUuid) {
+    couponUsageService.checkoutCouponUsage(couponUuid);
     return ResponseEntity.ok().build();
   }
 }
