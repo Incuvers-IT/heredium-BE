@@ -45,6 +45,9 @@ public class Post extends BaseEntity {
   @Column(name = "image_url", nullable = false)
   private String imageUrl;
 
+  @Column(name = "thumbnail_urls")
+  private String thumbnailUrls;
+
   @Column(name = "is_enabled", nullable = false)
   private Boolean isEnabled;
 
@@ -66,6 +69,7 @@ public class Post extends BaseEntity {
   public Post(
       String name,
       String imageUrl,
+      String thumbnailUrls,
       Boolean isEnabled,
       String contentDetail,
       String navigationLink) {
