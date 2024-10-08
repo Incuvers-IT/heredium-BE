@@ -8,21 +8,21 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 
-import art.heredium.payment.dto.TicketPaymentsPayRequest;
-import art.heredium.payment.inf.PaymentTicketRequest;
+import art.heredium.payment.dto.PaymentsPayRequest;
+import art.heredium.payment.inf.PaymentRequest;
 import art.heredium.payment.type.PaymentType;
 
 @Getter
 @Setter
 @Builder
 @AllArgsConstructor
-public class TossPaymentsPayRequest implements PaymentTicketRequest {
+public class TossPaymentsPayRequest implements PaymentRequest {
   @NotBlank private String orderId;
   @NotBlank private String paymentKey;
   @NotNull private Long amount;
   private PaymentType type;
 
-  public static TossPaymentsPayRequest from(TicketPaymentsPayRequest payRequest) {
+  public static TossPaymentsPayRequest from(PaymentsPayRequest payRequest) {
     return TossPaymentsPayRequest.builder()
         .orderId(payRequest.getOrderId())
         .paymentKey(payRequest.getPaymentKey())

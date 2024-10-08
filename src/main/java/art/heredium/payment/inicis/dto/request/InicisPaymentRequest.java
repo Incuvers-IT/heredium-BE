@@ -6,12 +6,12 @@ import lombok.ToString;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import art.heredium.payment.inf.PaymentTicketRequest;
+import art.heredium.payment.inf.PaymentRequest;
 
 @Getter
 @Setter
 @ToString
-public class InicisTicketRequest implements PaymentTicketRequest {
+public class InicisPaymentRequest implements PaymentRequest {
   private String resultCode;
   private String resultMsg;
   private String mid;

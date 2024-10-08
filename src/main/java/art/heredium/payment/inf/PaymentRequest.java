@@ -1,5 +1,5 @@
 package art.heredium.payment.inf;
 
-public interface PaymentTicketRequest {
+public interface PaymentRequest {
   String getOrderId();
 }

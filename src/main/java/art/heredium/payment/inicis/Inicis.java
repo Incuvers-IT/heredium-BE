@@ -36,13 +36,13 @@ import art.heredium.core.util.Constants;
 import art.heredium.domain.ticket.entity.Ticket;
 import art.heredium.payment.inf.PaymentService;
 import art.heredium.payment.inf.PaymentTicketResponse;
-import art.heredium.payment.inicis.dto.request.InicisTicketRequest;
+import art.heredium.payment.inicis.dto.request.InicisPaymentRequest;
 import art.heredium.payment.inicis.dto.response.InicisPayMobileResponse;
 import art.heredium.payment.inicis.dto.response.InicisPayResponse;
 
 @Slf4j
 @Service
-public class Inicis implements PaymentService<InicisTicketRequest> {
+public class Inicis implements PaymentService<InicisPaymentRequest> {
 
   @Value("${inicis.mid}")
   private String MID;
@@ -54,7 +54,7 @@ public class Inicis implements PaymentService<InicisTicketRequest> {
   private String API_KEY;
 
   @Override
-  public PaymentTicketResponse pay(InicisTicketRequest dto, Long amount) {
+  public PaymentTicketResponse pay(InicisPaymentRequest dto, Long amount) {
     if (dto.getIsMobile()) {
       return payMobile(dto);
     }
@@ -202,7 +202,7 @@ public class Inicis implements PaymentService<InicisTicketRequest> {
   }
 
   @Override
-  public void cancel(Ticket ticket, InicisTicketRequest dto) {
+  public void cancel(Ticket ticket, InicisPaymentRequest dto) {
     try {
       String timestamp = SignatureUtil.getTimestamp();
       Map<String, String> signParam = new HashMap<>();
@@ -233,7 +233,7 @@ public class Inicis implements PaymentService<InicisTicketRequest> {
     }
   }
 
-  public InicisPayMobileResponse payMobile(InicisTicketRequest dto) {
+  public InicisPayMobileResponse payMobile(InicisPaymentRequest dto) {
     try {
       String P_STATUS = dto.getP_STATUS(); // 인증 상태
       String P_RMESG1 = dto.getP_RMESG1(); // 인증 결과 메시지

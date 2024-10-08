@@ -12,7 +12,7 @@ import art.heredium.core.config.spring.ApplicationBeanUtil;
 import art.heredium.domain.common.converter.GenericTypeConverter;
 import art.heredium.domain.common.type.PersistableEnum;
 import art.heredium.domain.ticket.entity.Ticket;
-import art.heredium.payment.dto.TicketPaymentsPayRequest;
+import art.heredium.payment.dto.PaymentsPayRequest;
 import art.heredium.payment.inf.PaymentResponse;
 import art.heredium.payment.inf.PaymentService;
 import art.heredium.payment.inicis.Inicis;
@@ -70,13 +70,13 @@ public enum PaymentType implements PersistableEnum<Integer> {
     return this.code;
   }
 
-  public PaymentResponse pay(TicketPaymentsPayRequest paymentRequest, Long amount) {
+  public PaymentResponse pay(PaymentsPayRequest paymentRequest, Long amount) {
     validatePaymentMethod();
     PaymentService service = (PaymentService) ApplicationBeanUtil.getBean(this.getSimpleName());
     return service.pay(paymentRequest, amount);
   }
 
-  public void cancel(Ticket ticket, TicketPaymentsPayRequest dto) {
+  public void cancel(Ticket ticket, PaymentsPayRequest dto) {
     validatePaymentMethod();
     PaymentService service = (PaymentService) ApplicationBeanUtil.getBean(this.getSimpleName());
     service.cancel(ticket, dto);
