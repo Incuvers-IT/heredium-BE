@@ -3,6 +3,7 @@ package art.heredium.service;
 import java.time.LocalDate;
 import java.util.Optional;
 
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.stereotype.Service;
@@ -18,6 +19,9 @@ import art.heredium.domain.membership.entity.MembershipRegistration;
 import art.heredium.domain.membership.repository.MembershipRegistrationRepository;
 import art.heredium.domain.membership.repository.MembershipRepository;
 import art.heredium.domain.post.repository.PostRepository;
+import art.heredium.domain.ticket.entity.Ticket;
+import art.heredium.domain.ticket.repository.TicketRepository;
+import art.heredium.payment.dto.PaymentsPayRequest;
 
 import static art.heredium.core.config.error.entity.ErrorCode.ANONYMOUS_USER;
 
@@ -29,6 +33,7 @@ public class MembershipRegistrationService {
   private final MembershipRepository membershipRepository;
   private final PostRepository postRepository;
   private final AccountRepository accountRepository;
+  private final TicketRepository ticketRepository;
   private final CouponUsageService couponUsageService;
 
   public MembershipRegistration getMembershipRegistrationInfo() {
@@ -40,7 +45,7 @@ public class MembershipRegistrationService {
   }
 
   @Transactional(rollbackFor = Exception.class)
-  public long registerMembership(long membershipId) {
+  public long registerMembership(long membershipId, @NonNull PaymentsPayRequest payment) {
     final long accountId =
         AuthUtil.getCurrentUserAccountId()
             .orElseThrow(() -> new ApiException(ErrorCode.ANONYMOUS_USER));
@@ -60,14 +65,26 @@ public class MembershipRegistrationService {
         this.accountRepository
             .findById(accountId)
             .orElseThrow(() -> new ApiException(ErrorCode.USER_NOT_FOUND));
-    // TODO: IH-9 Implement payment
     final LocalDate registrationDate = LocalDate.now();
     final LocalDate expirationDate = registrationDate.plusMonths(membership.getPeriod());
+    final Ticket ticket =
+        Optional.ofNullable(this.ticketRepository.findByUuid(payment.getOrderId()))
+            .orElseThrow(() -> new ApiException(ErrorCode.TICKET_NOT_FOUND));
+    final long amount = payment.getAmount();
+    this.validatePaymentAmount(amount);
+    payment.getType().pay(payment, amount);
     final MembershipRegistration membershipRegistration =
         this.membershipRegistrationRepository.save(
-            new MembershipRegistration(account, membership, registrationDate, expirationDate));
+            new MembershipRegistration(
+                account, membership, registrationDate, expirationDate, ticket));
     this.couponUsageService.distributeCoupons(account, membership.getCoupons());
     // TODO: IH-6 Send notification
     return membershipRegistration.getId();
+  }
+
+  private void validatePaymentAmount(long amount) {
+    if (amount < 0) {
+      throw new ApiException(ErrorCode.INVALID_PAYMENT_AMOUNT, "Payment amount cannot be negative");
+    }
   }
 }
