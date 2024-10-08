@@ -76,13 +76,11 @@ public class MembershipRegistrationService {
         this.accountRepository
             .findById(accountId)
             .orElseThrow(() -> new ApiException(ErrorCode.USER_NOT_FOUND));
-    // TODO: IH-9 Implement payment
     final LocalDate registrationDate = LocalDate.now();
     final LocalDate expirationDate = registrationDate.plusMonths(membership.getPeriod());
     final Ticket ticket =
         Optional.ofNullable(this.ticketRepository.findByUuid(payment.getOrderId()))
             .orElseThrow(() -> new ApiException(ErrorCode.TICKET_NOT_FOUND));
-    payment.getType().pay(payment, payment.getAmount());
     final MembershipRegistration membershipRegistration =
         this.membershipRegistrationRepository.save(
             new MembershipRegistration(
@@ -92,9 +90,10 @@ public class MembershipRegistrationService {
                 expirationDate,
                 RegistrationType.MEMBERSHIP_PACKAGE,
                 PaymentStatus.COMPLETED,
-                registrationDate,
+                LocalDate.now(),
                 ticket));
     this.couponUsageService.distributeMembershipAndCompanyCoupons(account, membership.getCoupons());
+    payment.getType().pay(payment, payment.getAmount());
     // TODO: IH-6 Send notification
     return membershipRegistration.getId();
   }

@@ -83,11 +83,10 @@ public class MembershipRegistration {
       @NonNull Membership membership,
       @NonNull LocalDate registrationDate,
       @NonNull LocalDate expirationDate,
-      @NonNull LocalDate expirationDate,
       @NonNull RegistrationType registrationType,
       @NonNull PaymentStatus paymentStatus,
       @NonNull LocalDate paymentDate,
-      @Nullable Ticket ticket)) {
+      @Nullable Ticket ticket) {
     this.uuid = UUID.randomUUID().toString();
     this.account = account;
     this.membership = membership;
@@ -99,21 +98,21 @@ public class MembershipRegistration {
     this.ticket = ticket;
   }
 
-    public MembershipRegistration(
-            @NonNull Account account,
-            @NonNull Company company,
-            @NonNull LocalDate registrationDate,
-            @NonNull LocalDate expirationDate,
-            @NonNull RegistrationType registrationType,
-            @Nullable Ticket ticket) {
-        this.uuid = UUID.randomUUID().toString();
-        this.account = account;
-        this.company = company;
-        this.registrationDate = registrationDate;
-        this.expirationDate = expirationDate;
-        this.registrationType = registrationType;
-        this.paymentStatus = paymentStatus;
-        this.paymentDate = paymentDate;
-        this.ticket = ticket;
-    }
+  public MembershipRegistration(
+      @NonNull Account account,
+      @NonNull Company company,
+      @NonNull LocalDate registrationDate,
+      @NonNull LocalDate expirationDate,
+      @NonNull RegistrationType registrationType,
+      @Nullable Ticket ticket) {
+    this.uuid = UUID.randomUUID().toString();
+    this.account = account;
+    this.company = company;
+    this.registrationDate = registrationDate;
+    this.expirationDate = expirationDate;
+    this.registrationType = registrationType;
+    this.paymentStatus = paymentStatus;
+    this.paymentDate = paymentDate;
+    this.ticket = ticket;
+  }
 }
