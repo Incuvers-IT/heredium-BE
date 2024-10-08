@@ -14,6 +14,12 @@ import art.heredium.domain.membership.entity.MembershipRegistration;
 @Setter
 public class MembershipRegistrationResponse {
 
+  @JsonProperty("id")
+  private long membershipRegistrationId;
+
+  @JsonProperty("uuid")
+  private String uuid;
+
   @JsonProperty("membership_name")
   private String membershipName;
 
@@ -27,5 +33,7 @@ public class MembershipRegistrationResponse {
     this.membershipName = membershipRegistration.getMembership().getName();
     this.registrationDate = membershipRegistration.getRegistrationDate();
     this.expirationDate = membershipRegistration.getExpirationDate();
+    this.membershipRegistrationId = membershipRegistration.getId();
+    this.uuid = membershipRegistration.getUuid();
   }
 }
