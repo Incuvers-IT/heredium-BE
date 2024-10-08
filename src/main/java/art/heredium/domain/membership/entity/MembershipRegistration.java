@@ -11,6 +11,8 @@ import lombok.NoArgsConstructor;
 import lombok.NonNull;
 import lombok.ToString;
 
+import org.springframework.lang.Nullable;
+
 import com.vladmihalcea.hibernate.type.json.JsonStringType;
 import org.hibernate.annotations.Comment;
 import org.hibernate.annotations.DynamicInsert;
@@ -18,6 +20,7 @@ import org.hibernate.annotations.TypeDef;
 
 import art.heredium.domain.account.entity.Account;
 import art.heredium.domain.company.entity.Company;
+import art.heredium.domain.ticket.entity.Ticket;
 
 @Entity
 @Getter
@@ -51,6 +54,10 @@ public class MembershipRegistration {
   @JoinColumn(name = "company_id")
   private Company company;
 
+  @OneToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "ticket_id")
+  private Ticket ticket;
+
   @Comment("가입일시")
   @Column(name = "registration_date", nullable = false)
   private LocalDate registrationDate;
@@ -76,9 +83,11 @@ public class MembershipRegistration {
       @NonNull Membership membership,
       @NonNull LocalDate registrationDate,
       @NonNull LocalDate expirationDate,
+      @NonNull LocalDate expirationDate,
       @NonNull RegistrationType registrationType,
       @NonNull PaymentStatus paymentStatus,
-      @NonNull LocalDate paymentDate) {
+      @NonNull LocalDate paymentDate,
+      @Nullable Ticket ticket)) {
     this.uuid = UUID.randomUUID().toString();
     this.account = account;
     this.membership = membership;
@@ -87,20 +96,24 @@ public class MembershipRegistration {
     this.registrationType = registrationType;
     this.paymentStatus = paymentStatus;
     this.paymentDate = paymentDate;
+    this.ticket = ticket;
   }
 
-  public MembershipRegistration(
-      @NonNull Account account,
-      @NonNull Company company,
-      @NonNull LocalDate registrationDate,
-      @NonNull LocalDate expirationDate,
-      @NonNull RegistrationType registrationType) {
-    this.uuid = UUID.randomUUID().toString();
-    this.account = account;
-    this.company = company;
-    this.registrationDate = registrationDate;
-    this.expirationDate = expirationDate;
-    this.registrationType = registrationType;
-    // TODO: Add paymentStatus and paymentDate
-  }
+    public MembershipRegistration(
+            @NonNull Account account,
+            @NonNull Company company,
+            @NonNull LocalDate registrationDate,
+            @NonNull LocalDate expirationDate,
+            @NonNull RegistrationType registrationType,
+            @Nullable Ticket ticket) {
+        this.uuid = UUID.randomUUID().toString();
+        this.account = account;
+        this.company = company;
+        this.registrationDate = registrationDate;
+        this.expirationDate = expirationDate;
+        this.registrationType = registrationType;
+        this.paymentStatus = paymentStatus;
+        this.paymentDate = paymentDate;
+        this.ticket = ticket;
+    }
 }

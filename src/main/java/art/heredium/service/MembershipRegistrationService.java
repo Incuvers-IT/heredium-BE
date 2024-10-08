@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.stereotype.Service;
@@ -24,6 +25,9 @@ import art.heredium.domain.membership.model.dto.response.MembershipRegistrationR
 import art.heredium.domain.membership.repository.MembershipRegistrationRepository;
 import art.heredium.domain.membership.repository.MembershipRepository;
 import art.heredium.domain.post.repository.PostRepository;
+import art.heredium.domain.ticket.entity.Ticket;
+import art.heredium.domain.ticket.repository.TicketRepository;
+import art.heredium.payment.dto.PaymentsPayRequest;
 
 import static art.heredium.core.config.error.entity.ErrorCode.ANONYMOUS_USER;
 
@@ -36,6 +40,7 @@ public class MembershipRegistrationService {
   private final PostRepository postRepository;
   private final AccountRepository accountRepository;
   private final CouponUsageRepository couponUsageRepository;
+  private final TicketRepository ticketRepository;
   private final CouponUsageService couponUsageService;
 
   public MembershipRegistrationResponse getMembershipRegistrationInfo() {
@@ -51,7 +56,7 @@ public class MembershipRegistrationService {
   }
 
   @Transactional(rollbackFor = Exception.class)
-  public long registerMembership(long membershipId) {
+  public long registerMembership(long membershipId, @NonNull PaymentsPayRequest payment) {
     final long accountId =
         AuthUtil.getCurrentUserAccountId()
             .orElseThrow(() -> new ApiException(ErrorCode.ANONYMOUS_USER));
@@ -74,6 +79,11 @@ public class MembershipRegistrationService {
     // TODO: IH-9 Implement payment
     final LocalDate registrationDate = LocalDate.now();
     final LocalDate expirationDate = registrationDate.plusMonths(membership.getPeriod());
+    final Ticket ticket =
+        Optional.ofNullable(this.ticketRepository.findByUuid(payment.getOrderId()))
+            .orElseThrow(() -> new ApiException(ErrorCode.TICKET_NOT_FOUND));
+    final long amount = payment.getAmount();
+    payment.getType().pay(payment, amount);
     final MembershipRegistration membershipRegistration =
         this.membershipRegistrationRepository.save(
             new MembershipRegistration(
@@ -83,7 +93,8 @@ public class MembershipRegistrationService {
                 expirationDate,
                 RegistrationType.MEMBERSHIP_PACKAGE,
                 PaymentStatus.COMPLETED,
-                registrationDate));
+                registrationDate,
+                ticket));
     this.couponUsageService.distributeMembershipAndCompanyCoupons(account, membership.getCoupons());
     // TODO: IH-6 Send notification
     return membershipRegistration.getId();
