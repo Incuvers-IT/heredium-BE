@@ -79,5 +79,6 @@ public class Post extends BaseEntity {
     this.isEnabled = isEnabled;
     this.contentDetail = contentDetail;
     this.navigationLink = navigationLink;
+    this.thumbnailUrls = thumbnailUrls;
   }
 }

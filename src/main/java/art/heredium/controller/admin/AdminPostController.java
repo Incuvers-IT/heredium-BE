@@ -6,16 +6,21 @@ import javax.validation.Valid;
 
 import lombok.RequiredArgsConstructor;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import art.heredium.core.annotation.ManagerPermission;
 import art.heredium.core.config.error.entity.ApiException;
 import art.heredium.core.config.error.entity.ErrorCode;
+import art.heredium.domain.common.model.dto.response.CustomPageResponse;
 import art.heredium.domain.membership.model.dto.request.MultipleMembershipCreateRequest;
 import art.heredium.domain.membership.model.dto.response.MultipleMembershipCreateResponse;
+import art.heredium.domain.post.model.dto.request.GetAdminPostRequest;
 import art.heredium.domain.post.model.dto.request.PostCreateRequest;
 import art.heredium.domain.post.model.dto.request.PostUpdateRequest;
+import art.heredium.domain.post.model.dto.response.PostResponse;
 import art.heredium.service.MembershipService;
 import art.heredium.service.PostService;
 
@@ -54,5 +59,12 @@ public class AdminPostController {
     Long postId = postService.createPost(request);
 
     return ResponseEntity.ok(postId);
+  }
+
+  @GetMapping
+  public ResponseEntity<CustomPageResponse<PostResponse>> list(
+      @Valid GetAdminPostRequest dto, Pageable pageable) {
+    Page<PostResponse> page = postService.list(dto, pageable);
+    return ResponseEntity.ok(new CustomPageResponse<>(page));
   }
 }

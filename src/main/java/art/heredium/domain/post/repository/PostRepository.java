@@ -11,7 +11,7 @@ import org.springframework.stereotype.Repository;
 import art.heredium.domain.post.entity.Post;
 
 @Repository
-public interface PostRepository extends JpaRepository<Post, Long> {
+public interface PostRepository extends JpaRepository<Post, Long>, PostRepositoryQueryDsl {
   List<Post> findAllByIsEnabledTrue();
 
   Optional<Post> findByIdAndIsEnabledTrue(long id);
