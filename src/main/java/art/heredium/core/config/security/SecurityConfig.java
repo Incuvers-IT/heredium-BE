@@ -57,7 +57,9 @@ public class SecurityConfig {
     "/api/file/**",
     "/api/nice/**",
     "/swagger-ui/**",
-    "/v3/api-docs/**"
+    "/v3/api-docs/**",
+    "/api/user/posts/enabled-list",
+    "/api/user/posts/{post-id}"
   };
 
   @Bean
