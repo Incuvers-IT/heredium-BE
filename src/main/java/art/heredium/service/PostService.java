@@ -6,6 +6,8 @@ import java.util.stream.Collectors;
 
 import lombok.RequiredArgsConstructor;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import art.heredium.core.config.error.entity.ApiException;
 import art.heredium.core.config.error.entity.ErrorCode;
 import art.heredium.domain.post.entity.Post;
+import art.heredium.domain.post.model.dto.request.GetAdminPostRequest;
 import art.heredium.domain.post.model.dto.request.PostCreateRequest;
 import art.heredium.domain.post.model.dto.response.PostResponse;
 import art.heredium.domain.post.repository.PostRepository;
@@ -36,7 +39,8 @@ public class PostService {
                     post.getImageUrl(),
                     post.getIsEnabled(),
                     post.getContentDetail(),
-                    post.getNavigationLink()))
+                    post.getNavigationLink(),
+                    post.getThumbnailUrls()))
         .collect(Collectors.toList());
   }
 
@@ -85,5 +89,10 @@ public class PostService {
         + thumbnailUrl.getMediumThumbnailUrl()
         + THUMBNAIL_URL_DELIMITER
         + thumbnailUrl.getLargeThumbnailUrl();
+  }
+
+  @Transactional(readOnly = true)
+  public Page<PostResponse> list(GetAdminPostRequest dto, Pageable pageable) {
+    return postRepository.search(dto, pageable);
   }
 }
