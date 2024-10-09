@@ -10,7 +10,7 @@ import lombok.Setter;
 @Getter
 @Setter
 public class GetAdminPostRequest {
-  @NotNull private GetAdminPostRequest.SearchDateType searchDateType;
+  @NotNull private SearchDateType searchDateType;
   private LocalDateTime startDate;
   private LocalDateTime endDate;
   private Boolean isEnabled;

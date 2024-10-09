@@ -12,6 +12,7 @@ import org.springframework.util.StringUtils;
 
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.core.types.dsl.DateTimePath;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 
@@ -68,9 +69,7 @@ public class PostRepositoryImpl implements PostRepositoryQueryDsl {
   }
 
   private BooleanExpression dateRangeFilter(
-      com.querydsl.core.types.dsl.DateTimePath<LocalDateTime> datePath,
-      LocalDateTime startDate,
-      LocalDateTime endDate) {
+      DateTimePath<LocalDateTime> datePath, LocalDateTime startDate, LocalDateTime endDate) {
     BooleanExpression expression = null;
     if (startDate != null) {
       expression = datePath.goe(startDate);

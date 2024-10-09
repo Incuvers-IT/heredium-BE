@@ -7,6 +7,7 @@ import javax.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -64,7 +65,15 @@ public class AdminPostController {
   @GetMapping
   public ResponseEntity<CustomPageResponse<PostResponse>> list(
       @Valid GetAdminPostRequest dto, Pageable pageable) {
-    Page<PostResponse> page = postService.list(dto, pageable);
-    return ResponseEntity.ok(new CustomPageResponse<>(page));
+    Pageable adjustedPageable =
+        PageRequest.of(
+            Math.max(0, pageable.getPageNumber() - 1), pageable.getPageSize(), pageable.getSort());
+
+    Page<PostResponse> page = postService.list(dto, adjustedPageable);
+
+    CustomPageResponse<PostResponse> response = new CustomPageResponse<>(page);
+    response.setCurrentPage(pageable.getPageNumber());
+
+    return ResponseEntity.ok(response);
   }
 }
