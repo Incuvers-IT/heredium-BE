@@ -24,11 +24,14 @@ public class MembershipResponse {
 
   private List<CouponResponse> coupons;
 
+  private Integer price;
+
   public MembershipResponse(Membership membership) {
     this.coupons =
         membership.getCoupons().stream().map(CouponResponse::new).collect(Collectors.toList());
     this.name = membership.getName();
     this.period = membership.getPeriod();
     this.membershipId = membership.getId();
+    this.price = membership.getPrice();
   }
 }
