@@ -1,7 +1,6 @@
 package art.heredium.controller.user;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 import lombok.RequiredArgsConstructor;
 
@@ -13,8 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import art.heredium.core.config.error.entity.ApiException;
 import art.heredium.core.config.error.entity.ErrorCode;
-import art.heredium.domain.membership.entity.Membership;
-import art.heredium.domain.membership.model.dto.response.MembershipResponse;
+import art.heredium.domain.post.model.dto.response.PostDetailsResponse;
 import art.heredium.domain.post.model.dto.response.PostResponse;
 import art.heredium.service.MembershipService;
 import art.heredium.service.PostService;
@@ -33,14 +31,13 @@ public class UserPostController {
     return ResponseEntity.ok(enabledPosts);
   }
 
-  @GetMapping(value = "/{post-id}/memberships")
-  public ResponseEntity<List<MembershipResponse>> getAllMembershipsByPostIdAndEnabledTrue(
+  @GetMapping(value = "/{post-id}")
+  public ResponseEntity<PostDetailsResponse> getPostDetails(
       @PathVariable(name = "post-id") long postId) {
-    this.postService
-        .findByIdAndIsEnabledTrue(postId)
-        .orElseThrow(() -> new ApiException(ErrorCode.POST_NOT_FOUND));
-    List<Membership> result = this.membershipService.findByPostIdAndIsEnabledTrue(postId);
     return ResponseEntity.ok(
-        result.stream().map(MembershipResponse::new).collect(Collectors.toList()));
+        this.postService
+            .findByIdAndIsEnabledTrue(postId)
+            .map(PostDetailsResponse::new)
+            .orElseThrow(() -> new ApiException(ErrorCode.POST_NOT_FOUND)));
   }
 }
