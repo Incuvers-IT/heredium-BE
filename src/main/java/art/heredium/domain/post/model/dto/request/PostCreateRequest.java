@@ -33,5 +33,16 @@ public class PostCreateRequest {
   @JsonProperty("content_detail")
   private String contentDetail;
 
+  @JsonProperty("thumbnail_url")
+  private ThumbnailUrl thumbnailUrl;
+
   @Valid private MultipleMembershipCreateRequest memberships;
+
+  @Getter
+  @Setter
+  public static class ThumbnailUrl {
+    private String smallThumbnailUrl;
+    private String mediumThumbnailUrl;
+    private String largeThumbnailUrl;
+  }
 }

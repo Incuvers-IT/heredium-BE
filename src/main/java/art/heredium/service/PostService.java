@@ -6,6 +6,7 @@ import java.util.stream.Collectors;
 
 import lombok.RequiredArgsConstructor;
 
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,6 +20,7 @@ import art.heredium.domain.post.repository.PostRepository;
 @Service
 @RequiredArgsConstructor
 public class PostService {
+  private static final String THUMBNAIL_URL_DELIMITER = ";";
   private final PostRepository postRepository;
   private final MembershipService membershipService;
 
@@ -56,10 +58,12 @@ public class PostService {
 
   @Transactional
   public Long createPost(PostCreateRequest request) {
+    final String thumbnailUrls = this.buildThumbnailUrls(request.getThumbnailUrl());
     final Post post =
         Post.builder()
             .name(request.getName())
             .imageUrl(request.getImageUrl())
+            .thumbnailUrls(thumbnailUrls)
             .isEnabled(request.getIsEnabled())
             .contentDetail(request.getContentDetail())
             .navigationLink(request.getNavigationLink())
@@ -72,5 +76,14 @@ public class PostService {
     }
 
     return savedPost.getId();
+  }
+
+  private String buildThumbnailUrls(@Nullable PostCreateRequest.ThumbnailUrl thumbnailUrl) {
+    if (thumbnailUrl == null) return null;
+    return thumbnailUrl.getSmallThumbnailUrl()
+        + THUMBNAIL_URL_DELIMITER
+        + thumbnailUrl.getMediumThumbnailUrl()
+        + THUMBNAIL_URL_DELIMITER
+        + thumbnailUrl.getLargeThumbnailUrl();
   }
 }
