@@ -75,6 +75,7 @@ public class Post extends BaseEntity {
       String navigationLink) {
     this.name = name;
     this.imageUrl = imageUrl;
+    this.thumbnailUrls = thumbnailUrls;
     this.isEnabled = isEnabled;
     this.contentDetail = contentDetail;
     this.navigationLink = navigationLink;

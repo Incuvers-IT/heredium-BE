@@ -41,8 +41,13 @@ public class PostCreateRequest {
   @Getter
   @Setter
   public static class ThumbnailUrl {
+    @JsonProperty("small")
     private String smallThumbnailUrl;
+
+    @JsonProperty("medium")
     private String mediumThumbnailUrl;
+
+    @JsonProperty("large")
     private String largeThumbnailUrl;
   }
 }
