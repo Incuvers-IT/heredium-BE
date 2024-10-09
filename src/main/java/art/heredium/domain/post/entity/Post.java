@@ -58,7 +58,7 @@ public class Post extends BaseEntity {
   private String navigationLink;
 
   @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
-  @OrderBy("order ASC")
+  @OrderBy("id ASC")
   private List<Membership> memberships;
 
   public void updateIsEnabled(boolean isEnabled) {
@@ -75,6 +75,7 @@ public class Post extends BaseEntity {
       String navigationLink) {
     this.name = name;
     this.imageUrl = imageUrl;
+    this.thumbnailUrls = thumbnailUrls;
     this.isEnabled = isEnabled;
     this.contentDetail = contentDetail;
     this.navigationLink = navigationLink;
