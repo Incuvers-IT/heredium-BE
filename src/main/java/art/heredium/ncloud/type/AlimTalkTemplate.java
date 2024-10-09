@@ -18,6 +18,8 @@ public enum AlimTalkTemplate {
   ACCOUNT_SLEEP_TERMINATE("자동탈퇴 완료", "@heredium", "HEREDIUM011", "@spadecompany", "HEREDIUM011"),
   ACCOUNT_TERMINATE("회원탈퇴 안내", "@heredium", "HEREDIUM012", "@spadecompany", "HEREDIUM012"),
   COFFEE_COMPLETE("커피제작 완료", "@heredium", "HEREDIUM013", "@spadecompany", "HEREDIUM013"),
+  // TODO: TemplateCode will be updated
+  ALIMTALK_TEMPLATE_CODE("Temporary", "@heredium", "HEREDIUM014", "@spadecompany", "HEREDIUM014"),
   ;
 
   private String prodPlusFriendId;
