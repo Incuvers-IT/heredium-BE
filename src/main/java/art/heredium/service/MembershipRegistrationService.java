@@ -1,6 +1,7 @@
 package art.heredium.service;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 import lombok.RequiredArgsConstructor;
@@ -10,14 +11,18 @@ import org.springframework.transaction.annotation.Transactional;
 
 import art.heredium.core.config.error.entity.ApiException;
 import art.heredium.core.config.error.entity.ErrorCode;
+import art.heredium.core.config.properties.HerediumProperties;
 import art.heredium.core.util.AuthUtil;
 import art.heredium.domain.account.entity.Account;
 import art.heredium.domain.account.repository.AccountRepository;
+import art.heredium.domain.coupon.entity.CouponUsage;
 import art.heredium.domain.membership.entity.Membership;
 import art.heredium.domain.membership.entity.MembershipRegistration;
 import art.heredium.domain.membership.repository.MembershipRegistrationRepository;
 import art.heredium.domain.membership.repository.MembershipRepository;
 import art.heredium.domain.post.repository.PostRepository;
+import art.heredium.ncloud.bean.HerediumAlimTalk;
+import art.heredium.ncloud.type.AlimTalkTemplate;
 
 import static art.heredium.core.config.error.entity.ErrorCode.ANONYMOUS_USER;
 
@@ -25,11 +30,13 @@ import static art.heredium.core.config.error.entity.ErrorCode.ANONYMOUS_USER;
 @RequiredArgsConstructor
 public class MembershipRegistrationService {
 
+  private final HerediumProperties herediumProperties;
   private final MembershipRegistrationRepository membershipRegistrationRepository;
   private final MembershipRepository membershipRepository;
   private final PostRepository postRepository;
   private final AccountRepository accountRepository;
   private final CouponUsageService couponUsageService;
+  private final HerediumAlimTalk alimTalk;
 
   public MembershipRegistration getMembershipRegistrationInfo() {
     final long accountId =
@@ -60,14 +67,18 @@ public class MembershipRegistrationService {
         this.accountRepository
             .findById(accountId)
             .orElseThrow(() -> new ApiException(ErrorCode.USER_NOT_FOUND));
-    // TODO: IH-9 Implement payment
+    // TODO: To be implemented in IH-50
     final LocalDate registrationDate = LocalDate.now();
     final LocalDate expirationDate = registrationDate.plusMonths(membership.getPeriod());
     final MembershipRegistration membershipRegistration =
         this.membershipRegistrationRepository.save(
             new MembershipRegistration(account, membership, registrationDate, expirationDate));
-    this.couponUsageService.distributeCoupons(account, membership.getCoupons());
-    // TODO: IH-6 Send notification
+    final List<CouponUsage> coupons =
+        this.couponUsageService.distributeCoupons(account, membership.getCoupons());
+    this.alimTalk.sendAlimTalk(
+        account.getAccountInfo().getPhone(),
+        membershipRegistration.getMembershipParams(coupons, herediumProperties),
+        AlimTalkTemplate.ALIMTALK_TEMPLATE_CODE);
     return membershipRegistration.getId();
   }
 }
