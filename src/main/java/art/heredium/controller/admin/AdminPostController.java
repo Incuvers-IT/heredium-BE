@@ -14,7 +14,6 @@ import org.springframework.web.bind.annotation.*;
 import art.heredium.core.annotation.ManagerPermission;
 import art.heredium.core.config.error.entity.ApiException;
 import art.heredium.core.config.error.entity.ErrorCode;
-import art.heredium.core.util.AuthUtil;
 import art.heredium.domain.common.model.dto.response.CustomPageResponse;
 import art.heredium.domain.membership.model.dto.request.MultipleMembershipCreateRequest;
 import art.heredium.domain.membership.model.dto.response.MultipleMembershipCreateResponse;
@@ -52,15 +51,13 @@ public class AdminPostController {
 
   @PostMapping
   public ResponseEntity<Long> createPost(@Valid @RequestBody PostCreateRequest request) {
-    Long adminId =
-        AuthUtil.getCurrentAdminId().orElseThrow(() -> new ApiException(ErrorCode.ANONYMOUS_USER));
 
     if (!request.getIsEnabled() && request.getMemberships() != null) {
       throw new ApiException(
           ErrorCode.BAD_VALID, "Memberships cannot be created for disabled posts");
     }
 
-    Long postId = postService.createPost(request, adminId);
+    Long postId = postService.createPost(request);
 
     return ResponseEntity.ok(postId);
   }

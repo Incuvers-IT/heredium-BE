@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import art.heredium.core.config.error.entity.ApiException;
 import art.heredium.core.config.error.entity.ErrorCode;
+import art.heredium.core.util.AuthUtil;
 import art.heredium.domain.account.entity.Admin;
 import art.heredium.domain.account.repository.AdminRepository;
 import art.heredium.domain.post.entity.Post;
@@ -66,11 +67,9 @@ public class PostService {
   }
 
   @Transactional
-  public Long createPost(PostCreateRequest request, Long adminId) {
+  public Long createPost(PostCreateRequest request) {
     Admin admin =
-        adminRepository
-            .findById(adminId)
-            .orElseThrow(() -> new ApiException(ErrorCode.ADMIN_NOT_FOUND));
+        AuthUtil.getCurrentAdmin().orElseThrow(() -> new ApiException(ErrorCode.ADMIN_NOT_FOUND));
 
     final String thumbnailUrls = this.buildThumbnailUrls(request.getThumbnailUrl());
     final Post post =
