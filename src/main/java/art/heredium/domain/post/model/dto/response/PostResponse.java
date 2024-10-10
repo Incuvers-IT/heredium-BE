@@ -1,5 +1,6 @@
 package art.heredium.domain.post.model.dto.response;
 
+import java.time.LocalDateTime;
 import java.util.Arrays;
 
 import lombok.Getter;
@@ -32,6 +33,12 @@ public class PostResponse {
   @JsonProperty("thumbnail_urls")
   private ThumbnailUrlResponse thumbnailUrls;
 
+  @JsonProperty("created_name")
+  private String createdName;
+
+  @JsonProperty("created_date")
+  private LocalDateTime createdDate;
+
   public PostResponse(
       Long id,
       String name,
@@ -39,6 +46,8 @@ public class PostResponse {
       Boolean isEnabled,
       String contentDetail,
       String navigationLink,
+      String createdName,
+      LocalDateTime createdDate,
       String thumbnailUrls) {
     this.id = id;
     this.name = name;
@@ -46,6 +55,8 @@ public class PostResponse {
     this.isEnabled = isEnabled;
     this.contentDetail = contentDetail;
     this.navigationLink = navigationLink;
+    this.createdName = createdName;
+    this.createdDate = createdDate;
 
     if (thumbnailUrls != null && !thumbnailUrls.isEmpty()) {
       this.thumbnailUrls =
