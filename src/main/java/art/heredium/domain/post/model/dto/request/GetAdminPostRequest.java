@@ -15,6 +15,7 @@ public class GetAdminPostRequest {
   private LocalDateTime endDate;
   private Boolean isEnabled;
   private String name;
+  private String createdName;
 
   @Getter
   public enum SearchDateType {

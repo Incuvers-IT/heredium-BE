@@ -7,7 +7,6 @@ import javax.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -15,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import art.heredium.core.annotation.ManagerPermission;
 import art.heredium.core.config.error.entity.ApiException;
 import art.heredium.core.config.error.entity.ErrorCode;
+import art.heredium.core.util.AuthUtil;
 import art.heredium.domain.common.model.dto.response.CustomPageResponse;
 import art.heredium.domain.membership.model.dto.request.MultipleMembershipCreateRequest;
 import art.heredium.domain.membership.model.dto.response.MultipleMembershipCreateResponse;
@@ -52,12 +52,15 @@ public class AdminPostController {
 
   @PostMapping
   public ResponseEntity<Long> createPost(@Valid @RequestBody PostCreateRequest request) {
+    Long adminId =
+        AuthUtil.getCurrentAdminId().orElseThrow(() -> new ApiException(ErrorCode.ANONYMOUS_USER));
+
     if (!request.getIsEnabled() && request.getMemberships() != null) {
       throw new ApiException(
           ErrorCode.BAD_VALID, "Memberships cannot be created for disabled posts");
     }
 
-    Long postId = postService.createPost(request);
+    Long postId = postService.createPost(request, adminId);
 
     return ResponseEntity.ok(postId);
   }
@@ -65,15 +68,9 @@ public class AdminPostController {
   @GetMapping
   public ResponseEntity<CustomPageResponse<PostResponse>> list(
       @Valid GetAdminPostRequest dto, Pageable pageable) {
-    Pageable adjustedPageable =
-        PageRequest.of(
-            Math.max(0, pageable.getPageNumber() - 1), pageable.getPageSize(), pageable.getSort());
 
-    Page<PostResponse> page = postService.list(dto, adjustedPageable);
+    Page<PostResponse> page = postService.list(dto, pageable);
 
-    CustomPageResponse<PostResponse> response = new CustomPageResponse<>(page);
-    response.setCurrentPage(pageable.getPageNumber());
-
-    return ResponseEntity.ok(response);
+    return ResponseEntity.ok(new CustomPageResponse<>(page));
   }
 }

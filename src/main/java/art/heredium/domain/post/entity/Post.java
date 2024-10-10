@@ -8,6 +8,8 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.OrderBy;
 import javax.persistence.Table;
@@ -23,6 +25,7 @@ import com.vladmihalcea.hibernate.type.json.JsonStringType;
 import org.hibernate.annotations.DynamicInsert;
 import org.hibernate.annotations.TypeDef;
 
+import art.heredium.domain.account.entity.Admin;
 import art.heredium.domain.common.entity.BaseEntity;
 import art.heredium.domain.membership.entity.Membership;
 
@@ -61,6 +64,10 @@ public class Post extends BaseEntity {
   @OrderBy("id ASC")
   private List<Membership> memberships;
 
+  @ManyToOne
+  @JoinColumn(name = "admin_id", nullable = false)
+  private Admin admin;
+
   public void updateIsEnabled(boolean isEnabled) {
     this.isEnabled = isEnabled;
   }
@@ -72,13 +79,14 @@ public class Post extends BaseEntity {
       String thumbnailUrls,
       Boolean isEnabled,
       String contentDetail,
-      String navigationLink) {
+      String navigationLink,
+      Admin admin) {
     this.name = name;
     this.imageUrl = imageUrl;
     this.thumbnailUrls = thumbnailUrls;
     this.isEnabled = isEnabled;
     this.contentDetail = contentDetail;
     this.navigationLink = navigationLink;
-    this.thumbnailUrls = thumbnailUrls;
+    this.admin = admin;
   }
 }

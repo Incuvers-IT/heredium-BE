@@ -14,6 +14,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import art.heredium.core.config.error.entity.ApiException;
 import art.heredium.core.config.error.entity.ErrorCode;
+import art.heredium.domain.account.entity.Admin;
+import art.heredium.domain.account.repository.AdminRepository;
 import art.heredium.domain.post.entity.Post;
 import art.heredium.domain.post.model.dto.request.GetAdminPostRequest;
 import art.heredium.domain.post.model.dto.request.PostCreateRequest;
@@ -26,6 +28,7 @@ public class PostService {
   private static final String THUMBNAIL_URL_DELIMITER = ";";
   private final PostRepository postRepository;
   private final MembershipService membershipService;
+  private final AdminRepository adminRepository;
 
   @Transactional(readOnly = true)
   public List<PostResponse> getEnabledPosts() {
@@ -40,6 +43,8 @@ public class PostService {
                     post.getIsEnabled(),
                     post.getContentDetail(),
                     post.getNavigationLink(),
+                    post.getAdmin().getAdminInfo().getName(),
+                    post.getCreatedDate(),
                     post.getThumbnailUrls()))
         .collect(Collectors.toList());
   }
@@ -61,7 +66,12 @@ public class PostService {
   }
 
   @Transactional
-  public Long createPost(PostCreateRequest request) {
+  public Long createPost(PostCreateRequest request, Long adminId) {
+    Admin admin =
+        adminRepository
+            .findById(adminId)
+            .orElseThrow(() -> new ApiException(ErrorCode.ADMIN_NOT_FOUND));
+
     final String thumbnailUrls = this.buildThumbnailUrls(request.getThumbnailUrl());
     final Post post =
         Post.builder()
@@ -71,6 +81,7 @@ public class PostService {
             .isEnabled(request.getIsEnabled())
             .contentDetail(request.getContentDetail())
             .navigationLink(request.getNavigationLink())
+            .admin(admin)
             .build();
     final Post savedPost = postRepository.save(post);
 

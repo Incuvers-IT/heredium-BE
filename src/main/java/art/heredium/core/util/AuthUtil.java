@@ -17,4 +17,13 @@ public class AuthUtil {
     UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
     return Optional.ofNullable(userPrincipal.getAccount()).map(Account::getId);
   }
+
+  public static Optional<Long> getCurrentAdminId() {
+    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    if (authentication != null && authentication.getPrincipal() instanceof UserPrincipal) {
+      UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
+      return Optional.ofNullable(userPrincipal.getAdmin().getId());
+    }
+    return Optional.empty();
+  }
 }

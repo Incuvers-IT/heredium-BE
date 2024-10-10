@@ -42,8 +42,12 @@ public class PostRepositoryImpl implements PostRepositoryQueryDsl {
                     post.isEnabled,
                     post.contentDetail,
                     post.navigationLink,
+                    post.admin.adminInfo.name,
+                    post.createdDate,
                     post.thumbnailUrls))
             .from(post)
+            .leftJoin(post.admin)
+            .leftJoin(post.admin.adminInfo)
             .where(whereClause)
             .orderBy(post.createdDate.desc(), post.lastModifiedDate.desc());
 
@@ -56,7 +60,10 @@ public class PostRepositoryImpl implements PostRepositoryQueryDsl {
   }
 
   private BooleanExpression createWhereClause(GetAdminPostRequest dto) {
-    return dateFilter(dto).and(isEnabledEq(dto.getIsEnabled())).and(nameContains(dto.getName()));
+    return dateFilter(dto)
+        .and(isEnabledEq(dto.getIsEnabled()))
+        .and(nameContains(dto.getName()))
+        .and(createdNameContains(dto.getCreatedName()));
   }
 
   private BooleanExpression dateFilter(GetAdminPostRequest dto) {
@@ -87,5 +94,11 @@ public class PostRepositoryImpl implements PostRepositoryQueryDsl {
 
   private BooleanExpression nameContains(String name) {
     return StringUtils.hasText(name) ? QPost.post.name.containsIgnoreCase(name) : null;
+  }
+
+  private BooleanExpression createdNameContains(String createdName) {
+    return StringUtils.hasText(createdName)
+        ? QPost.post.admin.adminInfo.name.containsIgnoreCase(createdName)
+        : null;
   }
 }
