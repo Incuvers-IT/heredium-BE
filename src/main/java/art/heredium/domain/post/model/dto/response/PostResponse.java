@@ -18,9 +18,6 @@ public class PostResponse {
 
   private String name;
 
-  @JsonProperty("image_url")
-  private String imageUrl;
-
   @JsonProperty("is_enabled")
   private Boolean isEnabled;
 
@@ -39,10 +36,14 @@ public class PostResponse {
   @JsonProperty("created_date")
   private LocalDateTime createdDate;
 
+  @JsonProperty("detail_image")
+  private DetailImage detailImage;
+
   public PostResponse(
       Long id,
       String name,
       String imageUrl,
+      String originalFileName,
       Boolean isEnabled,
       String contentDetail,
       String navigationLink,
@@ -51,7 +52,6 @@ public class PostResponse {
       String thumbnailUrls) {
     this.id = id;
     this.name = name;
-    this.imageUrl = imageUrl;
     this.isEnabled = isEnabled;
     this.contentDetail = contentDetail;
     this.navigationLink = navigationLink;
@@ -61,6 +61,23 @@ public class PostResponse {
     if (thumbnailUrls != null && !thumbnailUrls.isEmpty()) {
       this.thumbnailUrls =
           new ThumbnailUrlResponse(Arrays.asList(thumbnailUrls.split(THUMBNAIL_URL_DELIMITER)));
+    }
+
+    this.detailImage = new DetailImage(imageUrl, originalFileName);
+  }
+
+  @Getter
+  @Setter
+  public static class DetailImage {
+    @JsonProperty("image_url")
+    private String imageUrl;
+
+    @JsonProperty("original_file_name")
+    private String originalFileName;
+
+    public DetailImage(String imageUrl, String originalFileName) {
+      this.imageUrl = imageUrl;
+      this.originalFileName = originalFileName;
     }
   }
 }
