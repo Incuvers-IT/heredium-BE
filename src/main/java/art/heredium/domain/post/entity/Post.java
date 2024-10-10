@@ -45,6 +45,9 @@ public class Post extends BaseEntity {
   @Column(name = "name", nullable = false)
   private String name;
 
+  @Column(name = "original_file_name", nullable = false)
+  private String originalFileName;
+
   @Column(name = "image_url", nullable = false)
   private String imageUrl;
 
@@ -76,6 +79,7 @@ public class Post extends BaseEntity {
   public Post(
       String name,
       String imageUrl,
+      String originalFileName,
       String thumbnailUrls,
       Boolean isEnabled,
       String contentDetail,
@@ -83,6 +87,7 @@ public class Post extends BaseEntity {
       Admin admin) {
     this.name = name;
     this.imageUrl = imageUrl;
+    this.originalFileName = originalFileName;
     this.thumbnailUrls = thumbnailUrls;
     this.isEnabled = isEnabled;
     this.contentDetail = contentDetail;

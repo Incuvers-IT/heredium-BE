@@ -41,6 +41,7 @@ public class PostService {
                     post.getId(),
                     post.getName(),
                     post.getImageUrl(),
+                    post.getOriginalFileName(),
                     post.getIsEnabled(),
                     post.getContentDetail(),
                     post.getNavigationLink(),
@@ -75,7 +76,8 @@ public class PostService {
     final Post post =
         Post.builder()
             .name(request.getName())
-            .imageUrl(request.getImageUrl())
+            .imageUrl(request.getDetailImage().getImageUrl())
+            .originalFileName(request.getDetailImage().getOriginalFileName())
             .thumbnailUrls(thumbnailUrls)
             .isEnabled(request.getIsEnabled())
             .contentDetail(request.getContentDetail())
