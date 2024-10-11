@@ -44,7 +44,7 @@ public class MembershipRegistrationService {
             .findByAccountIdAndNotExpired(accountId)
             .orElseThrow(() -> new ApiException(ErrorCode.MEMBERSHIP_REGISTRATION_NOT_FOUND));
     final List<CouponUsage> couponUsages =
-        this.couponUsageRepository.findByAccountIdAndIsUsedFalse(accountId);
+        this.couponUsageRepository.findByAccountIdAndIsUsedFalseAndNotExpired(accountId);
     return new MembershipRegistrationResponse(membershipRegistration, couponUsages);
   }
 

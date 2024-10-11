@@ -4,7 +4,7 @@ import lombok.Getter;
 
 @Getter
 public enum CouponType {
-  DRINK("마시다"),
+  COFFEE("커피"),
   ARTSHOP("아트숍"),
   PROGRAM("프로그램"),
   EXHIBITION("전시"),
