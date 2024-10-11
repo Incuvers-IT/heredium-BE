@@ -106,4 +106,8 @@ public class PostService {
   public Page<PostResponse> list(GetAdminPostRequest dto, Pageable pageable) {
     return postRepository.search(dto, pageable);
   }
+
+  public Optional<Post> findById(long id) {
+    return this.postRepository.findById(id);
+  }
 }
