@@ -72,7 +72,7 @@ public class PostService {
     Admin admin =
         AuthUtil.getCurrentAdmin().orElseThrow(() -> new ApiException(ErrorCode.ADMIN_NOT_FOUND));
 
-    final String thumbnailUrls = this.buildThumbnailUrls(request.getThumbnailUrl());
+    final String thumbnailUrls = this.buildThumbnailUrls(request.getThumbnailUrls());
     final Post post =
         Post.builder()
             .name(request.getName())
@@ -87,8 +87,7 @@ public class PostService {
     final Post savedPost = postRepository.save(post);
 
     if (request.getIsEnabled() && request.getMemberships() != null) {
-      membershipService.createMemberships(
-          savedPost.getId(), request.getMemberships().getMemberships());
+      membershipService.createMemberships(savedPost.getId(), request.getMemberships());
     }
 
     return savedPost.getId();
