@@ -1,5 +1,7 @@
 package art.heredium.domain.post.model.dto.request;
 
+import java.util.List;
+
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
@@ -10,7 +12,7 @@ import lombok.Setter;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import art.heredium.domain.membership.model.dto.request.MultipleMembershipCreateRequest;
+import art.heredium.domain.membership.model.dto.request.MembershipCreateRequest;
 
 @Getter
 @Setter
@@ -29,13 +31,13 @@ public class PostCreateRequest {
   @JsonProperty("content_detail")
   private String contentDetail;
 
-  @JsonProperty("thumbnail_url")
-  private ThumbnailUrl thumbnailUrl;
+  @JsonProperty("thumbnail_urls")
+  private ThumbnailUrl thumbnailUrls;
 
   @JsonProperty("detail_image")
   private DetailImage detailImage;
 
-  @Valid private MultipleMembershipCreateRequest memberships;
+  @Valid private List<MembershipCreateRequest> memberships;
 
   @Getter
   @Setter
