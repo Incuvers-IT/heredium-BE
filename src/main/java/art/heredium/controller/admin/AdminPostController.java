@@ -20,6 +20,7 @@ import art.heredium.domain.membership.model.dto.response.MultipleMembershipCreat
 import art.heredium.domain.post.model.dto.request.GetAdminPostRequest;
 import art.heredium.domain.post.model.dto.request.PostCreateRequest;
 import art.heredium.domain.post.model.dto.request.PostUpdateRequest;
+import art.heredium.domain.post.model.dto.response.PostDetailsResponse;
 import art.heredium.domain.post.model.dto.response.PostResponse;
 import art.heredium.service.MembershipService;
 import art.heredium.service.PostService;
@@ -69,5 +70,15 @@ public class AdminPostController {
     Page<PostResponse> page = postService.list(dto, pageable);
 
     return ResponseEntity.ok(new CustomPageResponse<>(page));
+  }
+
+  @GetMapping(value = "/{post-id}")
+  public ResponseEntity<PostDetailsResponse> getPostDetails(
+      @PathVariable(name = "post-id") long postId) {
+    return ResponseEntity.ok(
+        this.postService
+            .findById(postId)
+            .map(PostDetailsResponse::new)
+            .orElseThrow(() -> new ApiException(ErrorCode.POST_NOT_FOUND)));
   }
 }
