@@ -17,10 +17,6 @@ import art.heredium.domain.membership.model.dto.request.MultipleMembershipCreate
 public class PostCreateRequest {
   @NotBlank private String name;
 
-  @JsonProperty("image_url")
-  @NotBlank
-  private String imageUrl;
-
   @JsonProperty("is_enabled")
   @NotNull
   private Boolean isEnabled;
@@ -36,6 +32,9 @@ public class PostCreateRequest {
   @JsonProperty("thumbnail_url")
   private ThumbnailUrl thumbnailUrl;
 
+  @JsonProperty("detail_image")
+  private DetailImage detailImage;
+
   @Valid private MultipleMembershipCreateRequest memberships;
 
   @Getter
@@ -49,5 +48,17 @@ public class PostCreateRequest {
 
     @JsonProperty("large")
     private String largeThumbnailUrl;
+  }
+
+  @Getter
+  @Setter
+  public static class DetailImage {
+    @JsonProperty("image_url")
+    @NotBlank
+    private String imageUrl;
+
+    @JsonProperty("original_file_name")
+    @NotBlank
+    private String originalFileName;
   }
 }

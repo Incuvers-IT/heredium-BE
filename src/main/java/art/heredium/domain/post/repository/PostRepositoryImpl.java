@@ -39,6 +39,7 @@ public class PostRepositoryImpl implements PostRepositoryQueryDsl {
                     post.id,
                     post.name,
                     post.imageUrl,
+                    post.imageOriginalFileName,
                     post.isEnabled,
                     post.contentDetail,
                     post.navigationLink,
