@@ -1,6 +1,7 @@
 package art.heredium.service;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 import lombok.RequiredArgsConstructor;
@@ -13,8 +14,11 @@ import art.heredium.core.config.error.entity.ErrorCode;
 import art.heredium.core.util.AuthUtil;
 import art.heredium.domain.account.entity.Account;
 import art.heredium.domain.account.repository.AccountRepository;
+import art.heredium.domain.coupon.entity.CouponUsage;
+import art.heredium.domain.coupon.repository.CouponUsageRepository;
 import art.heredium.domain.membership.entity.Membership;
 import art.heredium.domain.membership.entity.MembershipRegistration;
+import art.heredium.domain.membership.model.dto.response.MembershipRegistrationResponse;
 import art.heredium.domain.membership.repository.MembershipRegistrationRepository;
 import art.heredium.domain.membership.repository.MembershipRepository;
 import art.heredium.domain.post.repository.PostRepository;
@@ -29,14 +33,19 @@ public class MembershipRegistrationService {
   private final MembershipRepository membershipRepository;
   private final PostRepository postRepository;
   private final AccountRepository accountRepository;
+  private final CouponUsageRepository couponUsageRepository;
   private final CouponUsageService couponUsageService;
 
-  public MembershipRegistration getMembershipRegistrationInfo() {
+  public MembershipRegistrationResponse getMembershipRegistrationInfo() {
     final long accountId =
         AuthUtil.getCurrentUserAccountId().orElseThrow(() -> new ApiException(ANONYMOUS_USER));
-    return this.membershipRegistrationRepository
-        .findByAccountIdAndNotExpired(accountId)
-        .orElseThrow(() -> new ApiException(ErrorCode.MEMBERSHIP_REGISTRATION_NOT_FOUND));
+    final MembershipRegistration membershipRegistration =
+        this.membershipRegistrationRepository
+            .findByAccountIdAndNotExpired(accountId)
+            .orElseThrow(() -> new ApiException(ErrorCode.MEMBERSHIP_REGISTRATION_NOT_FOUND));
+    final List<CouponUsage> couponUsages =
+        this.couponUsageRepository.findByAccountIdAndIsUsedFalse(accountId);
+    return new MembershipRegistrationResponse(membershipRegistration, couponUsages);
   }
 
   @Transactional(rollbackFor = Exception.class)

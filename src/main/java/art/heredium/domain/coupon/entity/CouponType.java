@@ -1,5 +1,8 @@
 package art.heredium.domain.coupon.entity;
 
+import lombok.Getter;
+
+@Getter
 public enum CouponType {
   DRINK("마시다"),
   ARTSHOP("아트숍"),
