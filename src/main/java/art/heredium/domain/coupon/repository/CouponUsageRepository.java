@@ -14,6 +14,10 @@ import art.heredium.domain.coupon.entity.CouponUsage;
 @Repository
 public interface CouponUsageRepository extends JpaRepository<CouponUsage, Long> {
 
+  @Query(
+      "SELECT cu FROM CouponUsage cu WHERE cu.account.id = :accountId AND cu.isUsed IS NOT TRUE AND cu.expirationDate >= CURRENT_TIMESTAMP")
+  List<CouponUsage> findByAccountIdAndIsUsedFalseAndNotExpired(@Param("accountId") Long accountId);
+
   @Query("SELECT DISTINCT cu.coupon FROM CouponUsage cu WHERE cu.account.id = :accountId")
   List<Coupon> findDistinctCouponsByAccountId(@Param("accountId") Long accountId);
 

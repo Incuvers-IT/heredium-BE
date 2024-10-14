@@ -24,9 +24,7 @@ public class UserMembershipController {
 
   @GetMapping(value = "/info")
   public ResponseEntity<MembershipRegistrationResponse> getMembershipRegistrationInfo() {
-    return ResponseEntity.ok(
-        new MembershipRegistrationResponse(
-            this.membershipRegistrationService.getMembershipRegistrationInfo()));
+    return ResponseEntity.ok(this.membershipRegistrationService.getMembershipRegistrationInfo());
   }
 
   @PostMapping(value = "/register")
