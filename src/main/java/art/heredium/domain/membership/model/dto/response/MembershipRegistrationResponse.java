@@ -3,8 +3,6 @@ package art.heredium.domain.membership.model.dto.response;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 import lombok.Getter;
 import lombok.NonNull;
@@ -46,11 +44,13 @@ public class MembershipRegistrationResponse {
     this.expirationDate = membershipRegistration.getExpirationDate();
     this.membershipRegistrationId = membershipRegistration.getId();
     this.uuid = membershipRegistration.getUuid();
-    Map<CouponType, List<CouponUsage>> couponListByType =
-        couponUsages.stream()
-            .collect(Collectors.groupingBy(couponUsage -> couponUsage.getCoupon().getCouponType()));
-    couponListByType.forEach(
-        (couponType, couponUsageList) ->
-            this.coupons.add(new CouponCountByTypeResponse(couponType, couponUsageList.size())));
+    for (CouponType couponType : CouponType.values()) {
+      this.coupons.add(
+          new CouponCountByTypeResponse(
+              couponType,
+              couponUsages.stream()
+                  .filter(couponUsage -> couponUsage.getCoupon().getCouponType() == couponType)
+                  .count()));
+    }
   }
 }
