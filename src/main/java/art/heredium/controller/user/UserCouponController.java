@@ -36,7 +36,7 @@ public class UserCouponController {
     return ResponseEntity.ok(couponResponseDtos);
   }
 
-  @GetMapping("/{coupon-uuid}")
+  @GetMapping("/usage/{coupon-uuid}")
   public ResponseEntity<CouponUsageResponse> getCouponByUuid(
       @PathVariable(value = "coupon-uuid") String couponUuid) {
     return ResponseEntity.ok(this.couponUsageService.getCouponUsageByUuid(couponUuid));
