@@ -39,7 +39,4 @@ out/
 .vscode/
 
 build
-gradle
-gradlew
-gradlew.bat
 settings.gradle

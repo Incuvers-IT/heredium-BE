@@ -66,6 +66,7 @@ public class CloudStorage {
                 new AwsClientBuilder.EndpointConfiguration(END_POINT, REGION_NAME))
             .withCredentials(
                 new AWSStaticCredentialsProvider(new BasicAWSCredentials(ACCESS_KEY, SECRET_KEY)))
+            .withPathStyleAccessEnabled(true)
             .build();
     return s3;
   }
