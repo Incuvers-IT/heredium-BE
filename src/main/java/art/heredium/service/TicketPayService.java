@@ -85,6 +85,14 @@ public class TicketPayService {
         });
   }
 
+  public Object valid(TicketOrderInfo ticketOrderInfo, TicketUserInfo ticketUserInfo) {
+    // 결제 모듈 시작전 데이터 저장.
+    Ticket entity = createTicket(ticketOrderInfo, ticketUserInfo, Constants.getUUID());
+    jwtRedisUtil.setDataExpire(entity.getUuid(), ticketOrderInfo, 15 * 60);
+    jwtRedisUtil.setDataExpire("ticketUserInfo-" + entity.getUuid(), ticketUserInfo, 15 * 60);
+    return PaymentsValidResponse.from(entity);
+  }
+
   public Object valid(
       TicketOrderInfo ticketOrderInfo, TicketUserInfo ticketUserInfo, String couponUuid) {
     // 결제 모듈 시작전 데이터 저장.
