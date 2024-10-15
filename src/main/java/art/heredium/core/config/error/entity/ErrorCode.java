@@ -74,6 +74,9 @@ public enum ErrorCode {
   COUPON_ALREADY_USED(HttpStatus.BAD_REQUEST),
 
   ADMIN_NOT_FOUND(HttpStatus.NOT_FOUND),
+
+  TICKET_PRICE_NOT_FOUND(HttpStatus.NOT_FOUND),
+  COUPON_NOT_APPLICABLE(HttpStatus.BAD_REQUEST),
   ;
   private HttpStatus status;
 

@@ -294,6 +294,10 @@ public class Ticket implements Serializable {
     this.smsRequestId = smsRequestId;
   }
 
+  public void setPrice(long price) {
+    this.price = price;
+  }
+
   public boolean isRefund() {
     return (this.getState().equals(TicketStateType.ADMIN_REFUND)
         || this.getState().equals(TicketStateType.USER_REFUND));
