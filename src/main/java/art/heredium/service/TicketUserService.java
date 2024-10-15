@@ -38,7 +38,7 @@ public class TicketUserService {
 
   public Object valid(PostTicketUserValidRequest dto) {
     TicketUserInfo ticketUserInfo = createTicketUserInfo();
-    return ticketPayService.valid(dto.getTicketOrderInfo(), ticketUserInfo);
+    return ticketPayService.valid(dto.getTicketOrderInfo(), ticketUserInfo, dto.getCouponUuid());
   }
 
   public PostUserTicketResponse insert(PostTicketUserRequest dto) {

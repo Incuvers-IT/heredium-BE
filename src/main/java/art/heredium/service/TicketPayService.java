@@ -1,5 +1,7 @@
 package art.heredium.service;
 
+import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -27,6 +29,10 @@ import art.heredium.domain.account.entity.NonUser;
 import art.heredium.domain.account.repository.AccountRepository;
 import art.heredium.domain.account.repository.NonUserRepository;
 import art.heredium.domain.common.type.DiscountType;
+import art.heredium.domain.coupon.entity.Coupon;
+import art.heredium.domain.coupon.entity.CouponType;
+import art.heredium.domain.coupon.entity.CouponUsage;
+import art.heredium.domain.coupon.repository.CouponUsageRepository;
 import art.heredium.domain.ticket.ProjectRounderRepository;
 import art.heredium.domain.ticket.entity.Ticket;
 import art.heredium.domain.ticket.entity.TicketPrice;
@@ -39,6 +45,7 @@ import art.heredium.domain.ticket.model.TicketUserInfo;
 import art.heredium.domain.ticket.model.dto.response.PostUserTicketResponse;
 import art.heredium.domain.ticket.repository.TicketRepository;
 import art.heredium.domain.ticket.repository.TicketUuidRepository;
+import art.heredium.domain.ticket.type.TicketKindType;
 import art.heredium.ncloud.bean.CloudMail;
 import art.heredium.ncloud.bean.HerediumAlimTalk;
 import art.heredium.ncloud.type.AlimTalkTemplate;
@@ -62,6 +69,7 @@ public class TicketPayService {
   private final TicketUuidRepository ticketUuidRepository;
   private final CloudMail cloudMail;
   private final JwtRedisUtil jwtRedisUtil;
+  private final CouponUsageRepository couponUsageRepository;
 
   @PostConstruct
   private void init() {
@@ -77,12 +85,60 @@ public class TicketPayService {
         });
   }
 
-  public Object valid(TicketOrderInfo ticketOrderInfo, TicketUserInfo ticketUserInfo) {
+  public Object valid(
+      TicketOrderInfo ticketOrderInfo, TicketUserInfo ticketUserInfo, String couponUuid) {
     // 결제 모듈 시작전 데이터 저장.
     Ticket entity = createTicket(ticketOrderInfo, ticketUserInfo, Constants.getUUID());
+
+    // Apply coupon discount if couponUuid is provided
+    if (couponUuid != null && !couponUuid.isEmpty()) {
+      applyCouponDiscount(entity, couponUuid, ticketUserInfo.getAccountId());
+    }
+
     jwtRedisUtil.setDataExpire(entity.getUuid(), ticketOrderInfo, 15 * 60);
     jwtRedisUtil.setDataExpire("ticketUserInfo-" + entity.getUuid(), ticketUserInfo, 15 * 60);
     return PaymentsValidResponse.from(entity);
+  }
+
+  private void applyCouponDiscount(Ticket ticket, String couponUuid, Long accountId) {
+    CouponUsage couponUsage =
+        couponUsageRepository
+            .findByUuid(couponUuid)
+            .orElseThrow(() -> new ApiException(ErrorCode.COUPON_NOT_FOUND));
+
+    if (couponUsage.getIsUsed()) {
+      throw new ApiException(ErrorCode.COUPON_ALREADY_USED);
+    }
+    if (LocalDateTime.now().isAfter(couponUsage.getExpirationDate())) {
+      throw new ApiException(ErrorCode.COUPON_EXPIRED);
+    }
+
+    Coupon coupon = couponUsage.getCoupon();
+    if (!isCouponApplicableToTicket(coupon.getCouponType(), ticket.getKind())) {
+      throw new ApiException(ErrorCode.COUPON_NOT_APPLICABLE);
+    }
+
+    TicketPrice mostExpensiveItem =
+        ticket.getPrices().stream()
+            .max(Comparator.comparing(TicketPrice::getPrice))
+            .orElseThrow(() -> new ApiException(ErrorCode.TICKET_PRICE_NOT_FOUND));
+
+    long discountAmount = (mostExpensiveItem.getPrice() * coupon.getDiscountPercent()) / 100;
+
+    ticket.setPrice(ticket.getPrice() - discountAmount);
+  }
+
+  private boolean isCouponApplicableToTicket(CouponType couponType, TicketKindType ticketKindType) {
+    switch (couponType) {
+      case EXHIBITION:
+        return ticketKindType == TicketKindType.EXHIBITION;
+      case PROGRAM:
+        return ticketKindType == TicketKindType.PROGRAM;
+      case COFFEE:
+        return ticketKindType == TicketKindType.COFFEE;
+      default:
+        return false;
+    }
   }
 
   @Transactional(noRollbackFor = ApiException.class)
