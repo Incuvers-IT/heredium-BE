@@ -21,4 +21,9 @@ public interface MembershipRegistrationRepository
       "SELECT mr FROM MembershipRegistration mr WHERE mr.account.id IN :accountIds "
           + "AND mr.registrationDate = (SELECT MAX(mr2.registrationDate) FROM MembershipRegistration mr2 WHERE mr2.account = mr.account)")
   List<MembershipRegistration> findLatestForAccounts(@Param("accountIds") List<Long> accountIds);
+
+  @Query(
+      "SELECT mr FROM MembershipRegistration mr WHERE mr.account.id = :accountId "
+          + "AND mr.registrationDate = (SELECT MAX(mr2.registrationDate) FROM MembershipRegistration mr2 WHERE mr2.account = mr.account)")
+  Optional<MembershipRegistration> findLatestForAccount(@Param("accountId") Long accountId);
 }
