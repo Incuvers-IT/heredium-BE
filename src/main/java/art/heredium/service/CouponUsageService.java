@@ -19,6 +19,7 @@ import art.heredium.domain.account.entity.Account;
 import art.heredium.domain.coupon.entity.Coupon;
 import art.heredium.domain.coupon.entity.CouponUsage;
 import art.heredium.domain.coupon.model.dto.response.CouponResponseDto;
+import art.heredium.domain.coupon.model.dto.response.CouponUsageResponse;
 import art.heredium.domain.coupon.repository.CouponUsageRepository;
 
 @Service
@@ -86,14 +87,28 @@ public class CouponUsageService {
     return this.couponUsageRepository.saveAll(couponUsages);
   }
 
+  public CouponUsageResponse getCouponUsageByUuid(@NonNull final String uuid) {
+    return new CouponUsageResponse(this.getCouponUsageByUuid(uuid, LocalDateTime.now()));
+  }
+
   @Transactional(rollbackFor = Exception.class)
   public void checkoutCouponUsage(String uuid) {
-    CouponUsage couponUsage =
+    LocalDateTime now = LocalDateTime.now();
+    final CouponUsage couponUsage = this.getCouponUsageByUuid(uuid, now);
+
+    couponUsage.setUsedCount(couponUsage.getUsedCount() + 1);
+    couponUsage.setIsUsed(true);
+
+    couponUsage.setUsedDate(now);
+    couponUsageRepository.save(couponUsage);
+  }
+
+  private CouponUsage getCouponUsageByUuid(
+      @NonNull final String uuid, @NonNull final LocalDateTime now) {
+    final CouponUsage couponUsage =
         couponUsageRepository
             .findByUuid(uuid)
             .orElseThrow(() -> new ApiException(ErrorCode.COUPON_NOT_FOUND, "Coupon not found"));
-
-    LocalDateTime now = LocalDateTime.now();
 
     if (couponUsage.getExpirationDate().isBefore(now)) {
       throw new ApiException(ErrorCode.COUPON_EXPIRED, "Coupon is expired");
@@ -102,11 +117,6 @@ public class CouponUsageService {
     if (couponUsage.getIsUsed() && !couponUsage.isPermanent()) {
       throw new ApiException(ErrorCode.COUPON_ALREADY_USED, "Coupon is already used");
     }
-
-    couponUsage.setUsedCount(couponUsage.getUsedCount() + 1);
-    couponUsage.setIsUsed(true);
-
-    couponUsage.setUsedDate(now);
-    couponUsageRepository.save(couponUsage);
+    return couponUsage;
   }
 }
