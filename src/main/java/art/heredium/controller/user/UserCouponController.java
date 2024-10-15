@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 import art.heredium.core.config.error.entity.ApiException;
 import art.heredium.core.util.AuthUtil;
 import art.heredium.domain.coupon.model.dto.response.CouponResponseDto;
+import art.heredium.domain.coupon.model.dto.response.CouponUsageResponse;
 import art.heredium.service.CouponUsageService;
 
 import static art.heredium.core.config.error.entity.ErrorCode.ANONYMOUS_USER;
@@ -33,6 +34,12 @@ public class UserCouponController {
     List<CouponResponseDto> couponResponseDtos =
         couponUsageService.getCouponsWithUsageByAccountId(accountId);
     return ResponseEntity.ok(couponResponseDtos);
+  }
+
+  @GetMapping("/usage/{coupon-uuid}")
+  public ResponseEntity<CouponUsageResponse> getCouponByUuid(
+      @PathVariable(value = "coupon-uuid") String couponUuid) {
+    return ResponseEntity.ok(this.couponUsageService.getCouponUsageByUuid(couponUuid));
   }
 
   @PostMapping("/checkout/{coupon-uuid}")
