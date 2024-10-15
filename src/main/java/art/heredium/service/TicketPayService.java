@@ -106,7 +106,7 @@ public class TicketPayService {
             .findByUuid(couponUuid)
             .orElseThrow(() -> new ApiException(ErrorCode.COUPON_NOT_FOUND));
 
-    if (couponUsage.getIsUsed()) {
+    if (couponUsage.getIsUsed() && !couponUsage.isPermanent()) {
       throw new ApiException(ErrorCode.COUPON_ALREADY_USED);
     }
     if (LocalDateTime.now().isAfter(couponUsage.getExpirationDate())) {
