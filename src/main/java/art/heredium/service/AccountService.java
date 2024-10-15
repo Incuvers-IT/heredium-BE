@@ -35,6 +35,8 @@ import art.heredium.domain.account.model.dto.request.*;
 import art.heredium.domain.account.model.dto.response.*;
 import art.heredium.domain.account.repository.AccountInfoRepository;
 import art.heredium.domain.account.repository.AccountRepository;
+import art.heredium.domain.membership.entity.MembershipRegistration;
+import art.heredium.domain.membership.repository.MembershipRegistrationRepository;
 import art.heredium.domain.ticket.repository.TicketRepository;
 import art.heredium.domain.ticket.type.TicketKindType;
 import art.heredium.ncloud.bean.CloudMail;
@@ -63,6 +65,7 @@ public class AccountService {
   private final JwtRedisUtil jwtRedisUtil;
   private final HerediumAlimTalk alimTalk;
   private final HerediumProperties herediumProperties;
+  private final MembershipRegistrationRepository membershipRegistrationRepository;
 
   public GetUserAccountResponse get(String password) {
     Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -77,7 +80,10 @@ public class AccountService {
   public GetUserAccountInfoResponse info() {
     Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
     UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
-    return new GetUserAccountInfoResponse(userPrincipal.getAccount());
+    final Account account = userPrincipal.getAccount();
+    final MembershipRegistration membershipRegistration =
+        membershipRegistrationRepository.findLatestForAccount(account.getId()).orElse(null);
+    return new GetUserAccountInfoResponse(userPrincipal.getAccount(), membershipRegistration);
   }
 
   public PostLoginResponse insert(HttpServletResponse response, PostAccountRequest dto) {
@@ -246,6 +252,8 @@ public class AccountService {
     Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
     UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
     Account entity = accountRepository.findById(userPrincipal.getId()).orElse(null);
+    MembershipRegistration membershipRegistration =
+        membershipRegistrationRepository.findLatestForAccount(entity.getId()).orElse(null);
     if (entity == null) {
       throw new ApiException(ErrorCode.NOT_FOUND);
     }
@@ -267,7 +275,7 @@ public class AccountService {
       PostNiceIdEncryptResponse info = niceIdService.decrypt(dto.getEncodeData());
       entity.getAccountInfo().updatePhone(info);
     }
-    return new GetUserAccountInfoResponse(entity);
+    return new GetUserAccountInfoResponse(entity, membershipRegistration);
   }
 
   public boolean delete(@Valid @NotBlank String password) {
