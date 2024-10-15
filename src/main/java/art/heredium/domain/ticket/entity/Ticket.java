@@ -15,7 +15,6 @@ import javax.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 import lombok.ToString;
 
 import org.springframework.data.annotation.CreatedDate;
@@ -49,7 +48,6 @@ import art.heredium.payment.type.PaymentType;
 
 @Entity
 @Getter
-@Setter
 @Table(name = "ticket")
 @DynamicInsert
 @TypeDef(name = "json", typeClass = JsonStringType.class)
@@ -294,6 +292,10 @@ public class Ticket implements Serializable {
 
   public void updateSmsRequestId(List<String> smsRequestId) {
     this.smsRequestId = smsRequestId;
+  }
+
+  public void setPrice(long price) {
+    this.price = price;
   }
 
   public boolean isRefund() {
