@@ -70,6 +70,7 @@ public class TicketPayService {
   private final CloudMail cloudMail;
   private final JwtRedisUtil jwtRedisUtil;
   private final CouponUsageRepository couponUsageRepository;
+  private final CouponUsageService couponUsageService;
 
   @PostConstruct
   private void init() {
@@ -95,12 +96,22 @@ public class TicketPayService {
 
   public Object valid(
       TicketOrderInfo ticketOrderInfo, TicketUserInfo ticketUserInfo, String couponUuid) {
-    // 결제 모듈 시작전 데이터 저장.
+
+    String couponCacheKey = "couponUsage-:" + couponUuid;
+    Boolean isCouponInUse = jwtRedisUtil.getData(couponCacheKey, Boolean.class);
+
+    if (isCouponInUse != null && isCouponInUse) {
+      throw new ApiException(ErrorCode.COUPON_ALREADY_IN_USE);
+    }
+
+    CouponUsage couponUsage = validateCouponUsage(couponUuid, ticketOrderInfo.getKind());
+
     Ticket entity = createTicket(ticketOrderInfo, ticketUserInfo, Constants.getUUID());
 
-    // Apply coupon discount if couponUuid is provided
-    if (couponUuid != null && !couponUuid.isEmpty()) {
-      applyCouponDiscount(entity, couponUuid, ticketUserInfo.getAccountId());
+    if (couponUsage != null) {
+      applyCouponDiscount(entity, couponUsage);
+      jwtRedisUtil.setDataExpire(couponCacheKey, true, 15 * 60);
+      jwtRedisUtil.setDataExpire("couponUuid-" + entity.getUuid(), couponUuid, 15 * 60);
     }
 
     jwtRedisUtil.setDataExpire(entity.getUuid(), ticketOrderInfo, 15 * 60);
@@ -108,7 +119,11 @@ public class TicketPayService {
     return PaymentsValidResponse.from(entity);
   }
 
-  private void applyCouponDiscount(Ticket ticket, String couponUuid, Long accountId) {
+  private CouponUsage validateCouponUsage(String couponUuid, TicketKindType ticketKindType) {
+    if (couponUuid == null || couponUuid.isEmpty()) {
+      return null;
+    }
+
     CouponUsage couponUsage =
         couponUsageRepository
             .findByUuid(couponUuid)
@@ -122,17 +137,21 @@ public class TicketPayService {
     }
 
     Coupon coupon = couponUsage.getCoupon();
-    if (!isCouponApplicableToTicket(coupon.getCouponType(), ticket.getKind())) {
+    if (!isCouponApplicableToTicket(coupon.getCouponType(), ticketKindType)) {
       throw new ApiException(ErrorCode.COUPON_NOT_APPLICABLE);
     }
 
+    return couponUsage;
+  }
+
+  private void applyCouponDiscount(Ticket ticket, CouponUsage couponUsage) {
+    Coupon coupon = couponUsage.getCoupon();
     TicketPrice mostExpensiveItem =
         ticket.getPrices().stream()
             .max(Comparator.comparing(TicketPrice::getPrice))
             .orElseThrow(() -> new ApiException(ErrorCode.TICKET_PRICE_NOT_FOUND));
 
     long discountAmount = (mostExpensiveItem.getPrice() * coupon.getDiscountPercent()) / 100;
-
     ticket.setPrice(ticket.getPrice() - discountAmount);
   }
 
@@ -175,6 +194,13 @@ public class TicketPayService {
     try {
       ticketRepository.saveAndFlush(entity);
       ticketUuidRepository.deleteById(entity.getUuid());
+
+      String couponUuid = jwtRedisUtil.getData("couponUuid-" + entity.getUuid(), String.class);
+      if (couponUuid != null) {
+        couponUsageService.checkoutCouponUsage(couponUuid);
+        jwtRedisUtil.deleteData("couponUsage-:" + couponUuid);
+        jwtRedisUtil.deleteData("couponUuid-" + entity.getUuid());
+      }
 
       Map<String, String> mailParam = entity.getMailParam(herediumProperties);
       if (!StringUtils.isBlank(entity.getEmail())) {
