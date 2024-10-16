@@ -26,6 +26,9 @@ public class MembershipResponse {
 
   private Integer price;
 
+  @JsonProperty("image_url")
+  private String imageUrl;
+
   public MembershipResponse(Membership membership) {
     this.coupons =
         membership.getCoupons().stream().map(CouponResponse::new).collect(Collectors.toList());
@@ -33,5 +36,6 @@ public class MembershipResponse {
     this.period = membership.getPeriod();
     this.membershipId = membership.getId();
     this.price = membership.getPrice();
+    this.imageUrl = membership.getImageUrl();
   }
 }
