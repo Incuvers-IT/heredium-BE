@@ -73,16 +73,22 @@ public class Membership extends BaseEntity implements Serializable {
   @Column(name = "is_enabled", nullable = false)
   private Boolean isEnabled;
 
+  @Comment("이미지 URL")
+  @Column(name = "image_url")
+  private String imageUrl;
+
   public void updateIsEnabled(boolean isEnabled) {
     this.isEnabled = isEnabled;
   }
 
   @Builder
-  public Membership(String name, Long period, Integer price, Boolean isEnabled, Post post) {
+  public Membership(
+      String name, Long period, Integer price, Boolean isEnabled, String imageUrl, Post post) {
     this.name = name;
     this.period = period;
     this.price = price;
     this.isEnabled = isEnabled;
+    this.imageUrl = imageUrl;
     this.post = post;
   }
 }

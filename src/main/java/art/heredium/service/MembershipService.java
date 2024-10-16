@@ -55,6 +55,7 @@ public class MembershipService {
               .period(DEFAULT_MEMBERSHIP_PERIOD)
               .price(request.getPrice())
               .isEnabled(DEFAULT_ENABLED_STATUS)
+              .imageUrl(request.getImageUrl())
               .post(post)
               .build();
 
