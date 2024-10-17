@@ -72,6 +72,9 @@ public class TicketPayService {
   private final CouponUsageRepository couponUsageRepository;
   private final CouponUsageService couponUsageService;
 
+  private static final String COUPON_USAGE_CACHE_KEY = "couponUsage-";
+  private static final String COUPON_UUID_CACHE_KEY = "couponUuid-";
+
   @PostConstruct
   private void init() {
     restTemplate.setErrorHandler(
@@ -97,10 +100,10 @@ public class TicketPayService {
   public Object valid(
       TicketOrderInfo ticketOrderInfo, TicketUserInfo ticketUserInfo, String couponUuid) {
 
-    String couponCacheKey = "couponUsage-:" + couponUuid;
-    Boolean isCouponInUse = jwtRedisUtil.getData(couponCacheKey, Boolean.class);
+    String couponCacheKey = COUPON_USAGE_CACHE_KEY + couponUuid;
+    String couponInUse = jwtRedisUtil.getData(couponCacheKey);
 
-    if (isCouponInUse != null && isCouponInUse) {
+    if (couponInUse != null) {
       throw new ApiException(ErrorCode.COUPON_ALREADY_IN_USE);
     }
 
@@ -110,8 +113,8 @@ public class TicketPayService {
 
     if (couponUsage != null) {
       applyCouponDiscount(entity, couponUsage);
-      jwtRedisUtil.setDataExpire(couponCacheKey, true, 15 * 60);
-      jwtRedisUtil.setDataExpire("couponUuid-" + entity.getUuid(), couponUuid, 15 * 60);
+      jwtRedisUtil.setDataExpire(couponCacheKey, couponCacheKey, 15 * 60);
+      jwtRedisUtil.setDataExpire(COUPON_UUID_CACHE_KEY + entity.getUuid(), couponUuid, 15 * 60);
     }
 
     jwtRedisUtil.setDataExpire(entity.getUuid(), ticketOrderInfo, 15 * 60);
@@ -190,18 +193,12 @@ public class TicketPayService {
     Ticket entity = createTicket(info, ticketUserInfo, dto.getOrderId());
     PaymentTicketResponse pay = (PaymentTicketResponse) dto.getType().pay(dto, entity.getPrice());
     entity.initPay(pay, dto.getType());
+    String couponUuid =
+        jwtRedisUtil.getData(COUPON_UUID_CACHE_KEY + entity.getUuid(), String.class);
 
     try {
       ticketRepository.saveAndFlush(entity);
       ticketUuidRepository.deleteById(entity.getUuid());
-
-      String couponUuid = jwtRedisUtil.getData("couponUuid-" + entity.getUuid(), String.class);
-      if (couponUuid != null) {
-        couponUsageService.checkoutCouponUsage(couponUuid);
-        jwtRedisUtil.deleteData("couponUsage-:" + couponUuid);
-        jwtRedisUtil.deleteData("couponUuid-" + entity.getUuid());
-      }
-
       Map<String, String> mailParam = entity.getMailParam(herediumProperties);
       if (!StringUtils.isBlank(entity.getEmail())) {
         cloudMail.mail(entity.getEmail(), mailParam, MailTemplate.TICKET_ISSUANCE);
@@ -223,6 +220,13 @@ public class TicketPayService {
       dto.getType().cancel(entity, dto);
       throw new ApiException(ErrorCode.DB_ERROR, e.getMessage());
     }
+
+    if (couponUuid != null) {
+      couponUsageService.checkoutCouponUsage(couponUuid);
+      jwtRedisUtil.deleteData(COUPON_USAGE_CACHE_KEY + couponUuid);
+      jwtRedisUtil.deleteData(COUPON_UUID_CACHE_KEY + entity.getUuid());
+    }
+
     return new PostUserTicketResponse(entity);
   }
 
