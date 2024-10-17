@@ -77,6 +77,7 @@ public enum ErrorCode {
 
   TICKET_PRICE_NOT_FOUND(HttpStatus.NOT_FOUND),
   COUPON_NOT_APPLICABLE(HttpStatus.BAD_REQUEST),
+  COUPON_ALREADY_IN_USE(HttpStatus.BAD_REQUEST),
   ;
   private HttpStatus status;
 

@@ -70,6 +70,10 @@ public class TicketPayService {
   private final CloudMail cloudMail;
   private final JwtRedisUtil jwtRedisUtil;
   private final CouponUsageRepository couponUsageRepository;
+  private final CouponUsageService couponUsageService;
+
+  private static final String COUPON_USAGE_CACHE_KEY = "couponUsage-";
+  private static final String COUPON_UUID_CACHE_KEY = "couponUuid-";
 
   @PostConstruct
   private void init() {
@@ -95,12 +99,22 @@ public class TicketPayService {
 
   public Object valid(
       TicketOrderInfo ticketOrderInfo, TicketUserInfo ticketUserInfo, String couponUuid) {
-    // 결제 모듈 시작전 데이터 저장.
+
+    String couponCacheKey = COUPON_USAGE_CACHE_KEY + couponUuid;
+    String couponInUse = jwtRedisUtil.getData(couponCacheKey);
+
+    if (couponInUse != null) {
+      throw new ApiException(ErrorCode.COUPON_ALREADY_IN_USE);
+    }
+
+    CouponUsage couponUsage = validateCouponUsage(couponUuid, ticketOrderInfo.getKind());
+
     Ticket entity = createTicket(ticketOrderInfo, ticketUserInfo, Constants.getUUID());
 
-    // Apply coupon discount if couponUuid is provided
-    if (couponUuid != null && !couponUuid.isEmpty()) {
-      applyCouponDiscount(entity, couponUuid, ticketUserInfo.getAccountId());
+    if (couponUsage != null) {
+      applyCouponDiscount(entity, couponUsage);
+      jwtRedisUtil.setDataExpire(couponCacheKey, couponCacheKey, 15 * 60);
+      jwtRedisUtil.setDataExpire(COUPON_UUID_CACHE_KEY + entity.getUuid(), couponUuid, 15 * 60);
     }
 
     jwtRedisUtil.setDataExpire(entity.getUuid(), ticketOrderInfo, 15 * 60);
@@ -108,7 +122,11 @@ public class TicketPayService {
     return PaymentsValidResponse.from(entity);
   }
 
-  private void applyCouponDiscount(Ticket ticket, String couponUuid, Long accountId) {
+  private CouponUsage validateCouponUsage(String couponUuid, TicketKindType ticketKindType) {
+    if (couponUuid == null || couponUuid.isEmpty()) {
+      return null;
+    }
+
     CouponUsage couponUsage =
         couponUsageRepository
             .findByUuid(couponUuid)
@@ -122,17 +140,21 @@ public class TicketPayService {
     }
 
     Coupon coupon = couponUsage.getCoupon();
-    if (!isCouponApplicableToTicket(coupon.getCouponType(), ticket.getKind())) {
+    if (!isCouponApplicableToTicket(coupon.getCouponType(), ticketKindType)) {
       throw new ApiException(ErrorCode.COUPON_NOT_APPLICABLE);
     }
 
+    return couponUsage;
+  }
+
+  private void applyCouponDiscount(Ticket ticket, CouponUsage couponUsage) {
+    Coupon coupon = couponUsage.getCoupon();
     TicketPrice mostExpensiveItem =
         ticket.getPrices().stream()
             .max(Comparator.comparing(TicketPrice::getPrice))
             .orElseThrow(() -> new ApiException(ErrorCode.TICKET_PRICE_NOT_FOUND));
 
     long discountAmount = (mostExpensiveItem.getPrice() * coupon.getDiscountPercent()) / 100;
-
     ticket.setPrice(ticket.getPrice() - discountAmount);
   }
 
@@ -171,11 +193,12 @@ public class TicketPayService {
     Ticket entity = createTicket(info, ticketUserInfo, dto.getOrderId());
     PaymentTicketResponse pay = (PaymentTicketResponse) dto.getType().pay(dto, entity.getPrice());
     entity.initPay(pay, dto.getType());
+    String couponUuid =
+        jwtRedisUtil.getData(COUPON_UUID_CACHE_KEY + entity.getUuid());
 
     try {
       ticketRepository.saveAndFlush(entity);
       ticketUuidRepository.deleteById(entity.getUuid());
-
       Map<String, String> mailParam = entity.getMailParam(herediumProperties);
       if (!StringUtils.isBlank(entity.getEmail())) {
         cloudMail.mail(entity.getEmail(), mailParam, MailTemplate.TICKET_ISSUANCE);
@@ -197,6 +220,13 @@ public class TicketPayService {
       dto.getType().cancel(entity, dto);
       throw new ApiException(ErrorCode.DB_ERROR, e.getMessage());
     }
+
+    if (couponUuid != null) {
+      couponUsageService.checkoutCouponUsage(couponUuid);
+      jwtRedisUtil.deleteData(COUPON_USAGE_CACHE_KEY + couponUuid);
+      jwtRedisUtil.deleteData(COUPON_UUID_CACHE_KEY + entity.getUuid());
+    }
+
     return new PostUserTicketResponse(entity);
   }
 
