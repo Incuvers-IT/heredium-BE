@@ -19,12 +19,15 @@ import lombok.NoArgsConstructor;
 import lombok.NonNull;
 import lombok.ToString;
 
+import org.springframework.lang.Nullable;
+
 import com.vladmihalcea.hibernate.type.json.JsonStringType;
 import org.hibernate.annotations.Comment;
 import org.hibernate.annotations.DynamicInsert;
 import org.hibernate.annotations.TypeDef;
 
 import art.heredium.domain.account.entity.Account;
+import art.heredium.domain.ticket.entity.Ticket;
 
 @Entity
 @Getter
@@ -51,6 +54,10 @@ public class MembershipRegistration {
   @JoinColumn(name = "membership_id", nullable = false)
   private Membership membership;
 
+  @OneToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "ticket_id")
+  private Ticket ticket;
+
   @Comment("가입일시")
   @Column(name = "registration_date", nullable = false)
   private LocalDate registrationDate;
@@ -63,11 +70,13 @@ public class MembershipRegistration {
       @NonNull Account account,
       @NonNull Membership membership,
       @NonNull LocalDate registrationDate,
-      @NonNull LocalDate expirationDate) {
+      @NonNull LocalDate expirationDate,
+      @Nullable Ticket ticket) {
     this.uuid = UUID.randomUUID().toString();
     this.account = account;
     this.membership = membership;
     this.registrationDate = registrationDate;
     this.expirationDate = expirationDate;
+    this.ticket = ticket;
   }
 }
