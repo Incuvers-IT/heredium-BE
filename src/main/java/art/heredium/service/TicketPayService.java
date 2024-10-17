@@ -72,7 +72,7 @@ public class TicketPayService {
   private final CouponUsageRepository couponUsageRepository;
   private final CouponUsageService couponUsageService;
 
-  private static final String COUPON_USAGE_CACHE_KEY = "couponUsage-";
+  public static final String COUPON_USAGE_CACHE_KEY = "couponUsage-";
   private static final String COUPON_UUID_CACHE_KEY = "couponUuid-";
 
   @PostConstruct
@@ -193,8 +193,7 @@ public class TicketPayService {
     Ticket entity = createTicket(info, ticketUserInfo, dto.getOrderId());
     PaymentTicketResponse pay = (PaymentTicketResponse) dto.getType().pay(dto, entity.getPrice());
     entity.initPay(pay, dto.getType());
-    String couponUuid =
-        jwtRedisUtil.getData(COUPON_UUID_CACHE_KEY + entity.getUuid());
+    String couponUuid = jwtRedisUtil.getData(COUPON_UUID_CACHE_KEY + entity.getUuid());
 
     try {
       ticketRepository.saveAndFlush(entity);
