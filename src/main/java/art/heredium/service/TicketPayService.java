@@ -194,7 +194,7 @@ public class TicketPayService {
     PaymentTicketResponse pay = (PaymentTicketResponse) dto.getType().pay(dto, entity.getPrice());
     entity.initPay(pay, dto.getType());
     String couponUuid =
-        jwtRedisUtil.getData(COUPON_UUID_CACHE_KEY + entity.getUuid(), String.class);
+        jwtRedisUtil.getData(COUPON_UUID_CACHE_KEY + entity.getUuid());
 
     try {
       ticketRepository.saveAndFlush(entity);
