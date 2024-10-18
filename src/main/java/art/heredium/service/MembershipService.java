@@ -71,9 +71,9 @@ public class MembershipService {
       Membership savedMembership = membershipRepository.save(membership);
       membershipIds.add(savedMembership.getId());
 
-      String permanentImageUrl =
-          moveImageToPermanentStorage(
-              request.getImageUrl(), FilePathType.MEMBERSHIP.getPath(), savedMembership.getId());
+      // Move membership image to permanent storage and update the imageUrl
+      String newMembershipPath = FilePathType.MEMBERSHIP.getPath() + "/" + savedMembership.getId();
+      String permanentImageUrl = moveImageToNewPlace(request.getImageUrl(), newMembershipPath);
       savedMembership.updateImageUrl(permanentImageUrl);
       membershipRepository.save(savedMembership);
 
@@ -96,9 +96,10 @@ public class MembershipService {
 
         Coupon savedCoupon = couponRepository.save(coupon);
 
+        // Move coupon image to permanent storage and update the imageUrl
+        String newCouponPath = FilePathType.COUPON.getPath() + "/" + savedCoupon.getId();
         String permanentCouponImageUrl =
-            moveImageToPermanentStorage(
-                couponRequest.getImageUrl(), FilePathType.COUPON.getPath(), savedCoupon.getId());
+            moveImageToNewPlace(couponRequest.getImageUrl(), newCouponPath);
         savedCoupon.updateImageUrl(permanentCouponImageUrl);
         couponRepository.save(savedCoupon);
       }
@@ -113,11 +114,10 @@ public class MembershipService {
     }
   }
 
-  private String moveImageToPermanentStorage(String imageUrl, String basePath, Long entityId) {
+  private String moveImageToNewPlace(String tempOriginalUrl, String newPath) {
     Storage storage = new Storage();
-    storage.setSavedFileName(imageUrl);
-    String permanentPath = basePath + "/" + entityId;
-    Constants.moveFileFromTemp(cloudStorage, storage, permanentPath);
+    storage.setSavedFileName(tempOriginalUrl);
+    Constants.moveFileFromTemp(cloudStorage, storage, newPath);
     return storage.getSavedFileName();
   }
 
