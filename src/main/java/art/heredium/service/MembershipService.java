@@ -101,7 +101,7 @@ public class MembershipService {
 
         Coupon savedCoupon = couponRepository.save(coupon);
 
-        if (StringUtils.isNotEmpty(request.getImageUrl())) {
+        if (StringUtils.isNotEmpty(couponRequest.getImageUrl())) {
           // Move coupon image to permanent storage and update the imageUrl
           String newCouponPath = FilePathType.COUPON.getPath() + "/" + savedCoupon.getId();
           String permanentCouponImageUrl =
