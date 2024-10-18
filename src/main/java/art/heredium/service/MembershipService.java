@@ -8,6 +8,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import org.apache.commons.lang3.StringUtils;
+
 import art.heredium.core.config.error.entity.ApiException;
 import art.heredium.core.config.error.entity.ErrorCode;
 import art.heredium.core.util.Constants;
@@ -109,7 +111,7 @@ public class MembershipService {
   }
 
   private void validateImage(String imageUrl) {
-    if (imageUrl == null || !cloudStorage.isExistObject(imageUrl)) {
+    if (StringUtils.isNotEmpty(imageUrl) && !cloudStorage.isExistObject(imageUrl)) {
       throw new ApiException(ErrorCode.S3_NOT_FOUND, imageUrl);
     }
   }
