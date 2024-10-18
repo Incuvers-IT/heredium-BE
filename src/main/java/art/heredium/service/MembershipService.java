@@ -73,11 +73,14 @@ public class MembershipService {
       Membership savedMembership = membershipRepository.save(membership);
       membershipIds.add(savedMembership.getId());
 
-      // Move membership image to permanent storage and update the imageUrl
-      String newMembershipPath = FilePathType.MEMBERSHIP.getPath() + "/" + savedMembership.getId();
-      String permanentImageUrl = moveImageToNewPlace(request.getImageUrl(), newMembershipPath);
-      savedMembership.updateImageUrl(permanentImageUrl);
-      membershipRepository.save(savedMembership);
+      if (StringUtils.isNotEmpty(request.getImageUrl())) {
+        // Move membership image to permanent storage and update the imageUrl
+        String newMembershipPath =
+            FilePathType.MEMBERSHIP.getPath() + "/" + savedMembership.getId();
+        String permanentImageUrl = moveImageToNewPlace(request.getImageUrl(), newMembershipPath);
+        savedMembership.updateImageUrl(permanentImageUrl);
+        membershipRepository.save(savedMembership);
+      }
 
       for (MembershipCouponCreateRequest couponRequest : request.getCoupons()) {
         validateCouponRequest(couponRequest);
@@ -98,12 +101,14 @@ public class MembershipService {
 
         Coupon savedCoupon = couponRepository.save(coupon);
 
-        // Move coupon image to permanent storage and update the imageUrl
-        String newCouponPath = FilePathType.COUPON.getPath() + "/" + savedCoupon.getId();
-        String permanentCouponImageUrl =
-            moveImageToNewPlace(couponRequest.getImageUrl(), newCouponPath);
-        savedCoupon.updateImageUrl(permanentCouponImageUrl);
-        couponRepository.save(savedCoupon);
+        if (StringUtils.isNotEmpty(request.getImageUrl())) {
+          // Move coupon image to permanent storage and update the imageUrl
+          String newCouponPath = FilePathType.COUPON.getPath() + "/" + savedCoupon.getId();
+          String permanentCouponImageUrl =
+              moveImageToNewPlace(couponRequest.getImageUrl(), newCouponPath);
+          savedCoupon.updateImageUrl(permanentCouponImageUrl);
+          couponRepository.save(savedCoupon);
+        }
       }
     }
 
