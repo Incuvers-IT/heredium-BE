@@ -10,6 +10,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import art.heredium.core.config.error.entity.ApiException;
 import art.heredium.core.config.error.entity.ErrorCode;
+import art.heredium.core.util.Constants;
+import art.heredium.domain.common.model.Storage;
+import art.heredium.domain.common.type.FilePathType;
 import art.heredium.domain.coupon.entity.Coupon;
 import art.heredium.domain.coupon.model.dto.request.MembershipCouponCreateRequest;
 import art.heredium.domain.coupon.repository.CouponRepository;
@@ -18,9 +21,11 @@ import art.heredium.domain.membership.model.dto.request.MembershipCreateRequest;
 import art.heredium.domain.membership.repository.MembershipRepository;
 import art.heredium.domain.post.entity.Post;
 import art.heredium.domain.post.repository.PostRepository;
+import art.heredium.ncloud.bean.CloudStorage;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(rollbackFor = Exception.class)
 public class MembershipService {
 
   private static final boolean DEFAULT_ENABLED_STATUS = true;
@@ -29,6 +34,7 @@ public class MembershipService {
   private final MembershipRepository membershipRepository;
   private final PostRepository postRepository;
   private final CouponRepository couponRepository;
+  private final CloudStorage cloudStorage;
 
   public List<Membership> findByPostIdAndIsEnabledTrue(long postId) {
     return this.membershipRepository.findByPostIdAndIsEnabledTrue(postId);
@@ -49,6 +55,9 @@ public class MembershipService {
     }
 
     for (MembershipCreateRequest request : membershipRequests) {
+      // Validate membership image
+      validateImage(request.getImageUrl());
+
       Membership membership =
           Membership.builder()
               .name(request.getName())
@@ -62,15 +71,17 @@ public class MembershipService {
       Membership savedMembership = membershipRepository.save(membership);
       membershipIds.add(savedMembership.getId());
 
+      // Move membership image to permanent storage and update the imageUrl
+      String newMembershipPath = FilePathType.MEMBERSHIP.getPath() + "/" + savedMembership.getId();
+      String permanentImageUrl = moveImageToNewPlace(request.getImageUrl(), newMembershipPath);
+      savedMembership.updateImageUrl(permanentImageUrl);
+      membershipRepository.save(savedMembership);
+
       for (MembershipCouponCreateRequest couponRequest : request.getCoupons()) {
-        if ((!couponRequest.getIsPermanent() && couponRequest.getNumberOfUses() == null)
-            || (couponRequest.getIsPermanent() && couponRequest.getNumberOfUses() != null)) {
-          throw new ApiException(
-              ErrorCode.BAD_VALID,
-              String.format(
-                  "Invalid coupon request for '%s': If 'isPermanent' is false, 'numberOfUses' must be provided. If 'isPermanent' is true, 'numberOfUses' must not be provided.",
-                  couponRequest.getName()));
-        }
+        validateCouponRequest(couponRequest);
+
+        validateImage(couponRequest.getImageUrl());
+
         Coupon coupon =
             Coupon.builder()
                 .name(couponRequest.getName())
@@ -83,11 +94,42 @@ public class MembershipService {
                 .isPermanent(couponRequest.getIsPermanent())
                 .build();
 
-        couponRepository.save(coupon);
+        Coupon savedCoupon = couponRepository.save(coupon);
+
+        // Move coupon image to permanent storage and update the imageUrl
+        String newCouponPath = FilePathType.COUPON.getPath() + "/" + savedCoupon.getId();
+        String permanentCouponImageUrl =
+            moveImageToNewPlace(couponRequest.getImageUrl(), newCouponPath);
+        savedCoupon.updateImageUrl(permanentCouponImageUrl);
+        couponRepository.save(savedCoupon);
       }
     }
 
     return membershipIds;
+  }
+
+  private void validateImage(String imageUrl) {
+    if (imageUrl == null || !cloudStorage.isExistObject(imageUrl)) {
+      throw new ApiException(ErrorCode.S3_NOT_FOUND, imageUrl);
+    }
+  }
+
+  private String moveImageToNewPlace(String tempOriginalUrl, String newPath) {
+    Storage storage = new Storage();
+    storage.setSavedFileName(tempOriginalUrl);
+    Constants.moveFileFromTemp(cloudStorage, storage, newPath);
+    return storage.getSavedFileName();
+  }
+
+  private void validateCouponRequest(MembershipCouponCreateRequest couponRequest) {
+    if ((!couponRequest.getIsPermanent() && couponRequest.getNumberOfUses() == null)
+        || (couponRequest.getIsPermanent() && couponRequest.getNumberOfUses() != null)) {
+      throw new ApiException(
+          ErrorCode.BAD_VALID,
+          String.format(
+              "Invalid coupon request for '%s': If 'isPermanent' is false, 'numberOfUses' must be provided. If 'isPermanent' is true, 'numberOfUses' must not be provided.",
+              couponRequest.getName()));
+    }
   }
 
   @Transactional(rollbackFor = Exception.class)

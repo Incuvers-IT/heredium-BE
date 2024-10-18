@@ -93,4 +93,8 @@ public class Coupon extends BaseEntity {
     this.numberOfUses = numberOfUses;
     this.isPermanent = isPermanent;
   }
+
+  public void updateImageUrl(String imageUrl) {
+    this.imageUrl = imageUrl;
+  }
 }
