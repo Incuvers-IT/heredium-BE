@@ -81,6 +81,10 @@ public class Membership extends BaseEntity implements Serializable {
     this.isEnabled = isEnabled;
   }
 
+  public void updateImageUrl(String imageUrl) {
+    this.imageUrl = imageUrl;
+  }
+
   @Builder
   public Membership(
       String name, Long period, Integer price, Boolean isEnabled, String imageUrl, Post post) {

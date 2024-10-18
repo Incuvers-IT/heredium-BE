@@ -18,6 +18,8 @@ public enum FilePathType {
   PROGRAM(8, "프로그램 파일", "program", null, null),
   COFFEE(9, "커피", "coffee", null, null),
   DOCENT(10, "도슨트 파일", "docent", null, null),
+  MEMBERSHIP(12, "멤버십 파일", "membership", null, null),
+  COUPON(13, "쿠폰 파일", "coupon", null, null),
   ;
 
   private int code;
