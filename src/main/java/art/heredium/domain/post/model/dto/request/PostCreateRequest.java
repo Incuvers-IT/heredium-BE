@@ -80,13 +80,13 @@ public class PostCreateRequest {
     @JsonProperty("ongoing_exhibition_count")
     private Integer ongoingExhibitionCount;
 
-    @JsonProperty("finished_exhibition_count")
-    private Integer finishedExhibitionCount;
+    @JsonProperty("completed_exhibition_count")
+    private Integer completedExhibitionCount;
 
     @JsonProperty("ongoing_program_count")
     private Integer ongoingProgramCount;
 
-    @JsonProperty("finished_program_count")
-    private Integer finishedProgramCount;
+    @JsonProperty("completed_program_count")
+    private Integer completedProgramCount;
   }
 }

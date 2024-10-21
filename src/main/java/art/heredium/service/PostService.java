@@ -78,6 +78,7 @@ public class PostService {
   public Long createPost(PostCreateRequest request) {
     Admin admin =
         AuthUtil.getCurrentAdmin().orElseThrow(() -> new ApiException(ErrorCode.ADMIN_NOT_FOUND));
+    final PostCreateRequest.AdditionalInfo additionalInfo = request.getAdditionalInfo();
 
     final Post post =
         Post.builder()
@@ -88,7 +89,22 @@ public class PostService {
             .contentDetail(request.getContentDetail())
             .navigationLink(request.getNavigationLink())
             .admin(admin)
-            .additionalInfo(this.buildAdditionalInfo(request.getAdditionalInfo()))
+            .ongoingExhibitionCount(
+                Optional.ofNullable(additionalInfo)
+                    .map(PostCreateRequest.AdditionalInfo::getOngoingExhibitionCount)
+                    .orElse(null))
+            .completedExhibitionCount(
+                Optional.ofNullable(additionalInfo)
+                    .map(PostCreateRequest.AdditionalInfo::getCompletedExhibitionCount)
+                    .orElse(null))
+            .ongoingProgramCount(
+                Optional.ofNullable(additionalInfo)
+                    .map(PostCreateRequest.AdditionalInfo::getOngoingProgramCount)
+                    .orElse(null))
+            .completedProgramCount(
+                Optional.ofNullable(additionalInfo)
+                    .map(PostCreateRequest.AdditionalInfo::getCompletedProgramCount)
+                    .orElse(null))
             .startDate(request.getStartDate())
             .endDate(request.getEndDate())
             .build();
@@ -161,17 +177,5 @@ public class PostService {
       result = result.replace(tempImageUrl, newImageUrl);
     }
     return result;
-  }
-
-  private String buildAdditionalInfo(final PostCreateRequest.AdditionalInfo additionalInfo) {
-    if (additionalInfo == null) {
-      return null;
-    }
-    return String.join(
-        ";",
-        String.valueOf(Optional.ofNullable(additionalInfo.getOngoingExhibitionCount()).orElse(0)),
-        String.valueOf(Optional.ofNullable(additionalInfo.getFinishedExhibitionCount()).orElse(0)),
-        String.valueOf(Optional.ofNullable(additionalInfo.getOngoingProgramCount()).orElse(0)),
-        String.valueOf(Optional.ofNullable(additionalInfo.getFinishedProgramCount()).orElse(0)));
   }
 }

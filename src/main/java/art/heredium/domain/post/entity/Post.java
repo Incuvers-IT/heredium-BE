@@ -64,8 +64,17 @@ public class Post extends BaseEntity {
   @Column(name = "navigation_link", nullable = false)
   private String navigationLink;
 
-  @Column(name = "additional_info")
-  private String additionalInfo;
+  @Column(name = "ongoing_exhibition_count")
+  private Integer ongoingExhibitionCount;
+
+  @Column(name = "completed_exhibition_count")
+  private Integer completedExhibitionCount;
+
+  @Column(name = "ongoing_program_count")
+  private Integer ongoingProgramCount;
+
+  @Column(name = "completed_program_count")
+  private Integer completedProgramCount;
 
   @Column(name = "start_date", nullable = false)
   private LocalDate startDate;
@@ -107,7 +116,10 @@ public class Post extends BaseEntity {
       String contentDetail,
       String navigationLink,
       Admin admin,
-      String additionalInfo,
+      Integer ongoingExhibitionCount,
+      Integer completedExhibitionCount,
+      Integer ongoingProgramCount,
+      Integer completedProgramCount,
       LocalDate startDate,
       LocalDate endDate) {
     this.name = name;
@@ -118,7 +130,10 @@ public class Post extends BaseEntity {
     this.contentDetail = contentDetail;
     this.navigationLink = navigationLink;
     this.admin = admin;
-    this.additionalInfo = additionalInfo;
+    this.ongoingExhibitionCount = ongoingExhibitionCount;
+    this.completedExhibitionCount = completedExhibitionCount;
+    this.ongoingProgramCount = ongoingProgramCount;
+    this.completedProgramCount = completedProgramCount;
     this.startDate = startDate;
     this.endDate = endDate;
   }
