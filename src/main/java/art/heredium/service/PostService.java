@@ -78,21 +78,40 @@ public class PostService {
   public Long createPost(PostCreateRequest request) {
     Admin admin =
         AuthUtil.getCurrentAdmin().orElseThrow(() -> new ApiException(ErrorCode.ADMIN_NOT_FOUND));
+    final PostCreateRequest.AdditionalInfo additionalInfo = request.getAdditionalInfo();
 
     final Post post =
         Post.builder()
             .name(request.getName())
-            .imageUrl(request.getDetailImage().getImageUrl())
-            .imageOriginalFileName(request.getDetailImage().getOriginalFileName())
+            .imageUrl(request.getNoteImage().getNoteImageUrl())
+            .imageOriginalFileName(request.getNoteImage().getOriginalFileName())
             .isEnabled(request.getIsEnabled())
             .contentDetail(request.getContentDetail())
             .navigationLink(request.getNavigationLink())
             .admin(admin)
+            .ongoingExhibitionCount(
+                Optional.ofNullable(additionalInfo)
+                    .map(PostCreateRequest.AdditionalInfo::getOngoingExhibitionCount)
+                    .orElse(null))
+            .completedExhibitionCount(
+                Optional.ofNullable(additionalInfo)
+                    .map(PostCreateRequest.AdditionalInfo::getCompletedExhibitionCount)
+                    .orElse(null))
+            .ongoingProgramCount(
+                Optional.ofNullable(additionalInfo)
+                    .map(PostCreateRequest.AdditionalInfo::getOngoingProgramCount)
+                    .orElse(null))
+            .completedProgramCount(
+                Optional.ofNullable(additionalInfo)
+                    .map(PostCreateRequest.AdditionalInfo::getCompletedProgramCount)
+                    .orElse(null))
+            .startDate(request.getStartDate())
+            .endDate(request.getEndDate())
             .build();
     final Post savedPost = postRepository.saveAndFlush(post);
     final long postId = savedPost.getId();
     final String fileFolderPath = String.format("%s/%d", FilePathType.POST.getPath(), postId);
-    final String imageUrl = request.getDetailImage().getImageUrl();
+    final String imageUrl = request.getNoteImage().getNoteImageUrl();
     if (!StringUtils.isEmpty(imageUrl)) {
       validateImage(imageUrl);
       post.updateImageUrl(this.moveImageToNewPlace(imageUrl, fileFolderPath));
@@ -100,7 +119,7 @@ public class PostService {
     post.updateThumbnailUrls(this.buildThumbnailUrls(request.getThumbnailUrls(), postId));
     post.updateContentDetail(this.moveEditorContent(request.getContentDetail(), fileFolderPath));
 
-    if (request.getIsEnabled() && request.getMemberships() != null) {
+    if (request.getMemberships() != null) {
       membershipService.createMemberships(postId, request.getMemberships());
     }
 

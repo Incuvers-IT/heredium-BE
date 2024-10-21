@@ -1,5 +1,6 @@
 package art.heredium.domain.post.model.dto.request;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import javax.validation.Valid;
@@ -34,10 +35,19 @@ public class PostCreateRequest {
   @JsonProperty("thumbnail_urls")
   private ThumbnailUrl thumbnailUrls;
 
-  @JsonProperty("detail_image")
-  private DetailImage detailImage;
+  @JsonProperty("note_image")
+  private NoteImage noteImage;
 
   @Valid private List<MembershipCreateRequest> memberships;
+
+  @JsonProperty("additional_info")
+  private AdditionalInfo additionalInfo;
+
+  @JsonProperty(value = "start_date", required = true)
+  private LocalDate startDate;
+
+  @JsonProperty(value = "end_date", required = true)
+  private LocalDate endDate;
 
   @Getter
   @Setter
@@ -54,13 +64,29 @@ public class PostCreateRequest {
 
   @Getter
   @Setter
-  public static class DetailImage {
-    @JsonProperty("image_url")
+  public static class NoteImage {
+    @JsonProperty("note_image_url")
     @NotBlank
-    private String imageUrl;
+    private String noteImageUrl;
 
     @JsonProperty("original_file_name")
     @NotBlank
     private String originalFileName;
+  }
+
+  @Getter
+  @Setter
+  public static class AdditionalInfo {
+    @JsonProperty("ongoing_exhibition_count")
+    private Integer ongoingExhibitionCount;
+
+    @JsonProperty("completed_exhibition_count")
+    private Integer completedExhibitionCount;
+
+    @JsonProperty("ongoing_program_count")
+    private Integer ongoingProgramCount;
+
+    @JsonProperty("completed_program_count")
+    private Integer completedProgramCount;
   }
 }
