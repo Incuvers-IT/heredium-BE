@@ -13,6 +13,7 @@ import java.util.zip.ZipOutputStream;
 
 import lombok.extern.slf4j.Slf4j;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
@@ -55,11 +56,17 @@ public class CloudStorage {
   @Value("${ncloud.storage.s3-url}")
   private String S3_URL;
 
+  @Autowired private S3Storage s3Storage;
+
   public String getS3Url() {
     return this.S3_URL;
   }
 
-  private AmazonS3 getSession() {
+  public String getBucket() {
+    return this.BUCKET;
+  }
+
+  public AmazonS3 getSession() {
     AmazonS3 s3 =
         AmazonS3ClientBuilder.standard()
             .withEndpointConfiguration(
@@ -179,10 +186,7 @@ public class CloudStorage {
   }
 
   public void move(String oldPath, String newPath) {
-    AmazonS3 s3 = getSession();
-    s3.copyObject(BUCKET, oldPath, BUCKET, newPath);
-    s3.setObjectAcl(BUCKET, newPath, CannedAccessControlList.PublicRead);
-    delete(oldPath);
+    s3Storage.move(this, oldPath, newPath);
   }
 
   public boolean isExistObject(String objectName) {
