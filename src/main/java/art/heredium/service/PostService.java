@@ -145,7 +145,7 @@ public class PostService {
   private String moveImageToNewPlace(String tempOriginalUrl, String newPath) {
     Storage storage = new Storage();
     storage.setSavedFileName(tempOriginalUrl);
-    Constants.moveFileFromTemp(null, storage, newPath);
+    Constants.moveFileFromTemp(this.cloudStorage, storage, newPath);
     return storage.getSavedFileName();
   }
 
