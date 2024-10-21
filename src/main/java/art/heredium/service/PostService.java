@@ -82,17 +82,20 @@ public class PostService {
     final Post post =
         Post.builder()
             .name(request.getName())
-            .imageUrl(request.getDetailImage().getImageUrl())
-            .imageOriginalFileName(request.getDetailImage().getOriginalFileName())
+            .imageUrl(request.getNoteImage().getNoteImageUrl())
+            .imageOriginalFileName(request.getNoteImage().getOriginalFileName())
             .isEnabled(request.getIsEnabled())
             .contentDetail(request.getContentDetail())
             .navigationLink(request.getNavigationLink())
             .admin(admin)
+            .additionalInfo(this.buildAdditionalInfo(request.getAdditionalInfo()))
+            .startDate(request.getStartDate())
+            .endDate(request.getEndDate())
             .build();
     final Post savedPost = postRepository.saveAndFlush(post);
     final long postId = savedPost.getId();
     final String fileFolderPath = String.format("%s/%d", FilePathType.POST.getPath(), postId);
-    final String imageUrl = request.getDetailImage().getImageUrl();
+    final String imageUrl = request.getNoteImage().getNoteImageUrl();
     if (!StringUtils.isEmpty(imageUrl)) {
       validateImage(imageUrl);
       post.updateImageUrl(this.moveImageToNewPlace(imageUrl, fileFolderPath));
@@ -100,7 +103,7 @@ public class PostService {
     post.updateThumbnailUrls(this.buildThumbnailUrls(request.getThumbnailUrls(), postId));
     post.updateContentDetail(this.moveEditorContent(request.getContentDetail(), fileFolderPath));
 
-    if (request.getIsEnabled() && request.getMemberships() != null) {
+    if (request.getMemberships() != null) {
       membershipService.createMemberships(postId, request.getMemberships());
     }
 
@@ -158,5 +161,17 @@ public class PostService {
       result = result.replace(tempImageUrl, newImageUrl);
     }
     return result;
+  }
+
+  private String buildAdditionalInfo(final PostCreateRequest.AdditionalInfo additionalInfo) {
+    if (additionalInfo == null) {
+      return null;
+    }
+    return String.join(
+        ";",
+        String.valueOf(Optional.ofNullable(additionalInfo.getOngoingExhibitionCount()).orElse(0)),
+        String.valueOf(Optional.ofNullable(additionalInfo.getFinishedExhibitionCount()).orElse(0)),
+        String.valueOf(Optional.ofNullable(additionalInfo.getOngoingProgramCount()).orElse(0)),
+        String.valueOf(Optional.ofNullable(additionalInfo.getFinishedProgramCount()).orElse(0)));
   }
 }

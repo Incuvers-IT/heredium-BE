@@ -1,5 +1,6 @@
 package art.heredium.domain.post.entity;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import javax.persistence.CascadeType;
@@ -63,6 +64,15 @@ public class Post extends BaseEntity {
   @Column(name = "navigation_link", nullable = false)
   private String navigationLink;
 
+  @Column(name = "additional_info")
+  private String additionalInfo;
+
+  @Column(name = "start_date", nullable = false)
+  private LocalDate startDate;
+
+  @Column(name = "end_date", nullable = false)
+  private LocalDate endDate;
+
   @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
   @OrderBy("id ASC")
   private List<Membership> memberships;
@@ -96,7 +106,10 @@ public class Post extends BaseEntity {
       Boolean isEnabled,
       String contentDetail,
       String navigationLink,
-      Admin admin) {
+      Admin admin,
+      String additionalInfo,
+      LocalDate startDate,
+      LocalDate endDate) {
     this.name = name;
     this.imageUrl = imageUrl;
     this.imageOriginalFileName = imageOriginalFileName;
@@ -105,5 +118,8 @@ public class Post extends BaseEntity {
     this.contentDetail = contentDetail;
     this.navigationLink = navigationLink;
     this.admin = admin;
+    this.additionalInfo = additionalInfo;
+    this.startDate = startDate;
+    this.endDate = endDate;
   }
 }
