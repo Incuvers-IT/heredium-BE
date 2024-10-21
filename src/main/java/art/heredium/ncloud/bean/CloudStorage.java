@@ -181,7 +181,7 @@ public class CloudStorage {
   public void move(String oldPath, String newPath) {
     AmazonS3 s3 = getSession();
     s3.copyObject(BUCKET, oldPath, BUCKET, newPath);
-    s3.setObjectAcl(BUCKET, newPath, CannedAccessControlList.PublicRead);
+//    s3.setObjectAcl(BUCKET, newPath, CannedAccessControlList.PublicRead);
     delete(oldPath);
   }
 
