@@ -75,6 +75,18 @@ public class Post extends BaseEntity {
     this.isEnabled = isEnabled;
   }
 
+  public void updateThumbnailUrls(final String thumbnailUrls) {
+    this.thumbnailUrls = thumbnailUrls;
+  }
+
+  public void updateImageUrl(final String imageUrl) {
+    this.imageUrl = imageUrl;
+  }
+
+  public void updateContentDetail(final String contentDetail) {
+    this.contentDetail = contentDetail;
+  }
+
   @Builder
   public Post(
       String name,

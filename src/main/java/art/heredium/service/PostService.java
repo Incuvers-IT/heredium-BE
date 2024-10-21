@@ -12,16 +12,22 @@ import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import org.apache.commons.lang3.StringUtils;
+
 import art.heredium.core.config.error.entity.ApiException;
 import art.heredium.core.config.error.entity.ErrorCode;
 import art.heredium.core.util.AuthUtil;
+import art.heredium.core.util.Constants;
 import art.heredium.domain.account.entity.Admin;
 import art.heredium.domain.account.repository.AdminRepository;
+import art.heredium.domain.common.model.Storage;
+import art.heredium.domain.common.type.FilePathType;
 import art.heredium.domain.post.entity.Post;
 import art.heredium.domain.post.model.dto.request.GetAdminPostRequest;
 import art.heredium.domain.post.model.dto.request.PostCreateRequest;
 import art.heredium.domain.post.model.dto.response.PostResponse;
 import art.heredium.domain.post.repository.PostRepository;
+import art.heredium.ncloud.bean.CloudStorage;
 
 @Service
 @RequiredArgsConstructor
@@ -30,6 +36,7 @@ public class PostService {
   private final PostRepository postRepository;
   private final MembershipService membershipService;
   private final AdminRepository adminRepository;
+  private final CloudStorage cloudStorage;
 
   @Transactional(readOnly = true)
   public List<PostResponse> getEnabledPosts() {
@@ -72,34 +79,52 @@ public class PostService {
     Admin admin =
         AuthUtil.getCurrentAdmin().orElseThrow(() -> new ApiException(ErrorCode.ADMIN_NOT_FOUND));
 
-    final String thumbnailUrls = this.buildThumbnailUrls(request.getThumbnailUrls());
     final Post post =
         Post.builder()
             .name(request.getName())
             .imageUrl(request.getDetailImage().getImageUrl())
             .imageOriginalFileName(request.getDetailImage().getOriginalFileName())
-            .thumbnailUrls(thumbnailUrls)
             .isEnabled(request.getIsEnabled())
             .contentDetail(request.getContentDetail())
             .navigationLink(request.getNavigationLink())
             .admin(admin)
             .build();
-    final Post savedPost = postRepository.save(post);
+    final Post savedPost = postRepository.saveAndFlush(post);
+    final long postId = savedPost.getId();
+    final String fileFolderPath = String.format("%s/%d", FilePathType.POST.getPath(), postId);
+    final String imageUrl = request.getDetailImage().getImageUrl();
+    if (!StringUtils.isEmpty(imageUrl)) {
+      validateImage(imageUrl);
+      post.updateImageUrl(this.moveImageToNewPlace(imageUrl, fileFolderPath));
+    }
+    post.updateThumbnailUrls(this.buildThumbnailUrls(request.getThumbnailUrls(), postId));
+    post.updateContentDetail(this.moveEditorContent(request.getContentDetail(), fileFolderPath));
 
     if (request.getIsEnabled() && request.getMemberships() != null) {
-      membershipService.createMemberships(savedPost.getId(), request.getMemberships());
+      membershipService.createMemberships(postId, request.getMemberships());
     }
 
-    return savedPost.getId();
+    return postId;
   }
 
-  private String buildThumbnailUrls(@Nullable PostCreateRequest.ThumbnailUrl thumbnailUrl) {
-    if (thumbnailUrl == null) return null;
-    return thumbnailUrl.getSmallThumbnailUrl()
-        + THUMBNAIL_URL_DELIMITER
-        + thumbnailUrl.getMediumThumbnailUrl()
-        + THUMBNAIL_URL_DELIMITER
-        + thumbnailUrl.getLargeThumbnailUrl();
+  private String buildThumbnailUrls(
+      @Nullable PostCreateRequest.ThumbnailUrl thumbnailUrl, final long postId) {
+    if (thumbnailUrl == null) {
+      return null;
+    }
+    final String small =
+        Optional.ofNullable(thumbnailUrl.getSmallThumbnailUrl())
+            .map(url -> this.moveImageToNewPlace(url, FilePathType.POST.getPath() + "/" + postId))
+            .orElse(StringUtils.EMPTY);
+    final String medium =
+        Optional.ofNullable(thumbnailUrl.getMediumThumbnailUrl())
+            .map(url -> this.moveImageToNewPlace(url, FilePathType.POST.getPath() + "/" + postId))
+            .orElse(StringUtils.EMPTY);
+    final String large =
+        Optional.ofNullable(thumbnailUrl.getLargeThumbnailUrl())
+            .map(url -> this.moveImageToNewPlace(url, FilePathType.POST.getPath() + "/" + postId))
+            .orElse(StringUtils.EMPTY);
+    return String.join(THUMBNAIL_URL_DELIMITER, small, medium, large);
   }
 
   @Transactional(readOnly = true)
@@ -109,5 +134,29 @@ public class PostService {
 
   public Optional<Post> findById(long id) {
     return this.postRepository.findById(id);
+  }
+
+  private void validateImage(String imageUrl) {
+    if (imageUrl == null || !cloudStorage.isExistObject(imageUrl)) {
+      throw new ApiException(ErrorCode.S3_NOT_FOUND, imageUrl);
+    }
+  }
+
+  private String moveImageToNewPlace(String tempOriginalUrl, String newPath) {
+    Storage storage = new Storage();
+    storage.setSavedFileName(tempOriginalUrl);
+    Constants.moveFileFromTemp(null, storage, newPath);
+    return storage.getSavedFileName();
+  }
+
+  private String moveEditorContent(final String editorContent, final String newPath) {
+    final List<String> imageUrls = Constants.getImageNameFromHtml(editorContent);
+    String result = editorContent;
+    for (String tempImageUrl : imageUrls) {
+      validateImage(tempImageUrl);
+      final String newImageUrl = this.moveImageToNewPlace(tempImageUrl, newPath);
+      result = result.replace(tempImageUrl, newImageUrl);
+    }
+    return result;
   }
 }
