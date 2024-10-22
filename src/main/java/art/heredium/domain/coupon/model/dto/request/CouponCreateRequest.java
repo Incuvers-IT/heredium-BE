@@ -15,7 +15,7 @@ import art.heredium.domain.coupon.entity.CouponType;
 @Getter
 @Setter
 @Builder
-public class MembershipCouponCreateRequest {
+public class CouponCreateRequest {
 
   @NotBlank private String name;
 

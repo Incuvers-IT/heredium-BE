@@ -13,10 +13,11 @@ import org.apache.commons.lang3.StringUtils;
 import art.heredium.core.config.error.entity.ApiException;
 import art.heredium.core.config.error.entity.ErrorCode;
 import art.heredium.core.util.Constants;
+import art.heredium.core.util.ValidationUtil;
 import art.heredium.domain.common.model.Storage;
 import art.heredium.domain.common.type.FilePathType;
 import art.heredium.domain.coupon.entity.Coupon;
-import art.heredium.domain.coupon.model.dto.request.MembershipCouponCreateRequest;
+import art.heredium.domain.coupon.model.dto.request.CouponCreateRequest;
 import art.heredium.domain.coupon.repository.CouponRepository;
 import art.heredium.domain.membership.entity.Membership;
 import art.heredium.domain.membership.model.dto.request.MembershipCreateRequest;
@@ -58,7 +59,7 @@ public class MembershipService {
 
     for (MembershipCreateRequest request : membershipRequests) {
       // Validate membership image
-      validateImage(request.getImageUrl());
+      ValidationUtil.validateImage(this.cloudStorage, request.getImageUrl());
 
       Membership membership =
           Membership.builder()
@@ -82,10 +83,10 @@ public class MembershipService {
         membershipRepository.save(savedMembership);
       }
 
-      for (MembershipCouponCreateRequest couponRequest : request.getCoupons()) {
-        validateCouponRequest(couponRequest);
+      for (CouponCreateRequest couponRequest : request.getCoupons()) {
+        ValidationUtil.validateCouponRequest(couponRequest);
 
-        validateImage(couponRequest.getImageUrl());
+        ValidationUtil.validateImage(this.cloudStorage, couponRequest.getImageUrl());
 
         Coupon coupon =
             Coupon.builder()
@@ -97,6 +98,7 @@ public class MembershipService {
                 .membership(savedMembership)
                 .numberOfUses(couponRequest.getNumberOfUses())
                 .isPermanent(couponRequest.getIsPermanent())
+                .isNonMembershipCoupon(false)
                 .build();
 
         Coupon savedCoupon = couponRepository.save(coupon);
@@ -115,28 +117,11 @@ public class MembershipService {
     return membershipIds;
   }
 
-  public void validateImage(String imageUrl) {
-    if (StringUtils.isNotEmpty(imageUrl) && !cloudStorage.isExistObject(imageUrl)) {
-      throw new ApiException(ErrorCode.S3_NOT_FOUND, imageUrl);
-    }
-  }
-
-  public String moveImageToNewPlace(String tempOriginalUrl, String newPath) {
+  private String moveImageToNewPlace(String tempOriginalUrl, String newPath) {
     Storage storage = new Storage();
     storage.setSavedFileName(tempOriginalUrl);
     Constants.moveFileFromTemp(cloudStorage, storage, newPath);
     return storage.getSavedFileName();
-  }
-
-  public void validateCouponRequest(MembershipCouponCreateRequest couponRequest) {
-    if ((!couponRequest.getIsPermanent() && couponRequest.getNumberOfUses() == null)
-        || (couponRequest.getIsPermanent() && couponRequest.getNumberOfUses() != null)) {
-      throw new ApiException(
-          ErrorCode.BAD_VALID,
-          String.format(
-              "Invalid coupon request for '%s': If 'isPermanent' is false, 'numberOfUses' must be provided. If 'isPermanent' is true, 'numberOfUses' must not be provided.",
-              couponRequest.getName()));
-    }
   }
 
   @Transactional(rollbackFor = Exception.class)
