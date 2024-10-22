@@ -58,8 +58,8 @@ public class PostService {
         .collect(Collectors.toList());
   }
 
-  public Optional<Post> findByIdAndIsEnabledTrue(long postId) {
-    return this.postRepository.findByIdAndIsEnabledTrue(postId);
+  public Optional<Post> findFirstByIsEnabledTrue() {
+    return this.postRepository.findFirstByIsEnabledTrue();
   }
 
   @Transactional(rollbackFor = Exception.class)
@@ -89,6 +89,10 @@ public class PostService {
             .contentDetail(request.getContentDetail())
             .navigationLink(request.getNavigationLink())
             .admin(admin)
+            .futureExhibitionCount(
+                Optional.ofNullable(additionalInfo)
+                    .map(PostCreateRequest.AdditionalInfo::getFutureExhibitionCount)
+                    .orElse(null))
             .ongoingExhibitionCount(
                 Optional.ofNullable(additionalInfo)
                     .map(PostCreateRequest.AdditionalInfo::getOngoingExhibitionCount)
@@ -96,6 +100,10 @@ public class PostService {
             .completedExhibitionCount(
                 Optional.ofNullable(additionalInfo)
                     .map(PostCreateRequest.AdditionalInfo::getCompletedExhibitionCount)
+                    .orElse(null))
+            .futureProgramCount(
+                Optional.ofNullable(additionalInfo)
+                    .map(PostCreateRequest.AdditionalInfo::getFutureProgramCount)
                     .orElse(null))
             .ongoingProgramCount(
                 Optional.ofNullable(additionalInfo)
@@ -151,8 +159,8 @@ public class PostService {
     return postRepository.search(dto, pageable);
   }
 
-  public Optional<Post> findById(long id) {
-    return this.postRepository.findById(id);
+  public Optional<Post> findFirst() {
+    return this.postRepository.findFirstByOrderByIdDesc();
   }
 
   private void validateImage(String imageUrl) {

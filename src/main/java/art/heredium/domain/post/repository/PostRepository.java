@@ -14,11 +14,13 @@ import art.heredium.domain.post.entity.Post;
 public interface PostRepository extends JpaRepository<Post, Long>, PostRepositoryQueryDsl {
   List<Post> findAllByIsEnabledTrue();
 
-  Optional<Post> findByIdAndIsEnabledTrue(long id);
+  Optional<Post> findFirstByIsEnabledTrue();
 
   Optional<Post> findById(long id);
 
   @Query(
       "SELECT p FROM Membership m LEFT JOIN Post p ON m.post.id = p.id WHERE m.id = :membership_id AND p.isEnabled IS TRUE")
   Optional<Post> findByMembershipIdAndIsEnabledTrue(@Param("membership_id") long membershipId);
+
+  Optional<Post> findFirstByOrderByIdDesc();
 }

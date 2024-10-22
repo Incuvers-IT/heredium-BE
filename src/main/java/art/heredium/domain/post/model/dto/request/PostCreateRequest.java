@@ -77,11 +77,17 @@ public class PostCreateRequest {
   @Getter
   @Setter
   public static class AdditionalInfo {
+    @JsonProperty("future_exhibition_count")
+    private Integer futureExhibitionCount;
+
     @JsonProperty("ongoing_exhibition_count")
     private Integer ongoingExhibitionCount;
 
     @JsonProperty("completed_exhibition_count")
     private Integer completedExhibitionCount;
+
+    @JsonProperty("future_program_count")
+    private Integer futureProgramCount;
 
     @JsonProperty("ongoing_program_count")
     private Integer ongoingProgramCount;
