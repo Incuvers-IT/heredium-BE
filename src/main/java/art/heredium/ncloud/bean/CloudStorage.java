@@ -180,9 +180,29 @@ public class CloudStorage {
 
   public void move(String oldPath, String newPath) {
     AmazonS3 s3 = getSession();
+
+    // Log bucket ACL
+    AccessControlList bucketAcl = s3.getBucketAcl(BUCKET);
+    log.info("Bucket ACL before move: {}", bucketAcl.getGrantsAsList());
+
+    // Log old object ACL
+    AccessControlList oldObjectAcl = s3.getObjectAcl(BUCKET, oldPath);
+    log.info("Old object ACL before move: {}", oldObjectAcl.getGrantsAsList());
+
+    // Perform the move operation
     s3.copyObject(BUCKET, oldPath, BUCKET, newPath);
-//    s3.setObjectAcl(BUCKET, newPath, CannedAccessControlList.PublicRead);
+    // s3.setObjectAcl(BUCKET, newPath, CannedAccessControlList.PublicRead);
+
+    // Log new object ACL
+    AccessControlList newObjectAcl = s3.getObjectAcl(BUCKET, newPath);
+    log.info("New object ACL after move: {}", newObjectAcl.getGrantsAsList());
+
+    // Delete the old object
     delete(oldPath);
+
+    // Log bucket ACL again
+    bucketAcl = s3.getBucketAcl(BUCKET);
+    log.info("Bucket ACL after move: {}", bucketAcl.getGrantsAsList());
   }
 
   public boolean isExistObject(String objectName) {
