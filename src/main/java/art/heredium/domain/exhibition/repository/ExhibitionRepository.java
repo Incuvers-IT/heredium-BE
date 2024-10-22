@@ -26,13 +26,13 @@ public interface ExhibitionRepository
 
   @Query(
       value =
-          "SELECT * FROM exhibition e WHERE e.start_date > now() AND e.is_enabled IS TRUE ORDER BY e.start_date DESC, e.end_date DESC, e.created_date DESC LIMIT :count",
+          "SELECT * FROM exhibition e WHERE e.start_date > now() AND e.is_enabled IS TRUE ORDER BY e.start_date, e.end_date, e.created_date LIMIT :count",
       nativeQuery = true)
   List<Exhibition> findFirstXByFutureAndIsEnabledTrue(@Param("count") int count);
 
   @Query(
       value =
-          "SELECT * FROM exhibition e WHERE e.start_date <= now() AND e.end_date >= now() AND e.is_enabled IS TRUE ORDER BY e.start_date DESC, e.end_date DESC, e.created_date DESC LIMIT :count",
+          "SELECT * FROM exhibition e WHERE e.start_date <= now() AND e.end_date >= now() AND e.is_enabled IS TRUE ORDER BY e.end_date LIMIT :count",
       nativeQuery = true)
   List<Exhibition> findFirstXByOngoingAndIsEnabledTrue(@Param("count") int count);
 

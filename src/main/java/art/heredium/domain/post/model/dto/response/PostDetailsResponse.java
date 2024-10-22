@@ -87,23 +87,11 @@ public class PostDetailsResponse {
   @Getter
   @Setter
   public static class AdditionalInfoResponse {
-    @JsonProperty("future_exhibitions")
-    private List<ExhibitionResponse> futureExhibitions;
+    @JsonProperty("exhibitions")
+    private ExhibitionDto exhibitions;
 
-    @JsonProperty("ongoing_exhibitions")
-    private List<ExhibitionResponse> ongoingExhibitions;
-
-    @JsonProperty("completed_exhibitions")
-    private List<ExhibitionResponse> completedExhibitions;
-
-    @JsonProperty("future_programs")
-    private List<ProgramResponse> futurePrograms;
-
-    @JsonProperty("ongoing_programs")
-    private List<ProgramResponse> ongoingPrograms;
-
-    @JsonProperty("completed_programs")
-    private List<ProgramResponse> completedPrograms;
+    @JsonProperty("programs")
+    private ProgramDto programs;
 
     @Builder
     public AdditionalInfoResponse(
@@ -113,12 +101,53 @@ public class PostDetailsResponse {
         List<Program> futurePrograms,
         List<Program> ongoingPrograms,
         List<Program> completedPrograms) {
+      this.exhibitions =
+          new ExhibitionDto(futureExhibitions, ongoingExhibitions, completedExhibitions);
+      this.programs = new ProgramDto(futurePrograms, ongoingPrograms, completedPrograms);
+    }
+  }
+
+  @Getter
+  @Setter
+  public static class ExhibitionDto {
+    @JsonProperty("future")
+    private List<ExhibitionResponse> futureExhibitions;
+
+    @JsonProperty("ongoing")
+    private List<ExhibitionResponse> ongoingExhibitions;
+
+    @JsonProperty("completed")
+    private List<ExhibitionResponse> completedExhibitions;
+
+    public ExhibitionDto(
+        List<Exhibition> futureExhibitions,
+        List<Exhibition> ongoingExhibitions,
+        List<Exhibition> completedExhibitions) {
       this.futureExhibitions =
           futureExhibitions.stream().map(ExhibitionResponse::new).collect(Collectors.toList());
       this.ongoingExhibitions =
           ongoingExhibitions.stream().map(ExhibitionResponse::new).collect(Collectors.toList());
       this.completedExhibitions =
           completedExhibitions.stream().map(ExhibitionResponse::new).collect(Collectors.toList());
+    }
+  }
+
+  @Getter
+  @Setter
+  public static class ProgramDto {
+    @JsonProperty("future")
+    private List<ProgramResponse> futurePrograms;
+
+    @JsonProperty("ongoing")
+    private List<ProgramResponse> ongoingPrograms;
+
+    @JsonProperty("completed")
+    private List<ProgramResponse> completedPrograms;
+
+    public ProgramDto(
+        List<Program> futurePrograms,
+        List<Program> ongoingPrograms,
+        List<Program> completedPrograms) {
       this.futurePrograms =
           futurePrograms.stream().map(ProgramResponse::new).collect(Collectors.toList());
       this.ongoingPrograms =

@@ -25,7 +25,7 @@ public interface ProgramRepository extends JpaRepository<Program, Long>, Program
 
   @Query(
       value =
-          "SELECT * FROM program p WHERE p.start_date > now() AND p.is_enabled IS TRUE ORDER BY p.start_date DESC, p.end_date DESC, p.created_date DESC LIMIT :count",
+          "SELECT * FROM program p WHERE p.start_date > now() AND p.is_enabled IS TRUE ORDER BY p.end_date LIMIT :count",
       nativeQuery = true)
   List<Program> findFirstXByFutureAndIsEnabledTrue(@Param("count") int count);
 

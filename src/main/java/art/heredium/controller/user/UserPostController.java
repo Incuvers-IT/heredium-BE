@@ -1,5 +1,6 @@
 package art.heredium.controller.user;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import lombok.RequiredArgsConstructor;
@@ -44,12 +45,12 @@ public class UserPostController {
             .findFirstByIsEnabledTrue()
             .orElseThrow(() -> new ApiException(ErrorCode.POST_NOT_FOUND));
 
-    List<Exhibition> futureExhibitions = null;
-    List<Exhibition> ongoingExhibitions = null;
-    List<Exhibition> completedExhibitions = null;
-    List<Program> futurePrograms = null;
-    List<Program> ongoingPrograms = null;
-    List<Program> completedPrograms = null;
+    List<Exhibition> futureExhibitions = new ArrayList<>();
+    List<Exhibition> ongoingExhibitions = new ArrayList<>();
+    List<Exhibition> completedExhibitions = new ArrayList<>();
+    List<Program> futurePrograms = new ArrayList<>();
+    List<Program> ongoingPrograms = new ArrayList<>();
+    List<Program> completedPrograms = new ArrayList<>();
     if (post.getFutureExhibitionCount() != 0) {
       futureExhibitions =
           this.exhibitionService.findFirstXByFutureAndIsEnabledTrue(
