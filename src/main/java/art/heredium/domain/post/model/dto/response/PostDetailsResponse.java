@@ -41,9 +41,6 @@ public class PostDetailsResponse {
   @JsonProperty("content_detail")
   private String contentDetail;
 
-  @JsonProperty("navigation_link")
-  private String navigationLink;
-
   @JsonProperty("additional_info")
   private AdditionalInfoResponse additionalInfo;
 
@@ -67,7 +64,6 @@ public class PostDetailsResponse {
     }
     this.isEnabled = post.getIsEnabled();
     this.contentDetail = post.getContentDetail();
-    this.navigationLink = post.getNavigationLink();
     this.memberships =
         post.getMemberships().stream()
             .filter(Membership::getIsEnabled)

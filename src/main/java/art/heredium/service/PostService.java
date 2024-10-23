@@ -60,7 +60,6 @@ public class PostService {
             .imageOriginalFileName(request.getNoteImage().getOriginalFileName())
             .isEnabled(request.getIsEnabled())
             .contentDetail(request.getContentDetail())
-            .navigationLink(request.getNavigationLink())
             .admin(admin)
             .futureExhibitionCount(
                 Optional.ofNullable(additionalInfo)
@@ -169,7 +168,6 @@ public class PostService {
   private void updatePostFields(Post post, PostUpdateRequest request) {
     if (request.getName() != null) post.setName(request.getName());
     if (request.getIsEnabled() != null) post.setIsEnabled(request.getIsEnabled());
-    if (request.getNavigationLink() != null) post.setNavigationLink(request.getNavigationLink());
     if (request.getContentDetail() != null) post.setContentDetail(request.getContentDetail());
     if (request.getThumbnailUrls() != null) updateThumbnailUrls(post, request.getThumbnailUrls());
     if (request.getNoteImage() != null) updateNoteImage(post, request.getNoteImage());

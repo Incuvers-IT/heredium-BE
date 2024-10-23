@@ -18,9 +18,6 @@ public class PostUpdateRequest {
   @JsonProperty("is_enabled")
   private Boolean isEnabled;
 
-  @JsonProperty("navigation_link")
-  private String navigationLink;
-
   @JsonProperty("content_detail")
   private String contentDetail;
 
