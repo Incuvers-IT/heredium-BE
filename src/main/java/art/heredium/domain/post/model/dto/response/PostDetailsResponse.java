@@ -1,5 +1,6 @@
 package art.heredium.domain.post.model.dto.response;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
@@ -46,6 +47,12 @@ public class PostDetailsResponse {
 
   private List<MembershipResponse> memberships;
 
+  @JsonProperty("start_date")
+  private LocalDate startDate;
+
+  @JsonProperty("end_date")
+  private LocalDate endDate;
+
   public PostDetailsResponse(
       @NonNull final Post post,
       @Nullable final List<Exhibition> futureExhibitions,
@@ -56,6 +63,8 @@ public class PostDetailsResponse {
       @Nullable final List<Program> completedPrograms) {
     this.id = post.getId();
     this.name = post.getName();
+    this.startDate = post.getStartDate();
+    this.endDate = post.getEndDate();
     this.noteImage =
         NoteImageResponse.builder()
             .noteImageUrl(post.getImageUrl())
