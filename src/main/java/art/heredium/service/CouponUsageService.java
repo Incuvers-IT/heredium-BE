@@ -1,10 +1,7 @@
 package art.heredium.service;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -134,42 +131,41 @@ public class CouponUsageService {
       @NonNull final CouponSource source) {
     long numberOfUses = Optional.ofNullable(coupon.getNumberOfUses()).orElse(1L);
     boolean isPermanentCoupon = Boolean.TRUE.equals(coupon.getIsPermanent());
-    LocalDateTime distributionDateTime = LocalDateTime.now();
+    LocalDateTime startedDate = null;
+    LocalDateTime endedDate = null;
+    if (source == CouponSource.MEMBERSHIP_PACKAGE) {
+      startedDate = LocalDateTime.now();
+      endedDate = startedDate.plusDays(coupon.getPeriodInDays());
+    } else if (source == CouponSource.ADMIN_SITE) {
+      startedDate = coupon.getStartedDate();
+      endedDate = coupon.getEndedDate();
+    }
     List<CouponUsage> couponUsages = new ArrayList<>();
-    accountIds.stream()
-        .distinct()
-        .forEach(
-            accountId -> {
-              final Account account =
-                  this.accountRepository
-                      .findById(accountId)
-                      .orElseThrow(() -> new ApiException(ErrorCode.USER_NOT_FOUND));
-              if (isPermanentCoupon) {
-                CouponUsage couponUsage =
-                    new CouponUsage(
-                        coupon,
-                        account,
-                        distributionDateTime,
-                        distributionDateTime.plusDays(coupon.getPeriodInDays()),
-                        true,
-                        0L,
-                        source);
-                couponUsages.add(couponUsage);
-              } else {
-                for (int i = 0; i < numberOfUses; i++) {
-                  CouponUsage couponUsage =
-                      new CouponUsage(
-                          coupon,
-                          account,
-                          distributionDateTime,
-                          distributionDateTime.plusDays(coupon.getPeriodInDays()),
-                          false,
-                          0L,
-                          source);
-                  couponUsages.add(couponUsage);
-                }
-              }
-            });
+    LocalDateTime couponStartedDate = startedDate;
+    LocalDateTime couponEndedDate = endedDate;
+    Set<Long> accountIdSet = new HashSet<>(accountIds);
+    Map<Long, Account> accountMap =
+        this.accountRepository.findAllByIds(accountIdSet).stream()
+            .collect(Collectors.toMap(Account::getId, account -> account));
+    if (accountMap.entrySet().size() != accountIdSet.size()) {
+      throw new ApiException(ErrorCode.USER_NOT_FOUND);
+    }
+    accountMap.forEach(
+        (accountId, account) -> {
+          if (isPermanentCoupon) {
+            CouponUsage couponUsage =
+                new CouponUsage(
+                    coupon, account, couponStartedDate, couponEndedDate, true, 0L, source);
+            couponUsages.add(couponUsage);
+          } else {
+            for (int i = 0; i < numberOfUses; i++) {
+              CouponUsage couponUsage =
+                  new CouponUsage(
+                      coupon, account, couponStartedDate, couponEndedDate, false, 0L, source);
+              couponUsages.add(couponUsage);
+            }
+          }
+        });
     return this.couponUsageRepository.saveAll(couponUsages);
   }
 }
