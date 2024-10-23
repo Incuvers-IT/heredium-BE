@@ -7,6 +7,8 @@ import java.util.List;
 
 import lombok.RequiredArgsConstructor;
 
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -95,5 +97,22 @@ public class FileController {
     httpHeaders.setContentDispositionFormData("attachment", downloadName);
 
     return new ResponseEntity<>(bytes, httpHeaders, HttpStatus.OK);
+  }
+
+  @GetMapping("/template/company-membership/download")
+  public ResponseEntity<Resource> downloadCompanyTemplate() throws IOException {
+    Resource resource = new ClassPathResource("company_upload_membership_template.xlsx");
+
+    HttpHeaders headers = new HttpHeaders();
+    headers.add(
+        HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=membership_upload_template.xlsx");
+
+    return ResponseEntity.ok()
+        .headers(headers)
+        .contentLength(resource.contentLength())
+        .contentType(
+            MediaType.parseMediaType(
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+        .body(resource);
   }
 }
