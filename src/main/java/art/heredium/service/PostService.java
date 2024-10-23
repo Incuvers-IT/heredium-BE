@@ -6,6 +6,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import art.heredium.domain.coupon.model.dto.request.CouponCreateRequest;
+import art.heredium.domain.coupon.validation.CouponValidationUtil;
+import art.heredium.domain.post.model.dto.request.*;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.data.domain.Page;
@@ -20,21 +23,17 @@ import art.heredium.core.config.error.entity.ApiException;
 import art.heredium.core.config.error.entity.ErrorCode;
 import art.heredium.core.util.AuthUtil;
 import art.heredium.core.util.Constants;
+import art.heredium.core.util.ValidationUtil;
 import art.heredium.domain.account.entity.Admin;
+import art.heredium.domain.account.repository.AdminRepository;
 import art.heredium.domain.common.model.Storage;
 import art.heredium.domain.common.type.FilePathType;
 import art.heredium.domain.coupon.entity.Coupon;
-import art.heredium.domain.coupon.model.dto.request.MembershipCouponCreateRequest;
 import art.heredium.domain.coupon.repository.CouponRepository;
 import art.heredium.domain.membership.entity.Membership;
 import art.heredium.domain.membership.model.dto.request.MembershipCreateRequest;
 import art.heredium.domain.membership.repository.MembershipRepository;
 import art.heredium.domain.post.entity.Post;
-import art.heredium.domain.post.model.dto.request.GetAdminPostRequest;
-import art.heredium.domain.post.model.dto.request.MembershipCouponUpdateRequest;
-import art.heredium.domain.post.model.dto.request.PostCreateRequest;
-import art.heredium.domain.post.model.dto.request.PostMembershipUpdateRequest;
-import art.heredium.domain.post.model.dto.request.PostUpdateRequest;
 import art.heredium.domain.post.model.dto.response.PostResponse;
 import art.heredium.domain.post.repository.PostRepository;
 import art.heredium.ncloud.bean.CloudStorage;
@@ -132,8 +131,9 @@ public class PostService {
     final String fileFolderPath = String.format("%s/%d", FilePathType.POST.getPath(), postId);
     final String imageUrl = request.getNoteImage().getNoteImageUrl();
     if (!StringUtils.isEmpty(imageUrl)) {
-      validateImage(imageUrl);
-      post.updateImageUrl(this.moveImageToNewPlace(imageUrl, fileFolderPath));
+      ValidationUtil.validateImage(this.cloudStorage, imageUrl);
+      post.updateImageUrl(
+          Constants.moveImageToNewPlace(this.cloudStorage, imageUrl, fileFolderPath));
     }
     post.updateThumbnailUrls(this.buildThumbnailUrls(request.getThumbnailUrls(), postId));
     post.updateContentDetail(this.moveEditorContent(request.getContentDetail(), fileFolderPath));
@@ -152,15 +152,24 @@ public class PostService {
     }
     final String small =
         Optional.ofNullable(thumbnailUrl.getSmallThumbnailUrl())
-            .map(url -> this.moveImageToNewPlace(url, FilePathType.POST.getPath() + "/" + postId))
+            .map(
+                url ->
+                    Constants.moveImageToNewPlace(
+                        this.cloudStorage, url, FilePathType.POST.getPath() + "/" + postId))
             .orElse(StringUtils.EMPTY);
     final String medium =
         Optional.ofNullable(thumbnailUrl.getMediumThumbnailUrl())
-            .map(url -> this.moveImageToNewPlace(url, FilePathType.POST.getPath() + "/" + postId))
+            .map(
+                url ->
+                    Constants.moveImageToNewPlace(
+                        this.cloudStorage, url, FilePathType.POST.getPath() + "/" + postId))
             .orElse(StringUtils.EMPTY);
     final String large =
         Optional.ofNullable(thumbnailUrl.getLargeThumbnailUrl())
-            .map(url -> this.moveImageToNewPlace(url, FilePathType.POST.getPath() + "/" + postId))
+            .map(
+                url ->
+                    Constants.moveImageToNewPlace(
+                        this.cloudStorage, url, FilePathType.POST.getPath() + "/" + postId))
             .orElse(StringUtils.EMPTY);
     return String.join(THUMBNAIL_URL_DELIMITER, small, medium, large);
   }
@@ -174,25 +183,13 @@ public class PostService {
     return this.postRepository.findFirstByOrderByIdDesc();
   }
 
-  private void validateImage(String imageUrl) {
-    if (imageUrl == null || !cloudStorage.isExistObject(imageUrl)) {
-      throw new ApiException(ErrorCode.S3_NOT_FOUND, imageUrl);
-    }
-  }
-
-  private String moveImageToNewPlace(String tempOriginalUrl, String newPath) {
-    Storage storage = new Storage();
-    storage.setSavedFileName(tempOriginalUrl);
-    Constants.moveFileFromTemp(this.cloudStorage, storage, newPath);
-    return storage.getSavedFileName();
-  }
-
   private String moveEditorContent(final String editorContent, final String newPath) {
     final List<String> imageUrls = Constants.getImageNameFromHtml(editorContent);
     String result = editorContent;
     for (String tempImageUrl : imageUrls) {
-      validateImage(tempImageUrl);
-      final String newImageUrl = this.moveImageToNewPlace(tempImageUrl, newPath);
+      ValidationUtil.validateImage(this.cloudStorage, tempImageUrl);
+      final String newImageUrl =
+          Constants.moveImageToNewPlace(this.cloudStorage, tempImageUrl, newPath);
       result = result.replace(tempImageUrl, newImageUrl);
     }
     return result;
@@ -250,8 +247,8 @@ public class PostService {
       return existingUrl;
     }
 
-    validateImage(newUrl);
-    return moveImageToNewPlace(newUrl, fileFolderPath);
+    ValidationUtil.validateImage(this.cloudStorage, newUrl);
+    return Constants.moveImageToNewPlace(this.cloudStorage, newUrl, fileFolderPath);
   }
 
   private void updateNoteImage(Post post, PostUpdateRequest.NoteImage noteImage) {
@@ -264,8 +261,8 @@ public class PostService {
     String noteImageUrl = noteImage.getNoteImageUrl();
     if (!StringUtils.isEmpty(noteImageUrl)) {
       String fileFolderPath = String.format("%s/%d", FilePathType.POST.getPath(), post.getId());
-      validateImage(noteImageUrl);
-      String newImageUrl = this.moveImageToNewPlace(noteImageUrl, fileFolderPath);
+      ValidationUtil.validateImage(this.cloudStorage, noteImageUrl);
+      String newImageUrl = Constants.moveImageToNewPlace(this.cloudStorage, noteImageUrl, fileFolderPath);
       post.setImageUrl(newImageUrl);
     }
   }
@@ -310,10 +307,10 @@ public class PostService {
     if (request.getName() != null) membership.setName(request.getName());
     if (request.getPrice() != null) membership.setPrice(request.getPrice());
     if (request.getImageUrl() != null) {
-      membershipService.validateImage(request.getImageUrl());
+      ValidationUtil.validateImage(this.cloudStorage, request.getImageUrl());
       String newMembershipPath = FilePathType.MEMBERSHIP.getPath() + "/" + membership.getId();
       String permanentImageUrl =
-          membershipService.moveImageToNewPlace(request.getImageUrl(), newMembershipPath);
+          Constants.moveImageToNewPlace(this.cloudStorage, request.getImageUrl(), newMembershipPath);
       membership.setImageUrl(permanentImageUrl);
     }
     if (request.getPeriod() != null) membership.setPeriod(request.getPeriod());
@@ -328,23 +325,23 @@ public class PostService {
     createRequest.setName(request.getName());
     createRequest.setPrice(request.getPrice());
     createRequest.setImageUrl(request.getImageUrl());
-    createRequest.setCoupons(convertToMembershipCouponCreateRequests(request.getCoupons()));
+    createRequest.setCoupons(convertToCouponCreateRequests(request.getCoupons()));
 
     membershipService.createMemberships(post.getId(), Arrays.asList(createRequest));
   }
 
-  private List<MembershipCouponCreateRequest> convertToMembershipCouponCreateRequests(
+  private List<CouponCreateRequest> convertToCouponCreateRequests(
       List<MembershipCouponUpdateRequest> updateRequests) {
     if (updateRequests == null) return new ArrayList<>();
 
     return updateRequests.stream()
-        .map(this::convertToMembershipCouponCreateRequest)
+        .map(this::convertToCouponCreateRequest)
         .collect(Collectors.toList());
   }
 
-  private MembershipCouponCreateRequest convertToMembershipCouponCreateRequest(
+  private CouponCreateRequest convertToCouponCreateRequest(
       MembershipCouponUpdateRequest updateRequest) {
-    return MembershipCouponCreateRequest.builder()
+    return CouponCreateRequest.builder()
         .name(updateRequest.getName())
         .couponType(updateRequest.getCouponType())
         .discountPercent(updateRequest.getDiscountPercent())
@@ -383,10 +380,10 @@ public class PostService {
       coupon.setDiscountPercent(request.getDiscountPercent());
     if (request.getPeriodInDays() != null) coupon.setPeriodInDays(request.getPeriodInDays());
     if (request.getImageUrl() != null) {
-      membershipService.validateImage(request.getImageUrl());
+      ValidationUtil.validateImage(this.cloudStorage, request.getImageUrl());
       String newCouponPath = FilePathType.COUPON.getPath() + "/" + coupon.getId();
       String permanentCouponImageUrl =
-          membershipService.moveImageToNewPlace(request.getImageUrl(), newCouponPath);
+          Constants.moveImageToNewPlace(this.cloudStorage, request.getImageUrl(), newCouponPath);
       coupon.setImageUrl(permanentCouponImageUrl);
     }
     if (request.getNumberOfUses() != null) coupon.setNumberOfUses(request.getNumberOfUses());
@@ -396,10 +393,10 @@ public class PostService {
   }
 
   private void createNewCoupon(Membership membership, MembershipCouponUpdateRequest request) {
-    MembershipCouponCreateRequest createRequest = convertToMembershipCouponCreateRequest(request);
+    CouponCreateRequest createRequest = convertToCouponCreateRequest(request);
 
-    membershipService.validateCouponRequest(createRequest);
-    membershipService.validateImage(createRequest.getImageUrl());
+    CouponValidationUtil.validateCouponRequest(createRequest);
+    ValidationUtil.validateImage(this.cloudStorage, createRequest.getImageUrl());
 
     Coupon newCoupon =
         Coupon.builder()
@@ -418,7 +415,7 @@ public class PostService {
     if (StringUtils.isNotEmpty(createRequest.getImageUrl())) {
       String newCouponPath = FilePathType.COUPON.getPath() + "/" + savedCoupon.getId();
       String permanentCouponImageUrl =
-          membershipService.moveImageToNewPlace(createRequest.getImageUrl(), newCouponPath);
+          Constants.moveImageToNewPlace(this.cloudStorage, createRequest.getImageUrl(), newCouponPath);
       savedCoupon.setImageUrl(permanentCouponImageUrl);
       couponRepository.save(savedCoupon);
     }

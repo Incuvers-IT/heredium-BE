@@ -14,11 +14,7 @@ import art.heredium.core.config.error.entity.ApiException;
 import art.heredium.core.config.error.entity.ErrorCode;
 import art.heredium.core.util.Constants;
 import art.heredium.core.util.ValidationUtil;
-import art.heredium.domain.common.model.Storage;
 import art.heredium.domain.common.type.FilePathType;
-import art.heredium.domain.coupon.entity.Coupon;
-import art.heredium.domain.coupon.model.dto.request.CouponCreateRequest;
-import art.heredium.domain.coupon.repository.CouponRepository;
 import art.heredium.domain.membership.entity.Membership;
 import art.heredium.domain.membership.model.dto.request.MembershipCreateRequest;
 import art.heredium.domain.membership.repository.MembershipRepository;
@@ -36,7 +32,7 @@ public class MembershipService {
 
   private final MembershipRepository membershipRepository;
   private final PostRepository postRepository;
-  private final CouponRepository couponRepository;
+  private final CouponService couponService;
   private final CloudStorage cloudStorage;
 
   public List<Membership> findByPostIdAndIsEnabledTrue(long postId) {
@@ -78,50 +74,21 @@ public class MembershipService {
         // Move membership image to permanent storage and update the imageUrl
         String newMembershipPath =
             FilePathType.MEMBERSHIP.getPath() + "/" + savedMembership.getId();
-        String permanentImageUrl = moveImageToNewPlace(request.getImageUrl(), newMembershipPath);
+        String permanentImageUrl =
+            Constants.moveImageToNewPlace(
+                this.cloudStorage, request.getImageUrl(), newMembershipPath);
         savedMembership.updateImageUrl(permanentImageUrl);
         membershipRepository.save(savedMembership);
       }
 
-      for (CouponCreateRequest couponRequest : request.getCoupons()) {
-        ValidationUtil.validateCouponRequest(couponRequest);
-
-        ValidationUtil.validateImage(this.cloudStorage, couponRequest.getImageUrl());
-
-        Coupon coupon =
-            Coupon.builder()
-                .name(couponRequest.getName())
-                .couponType(couponRequest.getCouponType())
-                .discountPercent(couponRequest.getDiscountPercent())
-                .periodInDays(couponRequest.getPeriodInDays())
-                .imageUrl(couponRequest.getImageUrl())
-                .membership(savedMembership)
-                .numberOfUses(couponRequest.getNumberOfUses())
-                .isPermanent(couponRequest.getIsPermanent())
-                .isNonMembershipCoupon(false)
-                .build();
-
-        Coupon savedCoupon = couponRepository.save(coupon);
-
-        if (StringUtils.isNotEmpty(couponRequest.getImageUrl())) {
-          // Move coupon image to permanent storage and update the imageUrl
-          String newCouponPath = FilePathType.COUPON.getPath() + "/" + savedCoupon.getId();
-          String permanentCouponImageUrl =
-              moveImageToNewPlace(couponRequest.getImageUrl(), newCouponPath);
-          savedCoupon.updateImageUrl(permanentCouponImageUrl);
-          couponRepository.save(savedCoupon);
-        }
-      }
+      request
+          .getCoupons()
+          .forEach(
+              couponRequest ->
+                  this.couponService.createMembershipCoupon(couponRequest, savedMembership));
     }
 
     return membershipIds;
-  }
-
-  private String moveImageToNewPlace(String tempOriginalUrl, String newPath) {
-    Storage storage = new Storage();
-    storage.setSavedFileName(tempOriginalUrl);
-    Constants.moveFileFromTemp(cloudStorage, storage, newPath);
-    return storage.getSavedFileName();
   }
 
   @Transactional(rollbackFor = Exception.class)
