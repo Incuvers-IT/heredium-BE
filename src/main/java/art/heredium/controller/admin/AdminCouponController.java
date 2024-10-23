@@ -5,7 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import art.heredium.domain.coupon.model.dto.request.CouponCreateRequest;
+import art.heredium.domain.coupon.model.dto.request.NonMembershipCouponCreateRequest;
 import art.heredium.domain.coupon.model.dto.response.CouponUsageResponse;
 import art.heredium.service.CouponService;
 import art.heredium.service.CouponUsageService;
@@ -33,7 +33,7 @@ public class AdminCouponController {
 
   @PostMapping("/non-membership")
   public ResponseEntity<Long> createNonMembershipCoupon(
-      @RequestBody final CouponCreateRequest request) {
+      @RequestBody final NonMembershipCouponCreateRequest request) {
     return ResponseEntity.ok(this.couponService.createNonMembershipCoupon(request));
   }
 }

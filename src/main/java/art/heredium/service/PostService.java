@@ -22,7 +22,7 @@ import art.heredium.core.util.ValidationUtil;
 import art.heredium.domain.account.entity.Admin;
 import art.heredium.domain.common.type.FilePathType;
 import art.heredium.domain.coupon.entity.Coupon;
-import art.heredium.domain.coupon.model.dto.request.CouponCreateRequest;
+import art.heredium.domain.coupon.model.dto.request.MembershipCouponCreateRequest;
 import art.heredium.domain.coupon.repository.CouponRepository;
 import art.heredium.domain.coupon.validation.CouponValidationUtil;
 import art.heredium.domain.membership.entity.Membership;
@@ -290,7 +290,7 @@ public class PostService {
     membershipService.createMemberships(post.getId(), Arrays.asList(createRequest));
   }
 
-  private List<CouponCreateRequest> convertToCouponCreateRequests(
+  private List<MembershipCouponCreateRequest> convertToCouponCreateRequests(
       List<MembershipCouponUpdateRequest> updateRequests) {
     if (updateRequests == null) return new ArrayList<>();
 
@@ -299,17 +299,17 @@ public class PostService {
         .collect(Collectors.toList());
   }
 
-  private CouponCreateRequest convertToCouponCreateRequest(
+  private MembershipCouponCreateRequest convertToCouponCreateRequest(
       MembershipCouponUpdateRequest updateRequest) {
-    return CouponCreateRequest.builder()
-        .name(updateRequest.getName())
-        .couponType(updateRequest.getCouponType())
-        .discountPercent(updateRequest.getDiscountPercent())
-        .periodInDays(updateRequest.getPeriodInDays())
-        .imageUrl(updateRequest.getImageUrl())
-        .numberOfUses(updateRequest.getNumberOfUses())
-        .isPermanent(updateRequest.getIsPermanent())
-        .build();
+    MembershipCouponCreateRequest createRequest = new MembershipCouponCreateRequest();
+    createRequest.setName(updateRequest.getName());
+    createRequest.setCouponType(createRequest.getCouponType());
+    createRequest.setDiscountPercent(createRequest.getDiscountPercent());
+    createRequest.setPeriodInDays(createRequest.getPeriodInDays());
+    createRequest.setImageUrl(createRequest.getImageUrl());
+    createRequest.setNumberOfUses(createRequest.getNumberOfUses());
+    createRequest.setIsPermanent(createRequest.getIsPermanent());
+    return createRequest;
   }
 
   private void updateCoupons(
@@ -353,7 +353,7 @@ public class PostService {
   }
 
   private void createNewCoupon(Membership membership, MembershipCouponUpdateRequest request) {
-    CouponCreateRequest createRequest = convertToCouponCreateRequest(request);
+    MembershipCouponCreateRequest createRequest = convertToCouponCreateRequest(request);
 
     CouponValidationUtil.validateCouponRequest(createRequest);
     ValidationUtil.validateImage(this.cloudStorage, createRequest.getImageUrl());
