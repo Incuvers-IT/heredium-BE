@@ -93,4 +93,11 @@ public class AdminAccountController {
     Map<String, Object> data = excelService.sleeperDownload(dto, fileName);
     return new ModelAndView("xlsxView", data);
   }
+
+  @GetMapping("/with-membership")
+  @SupervisorPermission
+  public ResponseEntity listWithMembershipInfo(
+      @Valid GetAccountWithMembershipInfoRequest dto, Pageable pageable) {
+    return ResponseEntity.ok(accountService.listWithMembershipInfo(dto, pageable));
+  }
 }

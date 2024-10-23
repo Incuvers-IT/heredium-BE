@@ -1,5 +1,6 @@
 package art.heredium.domain.account.repository;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -13,6 +14,7 @@ import org.springframework.data.domain.Pageable;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.ExpressionUtils;
 import com.querydsl.core.types.Predicate;
+import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.core.types.dsl.NumberPath;
@@ -26,11 +28,14 @@ import org.apache.tika.utils.StringUtils;
 import art.heredium.domain.account.entity.QAccount;
 import art.heredium.domain.account.entity.QAccountInfo;
 import art.heredium.domain.account.entity.QSleeperInfo;
-import art.heredium.domain.account.model.dto.request.GetAccountTicketGroupRequest;
-import art.heredium.domain.account.model.dto.request.GetAccountTicketInviteRequest;
-import art.heredium.domain.account.model.dto.request.GetAdminAccountRequest;
-import art.heredium.domain.account.model.dto.request.GetAdminSleeperRequest;
+import art.heredium.domain.account.model.dto.AccountMembershipRegistrationInfo;
+import art.heredium.domain.account.model.dto.request.*;
+import art.heredium.domain.account.model.dto.request.GetAccountWithMembershipInfoRequest;
 import art.heredium.domain.account.model.dto.response.*;
+import art.heredium.domain.account.model.dto.response.AccountWithMembershipInfoResponse;
+import art.heredium.domain.coupon.entity.QCouponUsage;
+import art.heredium.domain.membership.entity.QMembership;
+import art.heredium.domain.membership.entity.QMembershipRegistration;
 import art.heredium.domain.ticket.entity.QTicket;
 import art.heredium.domain.ticket.type.TicketKindType;
 import art.heredium.domain.ticket.type.TicketStateType;
@@ -373,5 +378,149 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
 
   private BooleanExpression idNotIn(List<Long> value) {
     return value != null && value.size() > 0 ? QAccount.account.id.notIn(value) : null;
+  }
+
+  @Override
+  public Page<AccountWithMembershipInfoResponse> searchWithMembershipInfo(
+      GetAccountWithMembershipInfoRequest dto, Pageable pageable) {
+    QAccount account = QAccount.account;
+    QAccountInfo accountInfo = QAccountInfo.accountInfo;
+    QTicket ticket = QTicket.ticket;
+    QCouponUsage couponUsage = QCouponUsage.couponUsage;
+    QMembershipRegistration membershipRegistration = QMembershipRegistration.membershipRegistration;
+    QMembership membership = QMembership.membership;
+
+    JPAQuery<AccountWithMembershipInfoResponse> query =
+        queryFactory
+            .select(
+                Projections.constructor(
+                    AccountWithMembershipInfoResponse.class,
+                    account.id,
+                    account.email,
+                    accountInfo.name,
+                    accountInfo.phone,
+                    account.createdDate,
+                    accountInfo.lastLoginDate,
+                    JPAExpressions.selectOne()
+                        .from(ticket)
+                        .where(
+                            ticket
+                                .account
+                                .eq(account)
+                                .and(
+                                    ticket.kind.in(
+                                        TicketKindType.PROGRAM, TicketKindType.EXHIBITION)))
+                        .exists(),
+                    JPAExpressions.selectOne()
+                        .from(couponUsage)
+                        .where(couponUsage.account.eq(account).and(couponUsage.isUsed.isTrue()))
+                        .exists(),
+                    membership.name,
+                    Projections.constructor(
+                        AccountMembershipRegistrationInfo.class,
+                        membershipRegistration.id,
+                        membershipRegistration.registrationDate,
+                        membershipRegistration.expirationDate)))
+            .from(account)
+            .innerJoin(account.accountInfo, accountInfo)
+            .leftJoin(membershipRegistration)
+            .on(membershipRegistration.account.eq(account))
+            .leftJoin(membershipRegistration.membership, membership)
+            .where(
+                createdDateBetween(dto.getSignUpDateFrom(), dto.getSignUpDateTo()),
+                hasNumberOfEntries(dto.getHasNumberOfEntries()),
+                alreadyLoginedBefore(dto.getAlreadyLoginedBefore()),
+                alreadyUsedCouponBefore(dto.getAlreadyUsedCouponBefore()),
+                hasMembership(dto.getHasMembership()));
+
+    // Create a count query
+    JPAQuery<Long> countQuery =
+        queryFactory
+            .select(account.count())
+            .from(account)
+            .innerJoin(account.accountInfo, accountInfo)
+            .leftJoin(membershipRegistration)
+            .on(membershipRegistration.account.eq(account))
+            .leftJoin(membershipRegistration.membership, membership)
+            .where(
+                createdDateBetween(dto.getSignUpDateFrom(), dto.getSignUpDateTo()),
+                hasNumberOfEntries(dto.getHasNumberOfEntries()),
+                alreadyLoginedBefore(dto.getAlreadyLoginedBefore()),
+                alreadyUsedCouponBefore(dto.getAlreadyUsedCouponBefore()),
+                hasMembership(dto.getHasMembership()));
+
+    long total = countQuery.fetchOne();
+
+    List<AccountWithMembershipInfoResponse> content =
+        query.offset(pageable.getOffset()).limit(pageable.getPageSize()).fetch();
+
+    return new PageImpl<>(content, pageable, total);
+  }
+
+  private BooleanExpression createdDateBetween(LocalDateTime from, LocalDateTime to) {
+    QAccount account = QAccount.account;
+    if (from != null && to != null) {
+      return account.createdDate.between(from, to);
+    } else if (from != null) {
+      return account.createdDate.goe(from);
+    } else if (to != null) {
+      return account.createdDate.loe(to);
+    }
+    return null;
+  }
+
+  private BooleanExpression hasNumberOfEntries(Boolean hasEntries) {
+    if (Boolean.TRUE.equals(hasEntries)) {
+      QAccount account = QAccount.account;
+      QTicket ticket = QTicket.ticket;
+      return JPAExpressions.selectOne()
+          .from(ticket)
+          .where(
+              ticket
+                  .account
+                  .eq(account)
+                  .and(ticket.kind.in(TicketKindType.PROGRAM, TicketKindType.EXHIBITION)))
+          .exists();
+    }
+    return null;
+  }
+
+  private BooleanExpression alreadyLoginedBefore(Boolean alreadyLogined) {
+    if (Boolean.TRUE.equals(alreadyLogined)) {
+      QAccountInfo accountInfo = QAccountInfo.accountInfo;
+      return accountInfo.lastLoginDate.isNotNull();
+    }
+    return null;
+  }
+
+  private BooleanExpression alreadyUsedCouponBefore(Boolean alreadyUsedCoupon) {
+    if (Boolean.TRUE.equals(alreadyUsedCoupon)) {
+      QAccount account = QAccount.account;
+      QCouponUsage couponUsage = QCouponUsage.couponUsage;
+      return JPAExpressions.selectOne()
+          .from(couponUsage)
+          .where(couponUsage.account.eq(account).and(couponUsage.isUsed.isTrue()))
+          .exists();
+    }
+    return null;
+  }
+
+  private BooleanExpression hasMembership(Boolean hasMembership) {
+    if (Boolean.TRUE.equals(hasMembership)) {
+      QAccount account = QAccount.account;
+      QMembershipRegistration membershipRegistration =
+          QMembershipRegistration.membershipRegistration;
+      LocalDate currentDate = LocalDate.now();
+
+      return JPAExpressions.selectOne()
+          .from(membershipRegistration)
+          .where(
+              membershipRegistration
+                  .account
+                  .eq(account)
+                  .and(membershipRegistration.expirationDate.goe(currentDate)))
+          .exists();
+    }
+    return null;
   }
 }

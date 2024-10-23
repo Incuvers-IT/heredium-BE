@@ -318,4 +318,9 @@ public class AccountService {
     }
     return true;
   }
+
+  public Page<AccountWithMembershipInfoResponse> listWithMembershipInfo(
+      GetAccountWithMembershipInfoRequest dto, Pageable pageable) {
+    return accountRepository.searchWithMembershipInfo(dto, pageable);
+  }
 }
