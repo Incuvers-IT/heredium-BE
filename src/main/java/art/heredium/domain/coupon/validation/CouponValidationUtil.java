@@ -7,8 +7,10 @@ import art.heredium.domain.coupon.model.dto.request.CouponCreateRequest;
 public class CouponValidationUtil {
 
   public static void validateCouponRequest(CouponCreateRequest couponRequest) {
-    if ((!couponRequest.getIsPermanent() && couponRequest.getNumberOfUses() == null)
-        || (couponRequest.getIsPermanent() && couponRequest.getNumberOfUses() != null)) {
+    final boolean isPermanentCoupon =
+        couponRequest.getIsPermanent() != null && couponRequest.getIsPermanent();
+    if ((!isPermanentCoupon && couponRequest.getNumberOfUses() == null)
+        || (isPermanentCoupon && couponRequest.getNumberOfUses() != null)) {
       throw new ApiException(
           ErrorCode.BAD_VALID,
           String.format(

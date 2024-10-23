@@ -145,7 +145,7 @@ public class CouponUsageService {
     LocalDateTime couponEndedDate = endedDate;
     Set<Long> accountIdSet = new HashSet<>(accountIds);
     Map<Long, Account> accountMap =
-        this.accountRepository.findAllByIds(accountIdSet).stream()
+        this.accountRepository.findByIdIn(accountIdSet).stream()
             .collect(Collectors.toMap(Account::getId, account -> account));
     if (accountMap.entrySet().size() != accountIdSet.size()) {
       throw new ApiException(ErrorCode.USER_NOT_FOUND);
