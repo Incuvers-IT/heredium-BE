@@ -24,10 +24,6 @@ public class PostCreateRequest {
   @NotNull
   private Boolean isEnabled;
 
-  @JsonProperty("navigation_link")
-  @NotBlank
-  private String navigationLink;
-
   @Size(max = 5000)
   @JsonProperty("content_detail")
   private String contentDetail;
