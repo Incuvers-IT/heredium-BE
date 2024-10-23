@@ -46,6 +46,5 @@ public interface AccountRepository extends JpaRepository<Account, Long>, Account
       "SELECT a FROM Account a INNER JOIN FETCH AccountInfo ai ON a.id = ai.id WHERE ai.phone = :phone")
   List<Account> findEmailByPhone(@Param("phone") String phone);
 
-  @Query("SELECT a FROM Account a WHERE a.id IN :ids")
-  List<Account> findAllByIds(@Param("ids") Set<Long> ids);
+  List<Account> findByIdIn(@Param("ids") Set<Long> ids);
 }
