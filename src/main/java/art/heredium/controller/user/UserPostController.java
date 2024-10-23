@@ -44,30 +44,30 @@ public class UserPostController {
     List<Program> futurePrograms = new ArrayList<>();
     List<Program> ongoingPrograms = new ArrayList<>();
     List<Program> completedPrograms = new ArrayList<>();
-    if (post.getFutureExhibitionCount() != 0) {
+    if (post.getFutureExhibitionCount() != null && post.getFutureExhibitionCount() != 0) {
       futureExhibitions =
           this.exhibitionService.findFirstXByFutureAndIsEnabledTrue(
               post.getFutureExhibitionCount());
     }
-    if (post.getOngoingExhibitionCount() != 0) {
+    if (post.getOngoingExhibitionCount() != null && post.getOngoingExhibitionCount() != 0) {
       ongoingExhibitions =
           this.exhibitionService.findFirstXByOngoingAndIsEnabledTrue(
               post.getOngoingExhibitionCount());
     }
-    if (post.getCompletedExhibitionCount() != 0) {
+    if (post.getCompletedExhibitionCount() != null && post.getCompletedExhibitionCount() != 0) {
       completedExhibitions =
           this.exhibitionService.findFirstXByCompletedAndIsEnabledTrue(
               post.getCompletedExhibitionCount());
     }
-    if (post.getFutureProgramCount() != 0) {
+    if (post.getFutureProgramCount() != null && post.getFutureProgramCount() != 0) {
       futurePrograms =
           this.programService.findFirstXByFutureAndIsEnabledTrue(post.getFutureProgramCount());
     }
-    if (post.getOngoingProgramCount() != 0) {
+    if (post.getOngoingProgramCount() != null && post.getOngoingProgramCount() != 0) {
       ongoingPrograms =
           this.programService.findFirstXByOngoingAndIsEnabledTrue(post.getOngoingProgramCount());
     }
-    if (post.getCompletedProgramCount() != 0) {
+    if (post.getCompletedProgramCount() != null && post.getCompletedProgramCount() != 0) {
       completedPrograms =
           this.programService.findFirstXByCompletedAndIsEnabledTrue(
               post.getCompletedProgramCount());
