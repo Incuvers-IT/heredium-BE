@@ -60,7 +60,7 @@ public class SecurityConfig {
     "/v3/api-docs/**",
     "/api/user/posts/enabled-list",
     "/api/user/posts/{post-id}",
-    "/api/admin/company-membership/download-template"
+    "/api/file/template/company-membership/download"
   };
 
   @Bean
