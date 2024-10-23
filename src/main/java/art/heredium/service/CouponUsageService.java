@@ -59,7 +59,18 @@ public class CouponUsageService {
 
   @Transactional(rollbackFor = Exception.class)
   public void assignCoupons(final long couponId, @NonNull List<Long> accountIds) {
-    this.assignCouponToAccounts(couponId, accountIds, CouponSource.ADMIN_SITE);
+    final Coupon coupon =
+        this.couponRepository
+            .findById(couponId)
+            .orElseThrow(() -> new ApiException(ErrorCode.COUPON_NOT_FOUND));
+    if (!coupon.getIsNonMembershipCoupon()) {
+      throw new ApiException(
+          ErrorCode.INVALID_COUPON_TO_ASSIGN,
+          String.format(
+              "Error while assigning coupon: %s: This coupon is membership coupon",
+              coupon.getName()));
+    }
+    this.assignCouponToAccounts(coupon, accountIds, CouponSource.ADMIN_SITE);
   }
 
   @Transactional(rollbackFor = Exception.class)
@@ -67,12 +78,20 @@ public class CouponUsageService {
       @NonNull Account account, @NonNull List<Coupon> coupons) {
     List<CouponUsage> couponUsages = new ArrayList<>();
     coupons.forEach(
-        coupon ->
-            couponUsages.addAll(
-                this.assignCouponToAccounts(
-                    coupon.getId(),
-                    Stream.of(account.getId()).collect(Collectors.toList()),
-                    CouponSource.MEMBERSHIP_PACKAGE)));
+        coupon -> {
+          if (coupon.getIsNonMembershipCoupon()) {
+            throw new ApiException(
+                ErrorCode.INVALID_COUPON_TO_ASSIGN,
+                String.format(
+                    "Error while assigning coupon: %s: This coupon is not membership coupon",
+                    coupon.getName()));
+          }
+          couponUsages.addAll(
+              this.assignCouponToAccounts(
+                  coupon,
+                  Stream.of(account.getId()).collect(Collectors.toList()),
+                  CouponSource.MEMBERSHIP_PACKAGE));
+        });
     return this.couponUsageRepository.saveAll(couponUsages);
   }
 
@@ -110,13 +129,9 @@ public class CouponUsageService {
   }
 
   private List<CouponUsage> assignCouponToAccounts(
-      final long couponId,
+      final Coupon coupon,
       @NonNull final List<Long> accountIds,
       @NonNull final CouponSource source) {
-    final Coupon coupon =
-        this.couponRepository
-            .findById(couponId)
-            .orElseThrow(() -> new ApiException(ErrorCode.COUPON_NOT_FOUND));
     long numberOfUses = Optional.ofNullable(coupon.getNumberOfUses()).orElse(1L);
     boolean isPermanentCoupon = Boolean.TRUE.equals(coupon.getIsPermanent());
     LocalDateTime distributionDateTime = LocalDateTime.now();

@@ -38,7 +38,7 @@ public class AdminCouponController {
     return ResponseEntity.ok(this.couponService.createNonMembershipCoupon(request));
   }
 
-  @PostMapping("assign")
+  @PostMapping("/assign")
   public ResponseEntity<Void> assignCouponToAccounts(
       @RequestBody final CouponAssignRequest request) {
     this.couponUsageService.assignCoupons(request.getCouponId(), request.getAccountIds());
