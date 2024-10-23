@@ -6,13 +6,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import art.heredium.domain.coupon.model.dto.request.CouponCreateRequest;
-import art.heredium.domain.coupon.validation.CouponValidationUtil;
-import art.heredium.domain.post.model.dto.request.*;
 import lombok.RequiredArgsConstructor;
 
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,16 +20,16 @@ import art.heredium.core.util.AuthUtil;
 import art.heredium.core.util.Constants;
 import art.heredium.core.util.ValidationUtil;
 import art.heredium.domain.account.entity.Admin;
-import art.heredium.domain.account.repository.AdminRepository;
-import art.heredium.domain.common.model.Storage;
 import art.heredium.domain.common.type.FilePathType;
 import art.heredium.domain.coupon.entity.Coupon;
+import art.heredium.domain.coupon.model.dto.request.CouponCreateRequest;
 import art.heredium.domain.coupon.repository.CouponRepository;
+import art.heredium.domain.coupon.validation.CouponValidationUtil;
 import art.heredium.domain.membership.entity.Membership;
 import art.heredium.domain.membership.model.dto.request.MembershipCreateRequest;
 import art.heredium.domain.membership.repository.MembershipRepository;
 import art.heredium.domain.post.entity.Post;
-import art.heredium.domain.post.model.dto.response.PostResponse;
+import art.heredium.domain.post.model.dto.request.*;
 import art.heredium.domain.post.repository.PostRepository;
 import art.heredium.ncloud.bean.CloudStorage;
 
@@ -48,40 +43,8 @@ public class PostService {
   private final MembershipRepository membershipRepository;
   private final CouponRepository couponRepository;
 
-  @Transactional(readOnly = true)
-  public List<PostResponse> getEnabledPosts() {
-    final List<Post> posts = postRepository.findAllByIsEnabledTrue();
-    return posts.stream()
-        .map(
-            post ->
-                new PostResponse(
-                    post.getId(),
-                    post.getName(),
-                    post.getImageUrl(),
-                    post.getImageOriginalFileName(),
-                    post.getIsEnabled(),
-                    post.getContentDetail(),
-                    post.getNavigationLink(),
-                    post.getAdmin().getAdminInfo().getName(),
-                    post.getCreatedDate(),
-                    post.getThumbnailUrls()))
-        .collect(Collectors.toList());
-  }
-
   public Optional<Post> findFirstByIsEnabledTrue() {
     return this.postRepository.findFirstByIsEnabledTrue();
-  }
-
-  @Transactional(rollbackFor = Exception.class)
-  public void updateIsEnabled(long postId, boolean isEnabled) {
-    Post existingPost =
-        this.postRepository
-            .findById(postId)
-            .orElseThrow(() -> new ApiException(ErrorCode.POST_NOT_FOUND));
-    if (existingPost.getIsEnabled() == isEnabled) {
-      return;
-    }
-    existingPost.updateIsEnabled(isEnabled);
   }
 
   @Transactional
@@ -174,11 +137,6 @@ public class PostService {
     return String.join(THUMBNAIL_URL_DELIMITER, small, medium, large);
   }
 
-  @Transactional(readOnly = true)
-  public Page<PostResponse> list(GetAdminPostRequest dto, Pageable pageable) {
-    return postRepository.search(dto, pageable);
-  }
-
   public Optional<Post> findFirst() {
     return this.postRepository.findFirstByOrderByIdDesc();
   }
@@ -262,7 +220,8 @@ public class PostService {
     if (!StringUtils.isEmpty(noteImageUrl)) {
       String fileFolderPath = String.format("%s/%d", FilePathType.POST.getPath(), post.getId());
       ValidationUtil.validateImage(this.cloudStorage, noteImageUrl);
-      String newImageUrl = Constants.moveImageToNewPlace(this.cloudStorage, noteImageUrl, fileFolderPath);
+      String newImageUrl =
+          Constants.moveImageToNewPlace(this.cloudStorage, noteImageUrl, fileFolderPath);
       post.setImageUrl(newImageUrl);
     }
   }
@@ -310,7 +269,8 @@ public class PostService {
       ValidationUtil.validateImage(this.cloudStorage, request.getImageUrl());
       String newMembershipPath = FilePathType.MEMBERSHIP.getPath() + "/" + membership.getId();
       String permanentImageUrl =
-          Constants.moveImageToNewPlace(this.cloudStorage, request.getImageUrl(), newMembershipPath);
+          Constants.moveImageToNewPlace(
+              this.cloudStorage, request.getImageUrl(), newMembershipPath);
       membership.setImageUrl(permanentImageUrl);
     }
     if (request.getPeriod() != null) membership.setPeriod(request.getPeriod());
@@ -415,7 +375,8 @@ public class PostService {
     if (StringUtils.isNotEmpty(createRequest.getImageUrl())) {
       String newCouponPath = FilePathType.COUPON.getPath() + "/" + savedCoupon.getId();
       String permanentCouponImageUrl =
-          Constants.moveImageToNewPlace(this.cloudStorage, createRequest.getImageUrl(), newCouponPath);
+          Constants.moveImageToNewPlace(
+              this.cloudStorage, createRequest.getImageUrl(), newCouponPath);
       savedCoupon.setImageUrl(permanentCouponImageUrl);
       couponRepository.save(savedCoupon);
     }

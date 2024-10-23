@@ -15,7 +15,6 @@ import art.heredium.core.config.error.entity.ErrorCode;
 import art.heredium.domain.exhibition.entity.Exhibition;
 import art.heredium.domain.post.entity.Post;
 import art.heredium.domain.post.model.dto.response.PostDetailsResponse;
-import art.heredium.domain.post.model.dto.response.PostResponse;
 import art.heredium.domain.program.entity.Program;
 import art.heredium.service.ExhibitionService;
 import art.heredium.service.MembershipService;
@@ -31,12 +30,6 @@ public class UserPostController {
   private final PostService postService;
   private final ExhibitionService exhibitionService;
   private final ProgramService programService;
-
-  @GetMapping("/enabled-list")
-  public ResponseEntity<List<PostResponse>> getEnabledPosts() {
-    final List<PostResponse> enabledPosts = postService.getEnabledPosts();
-    return ResponseEntity.ok(enabledPosts);
-  }
 
   @GetMapping
   public ResponseEntity<PostDetailsResponse> getPostDetails() {
