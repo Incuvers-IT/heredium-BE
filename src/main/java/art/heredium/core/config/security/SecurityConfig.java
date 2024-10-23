@@ -59,8 +59,7 @@ public class SecurityConfig {
     "/swagger-ui/**",
     "/v3/api-docs/**",
     "/api/user/posts/enabled-list",
-    "/api/user/posts/{post-id}",
-    "/api/file/template/company-membership/download"
+    "/api/user/posts/{post-id}"
   };
 
   @Bean

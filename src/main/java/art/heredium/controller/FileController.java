@@ -101,7 +101,7 @@ public class FileController {
 
   @GetMapping("/template/company-membership/download")
   public ResponseEntity<Resource> downloadCompanyTemplate() throws IOException {
-    Resource resource = new ClassPathResource("company_template.xlsx");
+    Resource resource = new ClassPathResource("company_upload_membership_template.xlsx");
 
     HttpHeaders headers = new HttpHeaders();
     headers.add(
