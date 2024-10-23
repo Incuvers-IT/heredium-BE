@@ -41,8 +41,7 @@ public class CouponService {
 
   private Long createCoupon(
       @NonNull final CouponCreateRequest request, @Nullable final Membership membership) {
-    final boolean isNonMembershipCoupon =
-        request.getClass().equals(NonMembershipCouponCreateRequest.class);
+    final boolean isNonMembershipCoupon = request instanceof NonMembershipCouponCreateRequest;
     if ((!isNonMembershipCoupon && membership == null)
         || (isNonMembershipCoupon && membership != null)) {
       // This case will never happen
