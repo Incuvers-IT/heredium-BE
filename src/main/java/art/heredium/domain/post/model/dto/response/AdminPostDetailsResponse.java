@@ -1,5 +1,6 @@
 package art.heredium.domain.post.model.dto.response;
 
+import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -38,9 +39,17 @@ public class AdminPostDetailsResponse {
 
   private List<MembershipResponse> memberships;
 
+  @JsonProperty("start_date")
+  private LocalDate startDate;
+
+  @JsonProperty("end_date")
+  private LocalDate endDate;
+
   public AdminPostDetailsResponse(@NonNull final Post post) {
     this.id = post.getId();
     this.name = post.getName();
+    this.startDate = post.getStartDate();
+    this.endDate = post.getEndDate();
     this.noteImage =
         NoteImageResponse.builder()
             .noteImageUrl(post.getImageUrl())
