@@ -128,4 +128,10 @@ public class AdminPostController {
             ongoingPrograms,
             completedPrograms));
   }
+
+  @PutMapping
+  public ResponseEntity<Void> updatePost(@Valid @RequestBody PostUpdateRequest request) {
+    postService.updatePost(request);
+    return ResponseEntity.ok().build();
+  }
 }

@@ -115,20 +115,20 @@ public class MembershipService {
     return membershipIds;
   }
 
-  private void validateImage(String imageUrl) {
+  public void validateImage(String imageUrl) {
     if (StringUtils.isNotEmpty(imageUrl) && !cloudStorage.isExistObject(imageUrl)) {
       throw new ApiException(ErrorCode.S3_NOT_FOUND, imageUrl);
     }
   }
 
-  private String moveImageToNewPlace(String tempOriginalUrl, String newPath) {
+  public String moveImageToNewPlace(String tempOriginalUrl, String newPath) {
     Storage storage = new Storage();
     storage.setSavedFileName(tempOriginalUrl);
     Constants.moveFileFromTemp(cloudStorage, storage, newPath);
     return storage.getSavedFileName();
   }
 
-  private void validateCouponRequest(MembershipCouponCreateRequest couponRequest) {
+  public void validateCouponRequest(MembershipCouponCreateRequest couponRequest) {
     if ((!couponRequest.getIsPermanent() && couponRequest.getNumberOfUses() == null)
         || (couponRequest.getIsPermanent() && couponRequest.getNumberOfUses() != null)) {
       throw new ApiException(

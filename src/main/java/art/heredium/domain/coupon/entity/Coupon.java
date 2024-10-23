@@ -4,12 +4,7 @@ import java.time.LocalDateTime;
 
 import javax.persistence.*;
 
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
+import lombok.*;
 
 import com.vladmihalcea.hibernate.type.json.JsonStringType;
 import org.hibernate.annotations.Comment;
@@ -21,6 +16,7 @@ import art.heredium.domain.membership.entity.Membership;
 
 @Entity
 @Getter
+@Setter
 @Table(name = "coupon")
 @DynamicInsert
 @TypeDef(name = "json", typeClass = JsonStringType.class)
