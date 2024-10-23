@@ -66,6 +66,10 @@ public class Coupon extends BaseEntity {
   @Column(name = "is_permanent")
   private Boolean isPermanent;
 
+  @Comment("멤버십 쿠폰이 아닙")
+  @Column(name = "is_non_membership_coupon")
+  private Boolean isNonMembershipCoupon;
+
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "membership_id")
   private Membership membership;
@@ -79,7 +83,8 @@ public class Coupon extends BaseEntity {
       String imageUrl,
       Membership membership,
       Long numberOfUses,
-      Boolean isPermanent) {
+      Boolean isPermanent,
+      Boolean isNonMembershipCoupon) {
     this.name = name;
     this.couponType = couponType;
     this.discountPercent = discountPercent;
@@ -88,6 +93,7 @@ public class Coupon extends BaseEntity {
     this.membership = membership;
     this.numberOfUses = numberOfUses;
     this.isPermanent = isPermanent;
+    this.isNonMembershipCoupon = isNonMembershipCoupon;
   }
 
   public void updateImageUrl(String imageUrl) {

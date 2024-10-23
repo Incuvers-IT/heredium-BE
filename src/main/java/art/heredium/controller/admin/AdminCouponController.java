@@ -3,13 +3,11 @@ package art.heredium.controller.admin;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
+import art.heredium.domain.coupon.model.dto.request.CouponCreateRequest;
 import art.heredium.domain.coupon.model.dto.response.CouponUsageResponse;
+import art.heredium.service.CouponService;
 import art.heredium.service.CouponUsageService;
 
 @RestController
@@ -17,6 +15,7 @@ import art.heredium.service.CouponUsageService;
 @RequestMapping("/api/admin/coupons")
 public class AdminCouponController {
 
+  private final CouponService couponService;
   private final CouponUsageService couponUsageService;
 
   @GetMapping("/usage/{coupon-uuid}")
@@ -30,5 +29,11 @@ public class AdminCouponController {
       @PathVariable(value = "coupon-uuid") String couponUuid) {
     couponUsageService.checkoutCouponUsage(couponUuid);
     return ResponseEntity.ok().build();
+  }
+
+  @PostMapping("/non-membership")
+  public ResponseEntity<Long> createNonMembershipCoupon(
+      @RequestBody final CouponCreateRequest request) {
+    return ResponseEntity.ok(this.couponService.createNonMembershipCoupon(request));
   }
 }

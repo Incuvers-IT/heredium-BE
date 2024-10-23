@@ -12,7 +12,7 @@ import lombok.Setter;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import art.heredium.domain.coupon.model.dto.request.MembershipCouponCreateRequest;
+import art.heredium.domain.coupon.model.dto.request.CouponCreateRequest;
 
 @Getter
 @Setter
@@ -25,5 +25,5 @@ public class MembershipCreateRequest {
   @JsonProperty("image_url")
   private String imageUrl;
 
-  @NotEmpty @Valid private List<MembershipCouponCreateRequest> coupons;
+  @NotEmpty @Valid private List<CouponCreateRequest> coupons;
 }
