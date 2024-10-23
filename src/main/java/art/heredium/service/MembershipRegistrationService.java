@@ -75,7 +75,7 @@ public class MembershipRegistrationService {
     final MembershipRegistration membershipRegistration =
         this.membershipRegistrationRepository.save(
             new MembershipRegistration(account, membership, registrationDate, expirationDate));
-    this.couponUsageService.distributeCoupons(account, membership.getCoupons());
+    this.couponUsageService.distributeMembershipCoupons(account, membership.getCoupons());
     // TODO: IH-6 Send notification
     return membershipRegistration.getId();
   }

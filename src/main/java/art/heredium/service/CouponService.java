@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -30,10 +31,12 @@ public class CouponService {
   private final CouponRepository couponRepository;
   private final CloudStorage cloudStorage;
 
+  @Transactional(rollbackFor = Exception.class)
   public Long createNonMembershipCoupon(@NonNull final NonMembershipCouponCreateRequest request) {
     return createCoupon(request, null);
   }
 
+  @Transactional(rollbackFor = Exception.class)
   public Long createMembershipCoupon(
       @NonNull final MembershipCouponCreateRequest request, @NonNull final Membership membership) {
     return createCoupon(request, membership);
