@@ -34,9 +34,6 @@ public class AdminPostDetailsResponse {
   @JsonProperty("content_detail")
   private String contentDetail;
 
-  @JsonProperty("navigation_link")
-  private String navigationLink;
-
   @JsonProperty("additional_info")
   private AdditionalInfoResponse additionalInfo;
 
@@ -53,10 +50,8 @@ public class AdminPostDetailsResponse {
     }
     this.isEnabled = post.getIsEnabled();
     this.contentDetail = post.getContentDetail();
-    this.navigationLink = post.getNavigationLink();
     this.memberships =
         post.getMemberships().stream()
-            .filter(Membership::getIsEnabled)
             .map(MembershipResponse::new)
             .collect(Collectors.toList());
     this.additionalInfo =
