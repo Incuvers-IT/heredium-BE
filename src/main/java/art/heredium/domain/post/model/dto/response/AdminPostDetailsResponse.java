@@ -8,7 +8,6 @@ import lombok.*;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import art.heredium.domain.membership.entity.Membership;
 import art.heredium.domain.membership.model.dto.response.MembershipResponse;
 import art.heredium.domain.post.entity.Post;
 
@@ -22,8 +21,8 @@ public class AdminPostDetailsResponse {
 
   private String name;
 
-  @JsonProperty("image_url")
-  private String imageUrl;
+  @JsonProperty("note_image")
+  private NoteImageResponse noteImage;
 
   @JsonProperty("thumbnail_urls")
   private ThumbnailUrlResponse thumbnailUrls;
@@ -42,7 +41,11 @@ public class AdminPostDetailsResponse {
   public AdminPostDetailsResponse(@NonNull final Post post) {
     this.id = post.getId();
     this.name = post.getName();
-    this.imageUrl = post.getImageUrl();
+    this.noteImage =
+        NoteImageResponse.builder()
+            .noteImageUrl(post.getImageUrl())
+            .originalFileName(post.getImageOriginalFileName())
+            .build();
     if (post.getThumbnailUrls() != null) {
       this.thumbnailUrls =
           new ThumbnailUrlResponse(
@@ -51,9 +54,7 @@ public class AdminPostDetailsResponse {
     this.isEnabled = post.getIsEnabled();
     this.contentDetail = post.getContentDetail();
     this.memberships =
-        post.getMemberships().stream()
-            .map(MembershipResponse::new)
-            .collect(Collectors.toList());
+        post.getMemberships().stream().map(MembershipResponse::new).collect(Collectors.toList());
     this.additionalInfo =
         AdditionalInfoResponse.builder()
             .futureExhibitionCount(post.getFutureExhibitionCount())
@@ -100,6 +101,22 @@ public class AdminPostDetailsResponse {
       this.futureProgramCount = futureProgramCount;
       this.ongoingProgramCount = ongoingProgramCount;
       this.completedProgramCount = completedProgramCount;
+    }
+  }
+
+  @Getter
+  @Setter
+  public static class NoteImageResponse {
+    @JsonProperty("note_image_url")
+    private String noteImageUrl;
+
+    @JsonProperty("original_file_name")
+    private String originalFileName;
+
+    @Builder
+    public NoteImageResponse(final String noteImageUrl, final String originalFileName) {
+      this.noteImageUrl = noteImageUrl;
+      this.originalFileName = originalFileName;
     }
   }
 }

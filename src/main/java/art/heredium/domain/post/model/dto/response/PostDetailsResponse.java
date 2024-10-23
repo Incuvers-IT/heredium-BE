@@ -29,8 +29,8 @@ public class PostDetailsResponse {
 
   private String name;
 
-  @JsonProperty("image_url")
-  private String imageUrl;
+  @JsonProperty("note_image")
+  private NoteImageResponse noteImage;
 
   @JsonProperty("thumbnail_urls")
   private ThumbnailUrlResponse thumbnailUrls;
@@ -56,7 +56,11 @@ public class PostDetailsResponse {
       @Nullable final List<Program> completedPrograms) {
     this.id = post.getId();
     this.name = post.getName();
-    this.imageUrl = post.getImageUrl();
+    this.noteImage =
+        NoteImageResponse.builder()
+            .noteImageUrl(post.getImageUrl())
+            .originalFileName(post.getImageOriginalFileName())
+            .build();
     if (post.getThumbnailUrls() != null) {
       this.thumbnailUrls =
           new ThumbnailUrlResponse(
@@ -206,6 +210,22 @@ public class PostDetailsResponse {
           Optional.ofNullable(program.getDetailImage()).map(Storage::getSavedFileName).orElse(null);
       this.startTime = program.getStartDate();
       this.endTime = program.getEndDate();
+    }
+  }
+
+  @Getter
+  @Setter
+  public static class NoteImageResponse {
+    @JsonProperty("note_image_url")
+    private String noteImageUrl;
+
+    @JsonProperty("original_file_name")
+    private String originalFileName;
+
+    @Builder
+    public NoteImageResponse(final String noteImageUrl, final String originalFileName) {
+      this.noteImageUrl = noteImageUrl;
+      this.originalFileName = originalFileName;
     }
   }
 }
