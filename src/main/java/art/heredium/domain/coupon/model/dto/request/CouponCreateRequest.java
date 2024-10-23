@@ -4,7 +4,6 @@ import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 
-import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -14,8 +13,7 @@ import art.heredium.domain.coupon.entity.CouponType;
 
 @Getter
 @Setter
-@Builder
-public class CouponCreateRequest {
+public abstract class CouponCreateRequest {
 
   @NotBlank private String name;
 
@@ -26,11 +24,6 @@ public class CouponCreateRequest {
   @JsonProperty("discount_percent")
   @NotNull
   private Integer discountPercent;
-
-  @JsonProperty("period_in_days")
-  @NotNull
-  @Min(1)
-  private Integer periodInDays;
 
   @JsonProperty("image_url")
   @NotBlank

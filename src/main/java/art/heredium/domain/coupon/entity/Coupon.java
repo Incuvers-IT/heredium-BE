@@ -79,6 +79,8 @@ public class Coupon extends BaseEntity {
       String name,
       CouponType couponType,
       Integer discountPercent,
+      LocalDateTime startedDate,
+      LocalDateTime endedDate,
       Integer periodInDays,
       String imageUrl,
       Membership membership,
@@ -88,6 +90,8 @@ public class Coupon extends BaseEntity {
     this.name = name;
     this.couponType = couponType;
     this.discountPercent = discountPercent;
+    this.startedDate = startedDate;
+    this.endedDate = endedDate;
     this.periodInDays = periodInDays;
     this.imageUrl = imageUrl;
     this.membership = membership;

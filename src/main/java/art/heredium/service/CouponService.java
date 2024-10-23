@@ -1,5 +1,7 @@
 package art.heredium.service;
 
+import java.time.LocalDateTime;
+
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
@@ -15,6 +17,8 @@ import art.heredium.core.util.ValidationUtil;
 import art.heredium.domain.common.type.FilePathType;
 import art.heredium.domain.coupon.entity.Coupon;
 import art.heredium.domain.coupon.model.dto.request.CouponCreateRequest;
+import art.heredium.domain.coupon.model.dto.request.MembershipCouponCreateRequest;
+import art.heredium.domain.coupon.model.dto.request.NonMembershipCouponCreateRequest;
 import art.heredium.domain.coupon.repository.CouponRepository;
 import art.heredium.domain.coupon.validation.CouponValidationUtil;
 import art.heredium.domain.membership.entity.Membership;
@@ -26,19 +30,18 @@ public class CouponService {
   private final CouponRepository couponRepository;
   private final CloudStorage cloudStorage;
 
-  public Long createNonMembershipCoupon(@NonNull final CouponCreateRequest request) {
-    return createCoupon(request, null, true);
+  public Long createNonMembershipCoupon(@NonNull final NonMembershipCouponCreateRequest request) {
+    return createCoupon(request, null);
   }
 
   public Long createMembershipCoupon(
-      @NonNull final CouponCreateRequest request, @NonNull final Membership membership) {
-    return createCoupon(request, membership, false);
+      @NonNull final MembershipCouponCreateRequest request, @NonNull final Membership membership) {
+    return createCoupon(request, membership);
   }
 
   private Long createCoupon(
-      @NonNull final CouponCreateRequest request,
-      @Nullable final Membership membership,
-      final boolean isNonMembershipCoupon) {
+      @NonNull final CouponCreateRequest request, @Nullable final Membership membership) {
+    final boolean isNonMembershipCoupon = request instanceof NonMembershipCouponCreateRequest;
     if ((!isNonMembershipCoupon && membership == null)
         || (isNonMembershipCoupon && membership != null)) {
       // This case will never happen
@@ -47,6 +50,15 @@ public class CouponService {
           String.format(
               "Invalid coupon request for '%s': If 'isNonMembershipCoupon' is false, 'membership' must be provided. If 'isNonMembershipCoupon' is true, 'membership' must not be provided.",
               request.getName()));
+    }
+    Integer periodInDays = null;
+    LocalDateTime startedDate = null;
+    LocalDateTime endedDate = null;
+    if (isNonMembershipCoupon) {
+      startedDate = ((NonMembershipCouponCreateRequest) request).getStartDate();
+      endedDate = ((NonMembershipCouponCreateRequest) request).getEndDate();
+    } else {
+      periodInDays = ((MembershipCouponCreateRequest) request).getPeriodInDays();
     }
     CouponValidationUtil.validateCouponRequest(request);
 
@@ -57,7 +69,9 @@ public class CouponService {
             .name(request.getName())
             .couponType(request.getCouponType())
             .discountPercent(request.getDiscountPercent())
-            .periodInDays(request.getPeriodInDays())
+            .startedDate(startedDate)
+            .endedDate(endedDate)
+            .periodInDays(periodInDays)
             .imageUrl(request.getImageUrl())
             .membership(membership)
             .numberOfUses(request.getNumberOfUses())
