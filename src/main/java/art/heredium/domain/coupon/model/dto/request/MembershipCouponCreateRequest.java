@@ -4,6 +4,7 @@ import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 
+import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -13,6 +14,7 @@ import art.heredium.domain.coupon.entity.CouponType;
 
 @Getter
 @Setter
+@Builder
 public class MembershipCouponCreateRequest {
 
   @NotBlank private String name;

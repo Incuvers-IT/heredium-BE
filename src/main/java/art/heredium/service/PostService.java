@@ -1,6 +1,7 @@
 package art.heredium.service;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -270,8 +271,6 @@ public class PostService {
   }
 
   private void updateAdditionalInfo(Post post, PostUpdateRequest.AdditionalInfo additionalInfo) {
-    if (additionalInfo == null) return;
-
     if (additionalInfo.getFutureExhibitionCount() != null)
       post.setFutureExhibitionCount(additionalInfo.getFutureExhibitionCount());
     if (additionalInfo.getOngoingExhibitionCount() != null)
@@ -293,9 +292,13 @@ public class PostService {
       if (membershipRequest.getId() != null) {
         Membership membership =
             post.getMemberships().stream()
-                .filter(m -> m.getId().equals(membershipRequest.getId()))
+                .filter(m -> m.getId() == membershipRequest.getId())
                 .findFirst()
-                .orElseThrow(() -> new ApiException(ErrorCode.MEMBERSHIP_NOT_FOUND));
+                .orElseThrow(
+                    () ->
+                        new ApiException(
+                            ErrorCode.MEMBERSHIP_NOT_FOUND,
+                            "membershipId = " + membershipRequest.getId()));
         updateMembership(membership, membershipRequest);
       } else {
         createNewMembership(post, membershipRequest);
@@ -327,8 +330,7 @@ public class PostService {
     createRequest.setImageUrl(request.getImageUrl());
     createRequest.setCoupons(convertToMembershipCouponCreateRequests(request.getCoupons()));
 
-    List<MembershipCreateRequest> createRequests = List.of(createRequest);
-    membershipService.createMemberships(post.getId(), createRequests);
+    membershipService.createMemberships(post.getId(), Arrays.asList(createRequest));
   }
 
   private List<MembershipCouponCreateRequest> convertToMembershipCouponCreateRequests(
@@ -342,15 +344,15 @@ public class PostService {
 
   private MembershipCouponCreateRequest convertToMembershipCouponCreateRequest(
       MembershipCouponUpdateRequest updateRequest) {
-    MembershipCouponCreateRequest createRequest = new MembershipCouponCreateRequest();
-    createRequest.setName(updateRequest.getName());
-    createRequest.setCouponType(updateRequest.getCouponType());
-    createRequest.setDiscountPercent(updateRequest.getDiscountPercent());
-    createRequest.setPeriodInDays(updateRequest.getPeriodInDays());
-    createRequest.setImageUrl(updateRequest.getImageUrl());
-    createRequest.setNumberOfUses(updateRequest.getNumberOfUses());
-    createRequest.setIsPermanent(updateRequest.getIsPermanent());
-    return createRequest;
+    return MembershipCouponCreateRequest.builder()
+        .name(updateRequest.getName())
+        .couponType(updateRequest.getCouponType())
+        .discountPercent(updateRequest.getDiscountPercent())
+        .periodInDays(updateRequest.getPeriodInDays())
+        .imageUrl(updateRequest.getImageUrl())
+        .numberOfUses(updateRequest.getNumberOfUses())
+        .isPermanent(updateRequest.getIsPermanent())
+        .build();
   }
 
   private void updateCoupons(
@@ -361,9 +363,12 @@ public class PostService {
       if (couponRequest.getId() != null) {
         Coupon coupon =
             membership.getCoupons().stream()
-                .filter(c -> c.getId().equals(couponRequest.getId()))
+                .filter(c -> c.getId() == couponRequest.getId())
                 .findFirst()
-                .orElseThrow(() -> new ApiException(ErrorCode.COUPON_NOT_FOUND));
+                .orElseThrow(
+                    () ->
+                        new ApiException(
+                            ErrorCode.MEMBERSHIP_NOT_FOUND, "couponId = " + couponRequest.getId()));
         updateCoupon(coupon, couponRequest);
       } else {
         createNewCoupon(membership, couponRequest);
