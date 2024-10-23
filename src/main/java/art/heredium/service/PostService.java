@@ -301,12 +301,12 @@ public class PostService {
       MembershipCouponUpdateRequest updateRequest) {
     MembershipCouponCreateRequest createRequest = new MembershipCouponCreateRequest();
     createRequest.setName(updateRequest.getName());
-    createRequest.setCouponType(createRequest.getCouponType());
-    createRequest.setDiscountPercent(createRequest.getDiscountPercent());
-    createRequest.setPeriodInDays(createRequest.getPeriodInDays());
-    createRequest.setImageUrl(createRequest.getImageUrl());
-    createRequest.setNumberOfUses(createRequest.getNumberOfUses());
-    createRequest.setIsPermanent(createRequest.getIsPermanent());
+    createRequest.setCouponType(updateRequest.getCouponType());
+    createRequest.setDiscountPercent(updateRequest.getDiscountPercent());
+    createRequest.setPeriodInDays(updateRequest.getPeriodInDays());
+    createRequest.setImageUrl(updateRequest.getImageUrl());
+    createRequest.setNumberOfUses(updateRequest.getNumberOfUses());
+    createRequest.setIsPermanent(updateRequest.getIsPermanent());
     return createRequest;
   }
 
