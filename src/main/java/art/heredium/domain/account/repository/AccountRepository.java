@@ -47,4 +47,8 @@ public interface AccountRepository extends JpaRepository<Account, Long>, Account
   List<Account> findEmailByPhone(@Param("phone") String phone);
 
   List<Account> findByIdIn(@Param("ids") Set<Long> ids);
+
+  @Query(
+      "SELECT a FROM Account a LEFT JOIN a.accountInfo ai WHERE a.email = :emailOrPhone OR ai.phone = :emailOrPhone")
+  Optional<Account> findByEmailOrAccountInfo_Phone(@Param("emailOrPhone") String emailOrPhone);
 }
