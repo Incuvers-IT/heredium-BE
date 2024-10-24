@@ -95,31 +95,7 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
     QMembership membership = QMembership.membership;
 
     JPAQuery<AccountWithMembershipInfoIncludingTitleResponse> query =
-        queryFactory
-            .select(
-                Projections.constructor(
-                    AccountWithMembershipInfoIncludingTitleResponse.class,
-                    membership.name,
-                    membershipRegistration.title,
-                    membershipRegistration.paymentStatus,
-                    membershipRegistration.paymentDate,
-                    membershipRegistration.registrationDate,
-                    membershipRegistration.expirationDate,
-                    JPAExpressions.select(couponUsage.count())
-                        .from(couponUsage)
-                        .where(couponUsage.account.eq(account).and(couponUsage.isUsed.isTrue())),
-                    account.email,
-                    accountInfo.name,
-                    accountInfo.phone))
-            .from(account)
-            .innerJoin(account.accountInfo, accountInfo)
-            .leftJoin(membershipRegistration)
-            .on(membershipRegistration.account.eq(account))
-            .leftJoin(membershipRegistration.membership, membership)
-            .where(
-                paymentDateBetween(dto.getPaymentDateFrom(), dto.getPaymentDateTo()),
-                paymentStatusIs(dto.getPaymentStatus()),
-                textContains(dto.getText()));
+        this.listWithMembershipInfo(dto);
 
     // Create a count query
     JPAQuery<Long> countQuery =
@@ -141,6 +117,47 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
         query.offset(pageable.getOffset()).limit(pageable.getPageSize()).fetch();
 
     return new PageImpl<>(content, pageable, total);
+  }
+
+  @Override
+  public List<AccountWithMembershipInfoIncludingTitleResponse> listWithMembershipInfoIncludingTitle(
+      final GetAccountWithMembershipInfoIncludingTitleRequest dto) {
+    return this.listWithMembershipInfo(dto).fetch();
+  }
+
+  private JPAQuery<AccountWithMembershipInfoIncludingTitleResponse> listWithMembershipInfo(
+      final GetAccountWithMembershipInfoIncludingTitleRequest dto) {
+    QAccount account = QAccount.account;
+    QAccountInfo accountInfo = QAccountInfo.accountInfo;
+    QCouponUsage couponUsage = QCouponUsage.couponUsage;
+    QMembershipRegistration membershipRegistration = QMembershipRegistration.membershipRegistration;
+    QMembership membership = QMembership.membership;
+
+    return queryFactory
+        .select(
+            Projections.constructor(
+                AccountWithMembershipInfoIncludingTitleResponse.class,
+                membership.name,
+                membershipRegistration.title,
+                membershipRegistration.paymentStatus,
+                membershipRegistration.paymentDate,
+                membershipRegistration.registrationDate,
+                membershipRegistration.expirationDate,
+                JPAExpressions.select(couponUsage.count())
+                    .from(couponUsage)
+                    .where(couponUsage.account.eq(account).and(couponUsage.isUsed.isTrue())),
+                account.email,
+                accountInfo.name,
+                accountInfo.phone))
+        .from(account)
+        .innerJoin(account.accountInfo, accountInfo)
+        .leftJoin(membershipRegistration)
+        .on(membershipRegistration.account.eq(account))
+        .leftJoin(membershipRegistration.membership, membership)
+        .where(
+            paymentDateBetween(dto.getPaymentDateFrom(), dto.getPaymentDateTo()),
+            paymentStatusIs(dto.getPaymentStatus()),
+            textContains(dto.getText()));
   }
 
   private JPQLQuery<Long> selectVisitCount() {
