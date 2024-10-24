@@ -1,5 +1,6 @@
 package art.heredium.domain.ticket.repository;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -58,7 +59,8 @@ public class TicketRepositoryImpl implements TicketRepositoryQueryDsl {
             .and(
                 ticket.account.id.in(
                     JPAExpressions.select(membershipRegistration.account.id)
-                        .from(membershipRegistration)));
+                        .from(membershipRegistration)
+                        .where(membershipRegistration.expirationDate.goe(LocalDate.now()))));
       } else {
         // Tickets associated with accounts without membership, or non-users, or neither
         whereClause.and(
@@ -113,7 +115,8 @@ public class TicketRepositoryImpl implements TicketRepositoryQueryDsl {
             .and(
                 ticket.account.id.in(
                     JPAExpressions.select(membershipRegistration.account.id)
-                        .from(membershipRegistration)));
+                        .from(membershipRegistration)
+                        .where(membershipRegistration.expirationDate.goe(LocalDate.now()))));
       } else {
         whereClause.and(
             ticket
