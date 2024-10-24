@@ -1,6 +1,9 @@
 package art.heredium.domain.coupon.entity;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 import javax.persistence.*;
@@ -16,6 +19,7 @@ import lombok.ToString;
 import org.hibernate.annotations.Comment;
 import org.hibernate.annotations.DynamicInsert;
 
+import art.heredium.core.config.properties.HerediumProperties;
 import art.heredium.domain.account.entity.Account;
 import art.heredium.domain.common.entity.BaseEntity;
 
@@ -84,5 +88,21 @@ public class CouponUsage extends BaseEntity {
     this.isUsed = false;
     this.isPermanent = isPermanent;
     this.usedCount = usedCount;
+  }
+
+  public Map<String, String> getCouponUsageParams(
+      @NonNull final HerediumProperties herediumProperties) {
+    Map<String, String> params = new HashMap<>();
+    params.put("coupon_name", coupon.getName());
+    params.put("discount_percent", String.valueOf(coupon.getDiscountPercent()));
+    if (usedDate != null) {
+      params.put("used_date", usedDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+    }
+    if (!isPermanent) {
+      params.put("used_count", String.valueOf(usedCount));
+    }
+    params.put("CSTel", herediumProperties.getTel());
+    params.put("CSEmail", herediumProperties.getEmail());
+    return params;
   }
 }

@@ -1,7 +1,12 @@
 package art.heredium.domain.membership.entity;
 
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import javax.persistence.*;
 
@@ -16,8 +21,10 @@ import org.hibernate.annotations.Comment;
 import org.hibernate.annotations.DynamicInsert;
 import org.hibernate.annotations.TypeDef;
 
+import art.heredium.core.config.properties.HerediumProperties;
 import art.heredium.domain.account.entity.Account;
 import art.heredium.domain.company.entity.Company;
+import art.heredium.domain.coupon.entity.CouponUsage;
 
 @Entity
 @Getter
@@ -102,5 +109,33 @@ public class MembershipRegistration {
     this.expirationDate = expirationDate;
     this.registrationType = registrationType;
     // TODO: Add paymentStatus and paymentDate
+  }
+
+  public Map<String, String> getMembershipParams(
+      @NonNull final List<CouponUsage> coupons,
+      @NonNull final HerediumProperties herediumProperties) {
+    Map<String, String> params = new HashMap<>();
+    params.put("membership_name", this.membership.getName());
+    params.put(
+        "registration_date",
+        this.registrationDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+    params.put(
+        "expiration_date", this.expirationDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+    params.put(
+        "coupons",
+        coupons.stream()
+            .map(
+                coupon ->
+                    String.format(
+                        "{type=%s,name=%s,expiration_date=%s}",
+                        coupon.getCoupon().getCouponType().name(),
+                        coupon.getCoupon().getName(),
+                        coupon
+                            .getExpirationDate()
+                            .format(DateTimeFormatter.ofPattern("yyyy-MM-dd (E) HH:mm"))))
+            .collect(Collectors.joining(", ")));
+    params.put("CSTel", herediumProperties.getTel());
+    params.put("CSEmail", herediumProperties.getEmail());
+    return params;
   }
 }
