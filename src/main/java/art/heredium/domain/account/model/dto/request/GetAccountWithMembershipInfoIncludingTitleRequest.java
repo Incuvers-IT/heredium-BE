@@ -1,6 +1,7 @@
 package art.heredium.domain.account.model.dto.request;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -12,6 +13,6 @@ import art.heredium.domain.membership.entity.PaymentStatus;
 public class GetAccountWithMembershipInfoIncludingTitleRequest {
   private LocalDateTime paymentDateFrom;
   private LocalDateTime paymentDateTo;
-  private PaymentStatus paymentStatus;
+  private List<PaymentStatus> paymentStatus;
   private String text;
 }

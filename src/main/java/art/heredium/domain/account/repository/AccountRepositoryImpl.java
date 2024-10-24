@@ -108,7 +108,7 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
             .leftJoin(membershipRegistration.membership, membership)
             .where(
                 paymentDateBetween(dto.getPaymentDateFrom(), dto.getPaymentDateTo()),
-                paymentStatusIs(dto.getPaymentStatus()),
+                paymentStatusIn(dto.getPaymentStatus()),
                 textContains(dto.getText()));
 
     long total = countQuery.fetchOne();
@@ -156,7 +156,7 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
         .leftJoin(membershipRegistration.membership, membership)
         .where(
             paymentDateBetween(dto.getPaymentDateFrom(), dto.getPaymentDateTo()),
-            paymentStatusIs(dto.getPaymentStatus()),
+            paymentStatusIn(dto.getPaymentStatus()),
             textContains(dto.getText()));
   }
 
@@ -581,10 +581,10 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
     return null;
   }
 
-  private BooleanExpression paymentStatusIs(PaymentStatus paymentStatus) {
+  private BooleanExpression paymentStatusIn(List<PaymentStatus> paymentStatuses) {
     QMembershipRegistration membershipRegistration = QMembershipRegistration.membershipRegistration;
-    if (paymentStatus != null) {
-      return membershipRegistration.paymentStatus.eq(paymentStatus);
+    if (paymentStatuses != null && !paymentStatuses.isEmpty()) {
+      return membershipRegistration.paymentStatus.in(paymentStatuses);
     }
     return null;
   }
