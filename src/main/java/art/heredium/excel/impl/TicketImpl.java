@@ -26,7 +26,7 @@ public class TicketImpl implements CreateBody {
   public List<String> head() {
     List<String> headList =
         Arrays.asList(
-            "NO", "구분", "티켓구분", "제목", "회차", "구매 수", "금액", "계정", "이름", "연락처", "멤버십 이름", "입장권아이디",
+            "NO", "구분", "티켓구분", "제목", "회차", "구매 수", "금액", "계정", "이름", "연락처", "멤버십", "입장권아이디",
             "결제아이디", "생성일시", "상태");
     return new ArrayList<>(headList);
   }
