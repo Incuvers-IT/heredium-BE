@@ -1,5 +1,6 @@
 package art.heredium.domain.ticket.repository;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -58,7 +59,8 @@ public class TicketRepositoryImpl implements TicketRepositoryQueryDsl {
             .and(
                 ticket.account.id.in(
                     JPAExpressions.select(membershipRegistration.account.id)
-                        .from(membershipRegistration)));
+                        .from(membershipRegistration)
+                        .where(membershipRegistration.expirationDate.goe(LocalDate.now()))));
       } else {
         // Tickets associated with accounts without membership, or non-users, or neither
         whereClause.and(
@@ -96,6 +98,7 @@ public class TicketRepositoryImpl implements TicketRepositoryQueryDsl {
             .where(whereClause)
             .offset(pageable.getOffset())
             .limit(pageable.getPageSize())
+            .orderBy(ticket.createdDate.desc())
             .fetch();
 
     return new PageImpl<>(results, pageable, total);
@@ -103,7 +106,43 @@ public class TicketRepositoryImpl implements TicketRepositoryQueryDsl {
 
   @Override
   public List<Ticket> search(GetAdminTicketRequest dto) {
-    return getAdminTicketQuery(dto).fetch();
+    BooleanBuilder whereClause = new BooleanBuilder(searchFilter(dto));
+
+    if (dto.getHasMembership() != null) {
+      if (dto.getHasMembership()) {
+        whereClause
+            .and(ticket.account.isNotNull())
+            .and(
+                ticket.account.id.in(
+                    JPAExpressions.select(membershipRegistration.account.id)
+                        .from(membershipRegistration)
+                        .where(membershipRegistration.expirationDate.goe(LocalDate.now()))));
+      } else {
+        whereClause.and(
+            ticket
+                .account
+                .isNull()
+                .or(
+                    ticket
+                        .account
+                        .isNotNull()
+                        .and(
+                            ticket.account.id.notIn(
+                                JPAExpressions.select(membershipRegistration.account.id)
+                                    .from(membershipRegistration))))
+                .or(ticket.nonUser.isNotNull()));
+      }
+    }
+
+    return queryFactory
+        .selectFrom(ticket)
+        .leftJoin(ticket.account, account)
+        .fetchJoin()
+        .leftJoin(ticket.nonUser, nonUser)
+        .fetchJoin()
+        .where(whereClause)
+        .orderBy(ticket.createdDate.desc())
+        .fetch();
   }
 
   @Override
@@ -203,13 +242,6 @@ public class TicketRepositoryImpl implements TicketRepositoryQueryDsl {
         .from(QTicketPrice.ticketPrice)
         .where(QTicketPrice.ticketPrice.ticket.id.eq(ticket.id))
         .groupBy(QTicketPrice.ticketPrice.ticket.id);
-  }
-
-  private JPAQuery<Ticket> getAdminTicketQuery(GetAdminTicketRequest dto) {
-    return queryFactory
-        .selectFrom(ticket)
-        .where(searchFilter(dto))
-        .orderBy(ticket.createdDate.desc());
   }
 
   private BooleanBuilder searchFilter(GetAdminTicketRequest dto) {

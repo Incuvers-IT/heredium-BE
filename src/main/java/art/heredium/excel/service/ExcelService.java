@@ -2,8 +2,12 @@ package art.heredium.excel.service;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,11 +22,14 @@ import org.apache.poi.openxml4j.util.ZipSecureFile;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
+import art.heredium.domain.account.entity.Account;
 import art.heredium.domain.account.model.dto.request.GetAdminAccountRequest;
 import art.heredium.domain.account.model.dto.request.GetAdminSleeperRequest;
 import art.heredium.domain.account.model.dto.response.GetAdminAccountResponse;
 import art.heredium.domain.account.model.dto.response.GetAdminSleeperResponse;
 import art.heredium.domain.account.repository.AccountRepositoryImpl;
+import art.heredium.domain.membership.entity.MembershipRegistration;
+import art.heredium.domain.membership.repository.MembershipRegistrationRepository;
 import art.heredium.domain.ticket.entity.Ticket;
 import art.heredium.domain.ticket.model.dto.request.GetAdminTicketRequest;
 import art.heredium.domain.ticket.repository.TicketRepositoryImpl;
@@ -40,14 +47,30 @@ public class ExcelService {
 
   private final TicketRepositoryImpl ticketRepository;
   private final AccountRepositoryImpl accountRepository;
+  private final MembershipRegistrationRepository membershipRegistrationRepository;
 
   public Map<String, Object> ticketDownload(GetAdminTicketRequest dto, String fileName) {
     List<Ticket> list = ticketRepository.search(dto);
+    List<Long> accountIds =
+        list.stream()
+            .map(Ticket::getAccount)
+            .filter(Objects::nonNull)
+            .map(Account::getId)
+            .distinct()
+            .collect(Collectors.toList());
+
+    Map<Long, MembershipRegistration> membershipRegistrations = Collections.emptyMap();
+    if (!accountIds.isEmpty() && (dto.getHasMembership() == null || dto.getHasMembership())) {
+      membershipRegistrations =
+          membershipRegistrationRepository.findLatestForAccounts(accountIds).stream()
+              .collect(Collectors.toMap(mr -> mr.getAccount().getId(), Function.identity()));
+    }
+
     ExcelModelManager emm = new ExcelModelManager();
     // 1. 파일 이름 부터 지정
     emm.setFileName(fileName);
     // 2. 시트 추가
-    TicketImpl experience = new TicketImpl(list);
+    TicketImpl experience = new TicketImpl(list, membershipRegistrations);
     emm.addHead(experience.head(), "Sheet1");
     emm.addBody(experience.body());
     // 자동으로 SHEET지 계산 후 Return.
