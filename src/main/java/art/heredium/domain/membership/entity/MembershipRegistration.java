@@ -76,14 +76,17 @@ public class MembershipRegistration {
       @NonNull Membership membership,
       @NonNull LocalDate registrationDate,
       @NonNull LocalDate expirationDate,
-      @NonNull RegistrationType registrationType) {
+      @NonNull RegistrationType registrationType,
+      @NonNull PaymentStatus paymentStatus,
+      @NonNull LocalDate paymentDate) {
     this.uuid = UUID.randomUUID().toString();
     this.account = account;
     this.membership = membership;
     this.registrationDate = registrationDate;
     this.expirationDate = expirationDate;
     this.registrationType = registrationType;
-    // TODO: Add paymentStatus and paymentDate
+    this.paymentStatus = paymentStatus;
+    this.paymentDate = paymentDate;
   }
 
   public MembershipRegistration(
