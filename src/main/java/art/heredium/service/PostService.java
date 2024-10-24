@@ -246,7 +246,7 @@ public class PostService {
       if (membershipRequest.getId() != null) {
         Membership membership =
             post.getMemberships().stream()
-                .filter(m -> m.getId() == membershipRequest.getId())
+                .filter(m -> m.getId().equals(membershipRequest.getId()))
                 .findFirst()
                 .orElseThrow(
                     () ->
