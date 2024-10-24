@@ -21,5 +21,6 @@ public class AccountWithMembershipInfoResponse {
   private Boolean hasEntries;
   private Boolean hasUsedCoupon;
   private String membershipName;
+  private Long numberOfEntries;
   private AccountMembershipRegistrationInfo membershipRegistrationInfo;
 }

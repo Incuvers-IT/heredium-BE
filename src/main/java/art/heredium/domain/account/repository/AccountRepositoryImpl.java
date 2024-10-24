@@ -416,6 +416,12 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
                         .where(couponUsage.account.eq(account).and(couponUsage.isUsed.isTrue()))
                         .exists(),
                     membership.name,
+                    JPAExpressions.select(Wildcard.count)
+                        .from(ticket)
+                        .where(
+                            ticket.account.eq(account),
+                            ticket.kind.in(TicketKindType.EXHIBITION, TicketKindType.PROGRAM),
+                            ticket.state.eq(TicketStateType.USED)),
                     Projections.constructor(
                         AccountMembershipRegistrationInfo.class,
                         membershipRegistration.id,
@@ -431,7 +437,9 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
                 hasNumberOfEntries(dto.getHasNumberOfEntries()),
                 alreadyLoginedBefore(dto.getAlreadyLoginedBefore()),
                 alreadyUsedCouponBefore(dto.getAlreadyUsedCouponBefore()),
-                hasMembership(dto.getHasMembership()));
+                hasMembership(dto.getHasMembership()),
+                searchByText(dto.getText()),
+                idNotIn(dto.getExcludeIds()));
 
     // Create a count query
     JPAQuery<Long> countQuery =
@@ -447,7 +455,9 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
                 hasNumberOfEntries(dto.getHasNumberOfEntries()),
                 alreadyLoginedBefore(dto.getAlreadyLoginedBefore()),
                 alreadyUsedCouponBefore(dto.getAlreadyUsedCouponBefore()),
-                hasMembership(dto.getHasMembership()));
+                hasMembership(dto.getHasMembership()),
+                searchByText(dto.getText()),
+                idNotIn(dto.getExcludeIds()));
 
     long total = countQuery.fetchOne();
 
@@ -479,7 +489,8 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
               ticket
                   .account
                   .eq(account)
-                  .and(ticket.kind.in(TicketKindType.PROGRAM, TicketKindType.EXHIBITION)))
+                  .and(ticket.kind.in(TicketKindType.PROGRAM, TicketKindType.EXHIBITION)),
+              ticket.state.eq(TicketStateType.USED))
           .exists();
     }
     return null;
@@ -522,5 +533,26 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
           .exists();
     }
     return null;
+  }
+
+  private BooleanExpression membershipNameContain(String text) {
+    if (StringUtils.isEmpty(text)) return null;
+    QMembership membership = QMembership.membership;
+    return JPAExpressions.selectOne()
+        .from(membership)
+        .where(membership.name.contains(text))
+        .exists();
+  }
+
+  private BooleanBuilder searchByText(String text) {
+    BooleanBuilder builder = new BooleanBuilder();
+    if (StringUtils.isEmpty(text)) return builder;
+    BooleanBuilder textBuilder = new BooleanBuilder();
+    textBuilder.or(membershipNameContain(text));
+    textBuilder.or(nameContain(text));
+    textBuilder.or(emailContain(text));
+    textBuilder.or(phoneContain(text));
+    builder.and(textBuilder);
+    return builder;
   }
 }
