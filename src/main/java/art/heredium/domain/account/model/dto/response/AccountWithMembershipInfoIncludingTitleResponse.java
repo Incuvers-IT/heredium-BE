@@ -44,4 +44,7 @@ public class AccountWithMembershipInfoIncludingTitleResponse {
 
   @JsonProperty("phone")
   private String phone;
+
+  @JsonProperty("amount")
+  private Long amount;
 }
