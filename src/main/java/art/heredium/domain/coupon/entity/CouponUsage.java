@@ -69,19 +69,13 @@ public class CouponUsage extends BaseEntity {
   @Column(name = "is_permanent")
   private boolean isPermanent;
 
-  @Comment("원천")
-  @Enumerated(EnumType.STRING)
-  @Column(name = "from_source", nullable = false)
-  private CouponSource fromSource;
-
   public CouponUsage(
       @NonNull Coupon coupon,
       @NonNull Account account,
       @NonNull LocalDateTime deliveredDate,
       @NonNull LocalDateTime expirationDate,
       boolean isPermanent,
-      long usedCount,
-      @NonNull CouponSource fromSource) {
+      long usedCount) {
     this.coupon = coupon;
     this.account = account;
     this.deliveredDate = deliveredDate;
@@ -90,6 +84,5 @@ public class CouponUsage extends BaseEntity {
     this.isUsed = false;
     this.isPermanent = isPermanent;
     this.usedCount = usedCount;
-    this.fromSource = fromSource;
   }
 }

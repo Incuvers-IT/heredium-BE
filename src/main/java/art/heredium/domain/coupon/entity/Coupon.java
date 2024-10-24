@@ -74,6 +74,11 @@ public class Coupon extends BaseEntity {
   @JoinColumn(name = "membership_id")
   private Membership membership;
 
+  @Comment("원천")
+  @Enumerated(EnumType.STRING)
+  @Column(name = "from_source", nullable = false)
+  private CouponSource fromSource;
+
   @Builder
   public Coupon(
       String name,
@@ -86,7 +91,8 @@ public class Coupon extends BaseEntity {
       Membership membership,
       Long numberOfUses,
       Boolean isPermanent,
-      Boolean isNonMembershipCoupon) {
+      Boolean isNonMembershipCoupon,
+      CouponSource fromSource) {
     this.name = name;
     this.couponType = couponType;
     this.discountPercent = discountPercent;
@@ -98,6 +104,7 @@ public class Coupon extends BaseEntity {
     this.numberOfUses = numberOfUses;
     this.isPermanent = isPermanent;
     this.isNonMembershipCoupon = isNonMembershipCoupon;
+    this.fromSource = fromSource;
   }
 
   public void updateImageUrl(String imageUrl) {

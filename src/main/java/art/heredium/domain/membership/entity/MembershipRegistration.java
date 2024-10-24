@@ -25,6 +25,7 @@ import org.hibernate.annotations.DynamicInsert;
 import org.hibernate.annotations.TypeDef;
 
 import art.heredium.domain.account.entity.Account;
+import art.heredium.domain.company.entity.Company;
 
 @Entity
 @Getter
@@ -48,8 +49,12 @@ public class MembershipRegistration {
   private Account account;
 
   @OneToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "membership_id", nullable = false)
+  @JoinColumn(name = "membership_id")
   private Membership membership;
+
+  @OneToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "company_id")
+  private Company company;
 
   @Comment("가입일시")
   @Column(name = "registration_date", nullable = false)
@@ -59,15 +64,35 @@ public class MembershipRegistration {
   @Column(name = "expiration_date", nullable = false)
   private LocalDate expirationDate;
 
+  @Comment("등록 유형")
+  @Column(name = "registration_type", nullable = false)
+  private RegistrationType registrationType;
+
   public MembershipRegistration(
       @NonNull Account account,
       @NonNull Membership membership,
       @NonNull LocalDate registrationDate,
-      @NonNull LocalDate expirationDate) {
+      @NonNull LocalDate expirationDate,
+      @NonNull RegistrationType registrationType) {
     this.uuid = UUID.randomUUID().toString();
     this.account = account;
     this.membership = membership;
     this.registrationDate = registrationDate;
     this.expirationDate = expirationDate;
+    this.registrationType = registrationType;
+  }
+
+  public MembershipRegistration(
+      @NonNull Account account,
+      @NonNull Company company,
+      @NonNull LocalDate registrationDate,
+      @NonNull LocalDate expirationDate,
+      @NonNull RegistrationType registrationType) {
+    this.uuid = UUID.randomUUID().toString();
+    this.account = account;
+    this.company = company;
+    this.registrationDate = registrationDate;
+    this.expirationDate = expirationDate;
+    this.registrationType = registrationType;
   }
 }

@@ -16,7 +16,10 @@ import art.heredium.core.config.error.entity.ErrorCode;
 import art.heredium.core.util.Constants;
 import art.heredium.core.util.ValidationUtil;
 import art.heredium.domain.common.type.FilePathType;
+import art.heredium.domain.company.entity.Company;
 import art.heredium.domain.coupon.entity.Coupon;
+import art.heredium.domain.coupon.entity.CouponSource;
+import art.heredium.domain.coupon.model.dto.request.CompanyCouponCreateRequest;
 import art.heredium.domain.coupon.model.dto.request.CouponCreateRequest;
 import art.heredium.domain.coupon.model.dto.request.MembershipCouponCreateRequest;
 import art.heredium.domain.coupon.model.dto.request.NonMembershipCouponCreateRequest;
@@ -33,35 +36,55 @@ public class CouponService {
 
   @Transactional(rollbackFor = Exception.class)
   public Long createNonMembershipCoupon(@NonNull final NonMembershipCouponCreateRequest request) {
-    return createCoupon(request, null);
+    return createCoupon(request, null, null);
   }
 
   @Transactional(rollbackFor = Exception.class)
   public Long createMembershipCoupon(
       @NonNull final MembershipCouponCreateRequest request, @NonNull final Membership membership) {
-    return createCoupon(request, membership);
+    return createCoupon(request, membership, null);
+  }
+
+  @Transactional(rollbackFor = Exception.class)
+  public Long createCompanyCoupon(
+      @NonNull final CompanyCouponCreateRequest request, @NonNull final Company company) {
+    return createCoupon(request, null, company);
   }
 
   private Long createCoupon(
-      @NonNull final CouponCreateRequest request, @Nullable final Membership membership) {
+      @NonNull final CouponCreateRequest request,
+      @Nullable final Membership membership,
+      @Nullable final Company company) {
     final boolean isNonMembershipCoupon = request instanceof NonMembershipCouponCreateRequest;
-    if ((!isNonMembershipCoupon && membership == null)
-        || (isNonMembershipCoupon && membership != null)) {
+    final boolean isMembershipCoupon = request instanceof MembershipCouponCreateRequest;
+    final boolean isCompanyCoupon = request instanceof CompanyCouponCreateRequest;
+    if ((isMembershipCoupon && membership == null) || (!isMembershipCoupon && membership != null)) {
       // This case will never happen
       throw new ApiException(
           ErrorCode.BAD_VALID,
           String.format(
-              "Invalid coupon request for '%s': If 'isNonMembershipCoupon' is false, 'membership' must be provided. If 'isNonMembershipCoupon' is true, 'membership' must not be provided.",
+              "Invalid coupon request for '%s': If 'isMembershipCoupon' is true, 'membership' must be provided. If 'isMembershipCoupon' is false, 'membership' must not be provided.",
+              request.getName()));
+    }
+    if ((isCompanyCoupon && company == null) || (!isCompanyCoupon && company != null)) {
+      // This case will never happen
+      throw new ApiException(
+          ErrorCode.BAD_VALID,
+          String.format(
+              "Invalid coupon request for '%s': If 'isCompanyCoupon' is true, 'company' must be provided. If 'isCompanyCoupon' is false, 'company' must not be provided.",
               request.getName()));
     }
     Integer periodInDays = null;
     LocalDateTime startedDate = null;
     LocalDateTime endedDate = null;
+    CouponSource fromSource = CouponSource.fromCouponCreateRequest(request);
     if (isNonMembershipCoupon) {
       startedDate = ((NonMembershipCouponCreateRequest) request).getStartDate();
       endedDate = ((NonMembershipCouponCreateRequest) request).getEndDate();
-    } else {
+    } else if (isMembershipCoupon) {
       periodInDays = ((MembershipCouponCreateRequest) request).getPeriodInDays();
+    } else if (isCompanyCoupon) {
+      periodInDays = ((CompanyCouponCreateRequest) request).getPeriodInDays();
     }
     CouponValidationUtil.validateCouponRequest(request);
 
@@ -80,6 +103,7 @@ public class CouponService {
             .numberOfUses(request.getNumberOfUses())
             .isPermanent(request.getIsPermanent())
             .isNonMembershipCoupon(isNonMembershipCoupon)
+            .fromSource(fromSource)
             .build();
 
     Coupon savedCoupon = couponRepository.save(coupon);

@@ -60,7 +60,7 @@ public class CouponUsageService {
         this.couponRepository
             .findById(couponId)
             .orElseThrow(() -> new ApiException(ErrorCode.COUPON_NOT_FOUND));
-    if (!coupon.getIsNonMembershipCoupon()) {
+    if (coupon.getFromSource() == CouponSource.MEMBERSHIP_PACKAGE) {
       throw new ApiException(
           ErrorCode.INVALID_COUPON_TO_ASSIGN,
           String.format(
@@ -71,12 +71,12 @@ public class CouponUsageService {
   }
 
   @Transactional(rollbackFor = Exception.class)
-  public List<CouponUsage> distributeMembershipCoupons(
+  public List<CouponUsage> distributeMembershipAndCompanyCoupons(
       @NonNull Account account, @NonNull List<Coupon> coupons) {
     List<CouponUsage> couponUsages = new ArrayList<>();
     coupons.forEach(
         coupon -> {
-          if (coupon.getIsNonMembershipCoupon()) {
+          if (coupon.getFromSource() == CouponSource.ADMIN_SITE) {
             throw new ApiException(
                 ErrorCode.INVALID_COUPON_TO_ASSIGN,
                 String.format(
@@ -87,7 +87,7 @@ public class CouponUsageService {
               this.assignCouponToAccounts(
                   coupon,
                   Stream.of(account.getId()).collect(Collectors.toList()),
-                  CouponSource.MEMBERSHIP_PACKAGE));
+                  coupon.getFromSource()));
         });
     return this.couponUsageRepository.saveAll(couponUsages);
   }
@@ -154,14 +154,12 @@ public class CouponUsageService {
         (accountId, account) -> {
           if (isPermanentCoupon) {
             CouponUsage couponUsage =
-                new CouponUsage(
-                    coupon, account, couponStartedDate, couponEndedDate, true, 0L, source);
+                new CouponUsage(coupon, account, couponStartedDate, couponEndedDate, true, 0L);
             couponUsages.add(couponUsage);
           } else {
             for (int i = 0; i < numberOfUses; i++) {
               CouponUsage couponUsage =
-                  new CouponUsage(
-                      coupon, account, couponStartedDate, couponEndedDate, false, 0L, source);
+                  new CouponUsage(coupon, account, couponStartedDate, couponEndedDate, false, 0L);
               couponUsages.add(couponUsage);
             }
           }
