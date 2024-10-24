@@ -26,4 +26,7 @@ public interface AccountRepositoryQueryDsl {
 
   Page<AccountWithMembershipInfoIncludingTitleResponse> searchWithMembershipInfoIncludingTitle(
       GetAccountWithMembershipInfoIncludingTitleRequest request, Pageable pageable);
+
+  List<AccountWithMembershipInfoIncludingTitleResponse> listWithMembershipInfoIncludingTitle(
+      final GetAccountWithMembershipInfoIncludingTitleRequest dto);
 }

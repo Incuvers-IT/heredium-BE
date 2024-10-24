@@ -111,4 +111,13 @@ public class AdminAccountController {
     return ResponseEntity.ok(
         accountService.listWithMembershipInfoIncludingTitle(request, pageable));
   }
+
+  @GetMapping("/with-membership-info/excel")
+  @SupervisorPermission
+  public ModelAndView downloadExcel(
+      @Valid GetAccountWithMembershipInfoIncludingTitleRequest request,
+      @RequestParam("fileName") String fileName) {
+    Map<String, Object> data = excelService.accountInfoDownload(request, fileName);
+    return new ModelAndView("xlsxView", data);
+  }
 }
