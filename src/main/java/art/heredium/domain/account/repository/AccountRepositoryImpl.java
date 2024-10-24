@@ -649,24 +649,16 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
     return null;
   }
 
-  private BooleanExpression membershipNameContain(String text) {
+  private BooleanExpression searchByText(String text) {
     if (StringUtils.isEmpty(text)) return null;
-    QMembership membership = QMembership.membership;
-    return JPAExpressions.selectOne()
-        .from(membership)
-        .where(membership.name.contains(text))
-        .exists();
-  }
 
-  private BooleanBuilder searchByText(String text) {
-    BooleanBuilder builder = new BooleanBuilder();
-    if (StringUtils.isEmpty(text)) return builder;
-    BooleanBuilder textBuilder = new BooleanBuilder();
-    textBuilder.or(membershipNameContain(text));
-    textBuilder.or(nameContain(text));
-    textBuilder.or(emailContain(text));
-    textBuilder.or(phoneContain(text));
-    builder.and(textBuilder);
-    return builder;
+    QAccountInfo accountInfo = QAccountInfo.accountInfo;
+    QMembershipRegistration membershipRegistration = QMembershipRegistration.membershipRegistration;
+
+    return accountInfo
+        .name
+        .contains(text)
+        .or(accountInfo.phone.contains(text))
+        .or(membershipRegistration.membership.name.contains(text));
   }
 }
