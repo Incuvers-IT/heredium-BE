@@ -18,6 +18,7 @@ import art.heredium.domain.coupon.entity.CouponUsage;
 import art.heredium.domain.coupon.repository.CouponUsageRepository;
 import art.heredium.domain.membership.entity.Membership;
 import art.heredium.domain.membership.entity.MembershipRegistration;
+import art.heredium.domain.membership.entity.RegistrationType;
 import art.heredium.domain.membership.model.dto.response.MembershipRegistrationResponse;
 import art.heredium.domain.membership.repository.MembershipRegistrationRepository;
 import art.heredium.domain.membership.repository.MembershipRepository;
@@ -74,8 +75,13 @@ public class MembershipRegistrationService {
     final LocalDate expirationDate = registrationDate.plusMonths(membership.getPeriod());
     final MembershipRegistration membershipRegistration =
         this.membershipRegistrationRepository.save(
-            new MembershipRegistration(account, membership, registrationDate, expirationDate));
-    this.couponUsageService.distributeMembershipCoupons(account, membership.getCoupons());
+            new MembershipRegistration(
+                account,
+                membership,
+                registrationDate,
+                expirationDate,
+                RegistrationType.MEMBERSHIP_PACKAGE));
+    this.couponUsageService.distributeMembershipAndCompanyCoupons(account, membership.getCoupons());
     // TODO: IH-6 Send notification
     return membershipRegistration.getId();
   }
