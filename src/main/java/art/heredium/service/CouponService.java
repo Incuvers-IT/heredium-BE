@@ -100,9 +100,9 @@ public class CouponService {
             .periodInDays(periodInDays)
             .imageUrl(request.getImageUrl())
             .membership(membership)
+            .company(company)
             .numberOfUses(request.getNumberOfUses())
             .isPermanent(request.getIsPermanent())
-            .isNonMembershipCoupon(isNonMembershipCoupon)
             .fromSource(fromSource)
             .build();
 

@@ -12,6 +12,7 @@ import org.hibernate.annotations.DynamicInsert;
 import org.hibernate.annotations.TypeDef;
 
 import art.heredium.domain.common.entity.BaseEntity;
+import art.heredium.domain.company.entity.Company;
 import art.heredium.domain.membership.entity.Membership;
 
 @Entity
@@ -74,6 +75,10 @@ public class Coupon extends BaseEntity {
   @JoinColumn(name = "membership_id")
   private Membership membership;
 
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "company_id")
+  private Company company;
+
   @Comment("원천")
   @Enumerated(EnumType.STRING)
   @Column(name = "from_source", nullable = false)
@@ -89,9 +94,9 @@ public class Coupon extends BaseEntity {
       Integer periodInDays,
       String imageUrl,
       Membership membership,
+      Company company,
       Long numberOfUses,
       Boolean isPermanent,
-      Boolean isNonMembershipCoupon,
       CouponSource fromSource) {
     this.name = name;
     this.couponType = couponType;
@@ -101,9 +106,9 @@ public class Coupon extends BaseEntity {
     this.periodInDays = periodInDays;
     this.imageUrl = imageUrl;
     this.membership = membership;
+    this.company = company;
     this.numberOfUses = numberOfUses;
     this.isPermanent = isPermanent;
-    this.isNonMembershipCoupon = isNonMembershipCoupon;
     this.fromSource = fromSource;
   }
 
