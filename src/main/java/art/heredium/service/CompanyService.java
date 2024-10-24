@@ -32,7 +32,9 @@ import art.heredium.domain.coupon.entity.Coupon;
 import art.heredium.domain.coupon.repository.CouponRepository;
 import art.heredium.domain.membership.entity.MembershipRegistration;
 import art.heredium.domain.membership.entity.PaymentStatus;
+import art.heredium.domain.membership.entity.RegistrationStatus;
 import art.heredium.domain.membership.entity.RegistrationType;
+import art.heredium.domain.membership.model.dto.request.CompanyMembershipRegistrationHistoryCreateRequest;
 import art.heredium.domain.membership.repository.MembershipRegistrationRepository;
 
 @Service
@@ -45,6 +47,8 @@ public class CompanyService {
   private final MembershipRegistrationRepository membershipRegistrationRepository;
   private final CouponUsageService couponUsageService;
   private final CouponService couponService;
+  private final CompanyMembershipRegistrationHistoryService
+      companyMembershipRegistrationHistoryService;
 
   @Transactional(rollbackFor = Exception.class)
   public Long createCompany(@NonNull final CompanyCreateRequest request) {
@@ -86,7 +90,12 @@ public class CompanyService {
             .orElseThrow(() -> new ApiException(ErrorCode.COMPANY_NOT_FOUND));
 
     CompanyMembershipExcelConvertResponse response = parseExcelFile(file);
-    List<CompanyMembershipRegistrationRequest> requests = response.getSuccessfulRequests();
+    Map<CompanyMembershipRegistrationRequest, Long> requestHistoryMap =
+        response.getSuccessfulRequests();
+    List<CompanyMembershipRegistrationRequest> requests =
+        new ArrayList<>(requestHistoryMap.keySet());
+    List<Long> successMembershipRegistrationHistoryIds = new ArrayList<>();
+    List<Long> failedMembershipRegistrationHistoryIds = new ArrayList<>();
     List<String> initialFailedCases = response.getFailedRequests();
 
     CompanyMembershipRegistrationResponse companyMembershipRegistrationResponse =
@@ -104,6 +113,7 @@ public class CompanyService {
         companyMembershipRegistrationResponse
             .getFailedCases()
             .add("Invalid request: both email and phone are missing");
+        failedMembershipRegistrationHistoryIds.add(requestHistoryMap.get(request));
         continue;
       }
 
@@ -140,6 +150,7 @@ public class CompanyService {
               .add(
                   "Account already has an active membership: "
                       + (request.getEmail() != null ? request.getEmail() : request.getPhone()));
+          failedMembershipRegistrationHistoryIds.add(requestHistoryMap.get(request));
           continue;
         }
 
@@ -156,6 +167,7 @@ public class CompanyService {
 
         successfulAccountIds.add(
             selectedAccount.getId()); // Add the account ID to the successful list
+        successMembershipRegistrationHistoryIds.add(requestHistoryMap.get(request));
       } else {
         companyMembershipRegistrationResponse
             .getFailedCases()
@@ -164,10 +176,21 @@ public class CompanyService {
                     + request.getEmail()
                     + " or phone: "
                     + request.getPhone());
+        failedMembershipRegistrationHistoryIds.add(requestHistoryMap.get(request));
       }
     }
+    this.updateCompanyMembershipRegistrationStatus(
+        successMembershipRegistrationHistoryIds, RegistrationStatus.SUCCESS);
+    this.updateCompanyMembershipRegistrationStatus(
+        failedMembershipRegistrationHistoryIds, RegistrationStatus.FAILED);
 
     return companyMembershipRegistrationResponse;
+  }
+
+  private void updateCompanyMembershipRegistrationStatus(
+      final List<Long> membershipRegistrationHistoryIds, final RegistrationStatus status) {
+    this.companyMembershipRegistrationHistoryService.updateRegistrationStatus(
+        membershipRegistrationHistoryIds, status);
   }
 
   private String getUniqueIdentifier(CompanyMembershipRegistrationRequest request) {
@@ -182,7 +205,7 @@ public class CompanyService {
   private CompanyMembershipExcelConvertResponse parseExcelFile(MultipartFile file)
       throws IOException {
     CompanyMembershipExcelConvertResponse response = new CompanyMembershipExcelConvertResponse();
-    List<CompanyMembershipRegistrationRequest> successfulRequests = new ArrayList<>();
+    Map<CompanyMembershipRegistrationRequest, Long> successfulRequests = new HashMap<>();
     List<String> failedRequests = new ArrayList<>();
     Workbook workbook = WorkbookFactory.create(file.getInputStream());
     Sheet sheet = workbook.getSheetAt(0);
@@ -191,17 +214,46 @@ public class CompanyService {
       if (row.getRowNum() == 0) continue; // Skip header row
       if (isRowEmpty(row)) continue;
 
+      final String title = getCellValueAsString(row.getCell(0));
+      final String email = getCellValueAsString(row.getCell(1));
+      final String phone = getCellValueAsString(row.getCell(2));
+      final String startDate = getCellValueAsString(row.getCell(3));
+      final String price = getCellValueAsString(row.getCell(4));
+      final String paymentDate = getCellValueAsString(row.getCell(5));
       try {
         CompanyMembershipRegistrationRequest request = new CompanyMembershipRegistrationRequest();
-        request.setTitle(getCellValueAsString(row.getCell(0)));
-        request.setEmail(getCellValueAsString(row.getCell(1)));
-        request.setPhone(getCellValueAsString(row.getCell(2)));
+        request.setTitle(title);
+        request.setEmail(email);
+        request.setPhone(phone);
         request.setStartDate(getCellValueAsLocalDate(row.getCell(3)));
         request.setPrice(getCellValueAsLong(row.getCell(4)));
         request.setPaymentDate(getCellValueAsLocalDate(row.getCell(5)));
-        successfulRequests.add(request);
+        final Long registrationHistoryId =
+            this.companyMembershipRegistrationHistoryService
+                .createMembershipRegistrationHistory(
+                    CompanyMembershipRegistrationHistoryCreateRequest.builder()
+                        .title(title)
+                        .email(email)
+                        .phone(phone)
+                        .startDate(startDate)
+                        .price(price)
+                        .paymentDate(paymentDate)
+                        .build())
+                .getId();
+        successfulRequests.put(request, registrationHistoryId);
       } catch (InvalidUploadDataException e) {
         failedRequests.add(getCellValueAsString(row.getCell(1)) + ": " + e.getMessage());
+        this.companyMembershipRegistrationHistoryService.createMembershipRegistrationHistory(
+            CompanyMembershipRegistrationHistoryCreateRequest.builder()
+                .title(title)
+                .email(email)
+                .phone(phone)
+                .startDate(startDate)
+                .price(price)
+                .paymentDate(paymentDate)
+                .status(RegistrationStatus.FAILED)
+                .failedReason(e.getMessage())
+                .build());
       }
     }
 
