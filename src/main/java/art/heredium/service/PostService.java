@@ -22,6 +22,7 @@ import art.heredium.core.util.ValidationUtil;
 import art.heredium.domain.account.entity.Admin;
 import art.heredium.domain.common.type.FilePathType;
 import art.heredium.domain.coupon.entity.Coupon;
+import art.heredium.domain.coupon.entity.CouponSource;
 import art.heredium.domain.coupon.model.dto.request.MembershipCouponCreateRequest;
 import art.heredium.domain.coupon.repository.CouponRepository;
 import art.heredium.domain.coupon.validation.CouponValidationUtil;
@@ -366,6 +367,7 @@ public class PostService {
             .membership(membership)
             .numberOfUses(createRequest.getNumberOfUses())
             .isPermanent(createRequest.getIsPermanent())
+            .fromSource(CouponSource.MEMBERSHIP_PACKAGE)
             .build();
 
     Coupon savedCoupon = couponRepository.save(newCoupon);
