@@ -26,7 +26,7 @@ public class TicketImpl implements CreateBody {
   public List<String> head() {
     List<String> headList =
         Arrays.asList(
-            "NO", "구분", "티켓구분", "제목", "회차", "구매 수", "금액", "계정", "이름", "연락처", "멤버십", "입장권아이디",
+            "NO", "구분", "티켓구분", "제목", "회차", "구매 수", "금액", "멤버십", "계정", "이름", "연락처", "입장권아이디",
             "결제아이디", "생성일시", "상태");
     return new ArrayList<>(headList);
   }
@@ -50,10 +50,10 @@ public class TicketImpl implements CreateBody {
                       entity.getStartDate().format(dtfm), entity.getEndDate().format(dtfm))),
               createString(entity.getNumber()),
               createString(entity.getPrice()),
+              getMembershipName(entity),
               createString(entity.getEmail()),
               createString(entity.getName()),
               createString(entity.getPhone()),
-              getMembershipName(entity),
               createString(entity.getUuid()),
               createString(entity.getPgId()),
               createString(entity.getCreatedDate().format(dtfs)),
