@@ -319,12 +319,12 @@ public class PostService {
       if (couponRequest.getId() != null) {
         Coupon coupon =
             membership.getCoupons().stream()
-                .filter(c -> c.getId() == couponRequest.getId())
+                .filter(c -> c.getId().equals(couponRequest.getId()))
                 .findFirst()
                 .orElseThrow(
                     () ->
                         new ApiException(
-                            ErrorCode.MEMBERSHIP_NOT_FOUND, "couponId = " + couponRequest.getId()));
+                            ErrorCode.COUPON_NOT_FOUND, "couponId = " + couponRequest.getId()));
         updateCoupon(coupon, couponRequest);
       } else {
         createNewCoupon(membership, couponRequest);
