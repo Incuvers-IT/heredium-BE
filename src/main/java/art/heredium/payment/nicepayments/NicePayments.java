@@ -42,7 +42,7 @@ public class NicePayments implements PaymentService<PaymentsPayRequest> {
       //                    authorization, dto.getPaymentKey(), NicePaymentsPayRequest.from(dto));
 
       // TODO: Continue the payment process
-      NicePaymentsPayResponse nicePaymentResponse = getNicePaymentsPayResponse(dto);
+      NicePaymentsPayResponse nicePaymentResponse = getMockedNicePaymentsPayResponse(dto);
 
       if (!NICE_PAYMENT_SUCCESS_CODE.equals(nicePaymentResponse.getResultCode())) {
         log.error(
@@ -99,7 +99,8 @@ public class NicePayments implements PaymentService<PaymentsPayRequest> {
     return Base64Encoder.encodeAuthorization(secretKey);
   }
 
-  private NicePaymentsPayResponse getNicePaymentsPayResponse(PaymentsPayRequest dto) {
+  // TODO: Will be removed in the future
+  private NicePaymentsPayResponse getMockedNicePaymentsPayResponse(PaymentsPayRequest dto) {
     NicePaymentsPayResponse nicePaymentResponse = new NicePaymentsPayResponse();
     nicePaymentResponse.setResultCode("0000");
     nicePaymentResponse.setResultMsg("정상 처리되었습니다.");
