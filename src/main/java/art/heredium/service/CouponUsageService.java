@@ -139,6 +139,9 @@ public class CouponUsageService {
     } else if (source == CouponSource.ADMIN_SITE) {
       startedDate = coupon.getStartedDate();
       endedDate = coupon.getEndedDate();
+    } else if (source == CouponSource.COMPANY) {
+      startedDate = LocalDateTime.now();
+      endedDate = startedDate.plusDays(coupon.getPeriodInDays());
     }
     List<CouponUsage> couponUsages = new ArrayList<>();
     LocalDateTime couponStartedDate = startedDate;
