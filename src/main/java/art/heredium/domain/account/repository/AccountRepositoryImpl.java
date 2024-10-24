@@ -132,6 +132,7 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
     QCouponUsage couponUsage = QCouponUsage.couponUsage;
     QMembershipRegistration membershipRegistration = QMembershipRegistration.membershipRegistration;
     QMembership membership = QMembership.membership;
+    QTicket ticket = QTicket.ticket;
 
     return queryFactory
         .select(
@@ -148,7 +149,13 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
                     .where(couponUsage.account.eq(account).and(couponUsage.isUsed.isTrue())),
                 account.email,
                 accountInfo.name,
-                accountInfo.phone))
+                accountInfo.phone,
+                JPAExpressions.select(ticket.price.sum().coalesce(0L))
+                        .from(ticket)
+                        .innerJoin(account)
+                        .on(ticket.account.eq(account))
+                        .groupBy(account.id)
+                ))
         .from(account)
         .innerJoin(account.accountInfo, accountInfo)
         .leftJoin(membershipRegistration)
