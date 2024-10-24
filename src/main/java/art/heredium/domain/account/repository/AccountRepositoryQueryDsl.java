@@ -5,16 +5,8 @@ import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
-import art.heredium.domain.account.model.dto.request.GetAccountTicketGroupRequest;
-import art.heredium.domain.account.model.dto.request.GetAccountTicketInviteRequest;
-import art.heredium.domain.account.model.dto.request.GetAccountWithMembershipInfoRequest;
-import art.heredium.domain.account.model.dto.request.GetAdminAccountRequest;
-import art.heredium.domain.account.model.dto.request.GetAdminSleeperRequest;
-import art.heredium.domain.account.model.dto.response.AccountWithMembershipInfoResponse;
-import art.heredium.domain.account.model.dto.response.GetAccountTicketGroupResponse;
-import art.heredium.domain.account.model.dto.response.GetAccountTicketInviteResponse;
-import art.heredium.domain.account.model.dto.response.GetAdminAccountResponse;
-import art.heredium.domain.account.model.dto.response.GetAdminSleeperResponse;
+import art.heredium.domain.account.model.dto.request.*;
+import art.heredium.domain.account.model.dto.response.*;
 
 public interface AccountRepositoryQueryDsl {
   Page<GetAccountTicketGroupResponse> search(GetAccountTicketGroupRequest dto, Pageable pageable);
@@ -31,4 +23,7 @@ public interface AccountRepositoryQueryDsl {
 
   Page<AccountWithMembershipInfoResponse> searchWithMembershipInfo(
       GetAccountWithMembershipInfoRequest dto, Pageable pageable);
+
+  Page<AccountWithMembershipInfoIncludingTitleResponse> searchWithMembershipInfoIncludingTitle(
+      GetAccountWithMembershipInfoIncludingTitleRequest request, Pageable pageable);
 }

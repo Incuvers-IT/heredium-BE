@@ -6,6 +6,7 @@ import javax.validation.Valid;
 
 import lombok.RequiredArgsConstructor;
 
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -13,6 +14,7 @@ import org.springframework.web.servlet.ModelAndView;
 
 import art.heredium.core.annotation.SupervisorPermission;
 import art.heredium.domain.account.model.dto.request.*;
+import art.heredium.domain.account.model.dto.response.AccountWithMembershipInfoIncludingTitleResponse;
 import art.heredium.excel.service.ExcelService;
 import art.heredium.service.AccountService;
 
@@ -99,5 +101,14 @@ public class AdminAccountController {
   public ResponseEntity listWithMembershipInfo(
       @Valid GetAccountWithMembershipInfoRequest dto, Pageable pageable) {
     return ResponseEntity.ok(accountService.listWithMembershipInfo(dto, pageable));
+  }
+
+  @GetMapping("/with-membership-info")
+  @SupervisorPermission
+  public ResponseEntity<Page<AccountWithMembershipInfoIncludingTitleResponse>>
+      listWithMembershipInfoIncludingTitle(
+          @Valid GetAccountWithMembershipInfoIncludingTitleRequest request, Pageable pageable) {
+    return ResponseEntity.ok(
+        accountService.listWithMembershipInfoIncludingTitle(request, pageable));
   }
 }

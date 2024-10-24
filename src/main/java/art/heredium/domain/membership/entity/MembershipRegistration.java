@@ -3,15 +3,7 @@ package art.heredium.domain.membership.entity;
 import java.time.LocalDate;
 import java.util.UUID;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.OneToOne;
-import javax.persistence.Table;
+import javax.persistence.*;
 
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -40,6 +32,9 @@ public class MembershipRegistration {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
+  @Column(name = "title", length = 100, unique = true)
+  private String title;
+
   @Comment("티켓 uuid")
   @Column(name = "uuid", nullable = false, length = 36, unique = true, updatable = false)
   private String uuid;
@@ -64,6 +59,14 @@ public class MembershipRegistration {
   @Column(name = "expiration_date", nullable = false)
   private LocalDate expirationDate;
 
+  @Comment("결제 상태")
+  @Column(name = "payment_status")
+  @Enumerated(EnumType.STRING)
+  private PaymentStatus paymentStatus;
+
+  @Column(name = "payment_date", nullable = false)
+  private LocalDate paymentDate;
+
   @Comment("등록 유형")
   @Column(name = "registration_type", nullable = false)
   private RegistrationType registrationType;
@@ -80,6 +83,7 @@ public class MembershipRegistration {
     this.registrationDate = registrationDate;
     this.expirationDate = expirationDate;
     this.registrationType = registrationType;
+    // TODO: Add paymentStatus and paymentDate
   }
 
   public MembershipRegistration(
@@ -94,5 +98,6 @@ public class MembershipRegistration {
     this.registrationDate = registrationDate;
     this.expirationDate = expirationDate;
     this.registrationType = registrationType;
+    // TODO: Add paymentStatus and paymentDate
   }
 }
