@@ -36,15 +36,13 @@ import art.heredium.core.util.Constants;
 import art.heredium.domain.ticket.entity.Ticket;
 import art.heredium.payment.inf.PaymentService;
 import art.heredium.payment.inf.PaymentTicketResponse;
-import art.heredium.payment.inicis.dto.request.InicisTicketRequest;
+import art.heredium.payment.inicis.dto.request.InicisPaymentRequest;
 import art.heredium.payment.inicis.dto.response.InicisPayMobileResponse;
 import art.heredium.payment.inicis.dto.response.InicisPayResponse;
-import art.heredium.payment.inicis.dto.response.InicisValidResponse;
-import art.heredium.payment.type.PaymentType;
 
 @Slf4j
 @Service
-public class Inicis implements PaymentService<InicisValidResponse, InicisTicketRequest> {
+public class Inicis implements PaymentService<InicisPaymentRequest> {
 
   @Value("${inicis.mid}")
   private String MID;
@@ -56,36 +54,7 @@ public class Inicis implements PaymentService<InicisValidResponse, InicisTicketR
   private String API_KEY;
 
   @Override
-  public PaymentType getPaymentType(InicisTicketRequest dto) {
-    return PaymentType.INICIS;
-  }
-
-  @Override
-  public InicisValidResponse valid(Ticket ticket) {
-
-    try {
-      String mid = MID; // 가맹점 ID(가맹점 수정후 고정)
-      String signKey = SIGN_KEY; // 가맹점에 제공된 웹 표준 사인키(가맹점 수정후 고정)
-      String timestamp = SignatureUtil.getTimestamp(); // util에 의해서 자동생성
-
-      String oid = ticket.getUuid(); // 가맹점 주문번호(가맹점에서 직접 설정)
-      Long price = ticket.getPrice(); // 상품가격(특수기호 제외, 가맹점에서 직접 설정)
-      String mKey = SignatureUtil.hash(signKey, "SHA-256");
-
-      Map<String, String> signParam = new HashMap<>();
-      signParam.put("oid", oid);
-      signParam.put("price", price.toString());
-      signParam.put("timestamp", timestamp);
-      String signature = SignatureUtil.makeSignature(signParam);
-
-      return new InicisValidResponse(ticket, timestamp, oid, price, mid, mKey, signature);
-    } catch (Exception e) {
-      throw new ApiException(ErrorCode.BAD_REQUEST);
-    }
-  }
-
-  @Override
-  public PaymentTicketResponse pay(InicisTicketRequest dto, Long amount) {
+  public PaymentTicketResponse pay(InicisPaymentRequest dto, Long amount) {
     if (dto.getIsMobile()) {
       return payMobile(dto);
     }
@@ -233,7 +202,7 @@ public class Inicis implements PaymentService<InicisValidResponse, InicisTicketR
   }
 
   @Override
-  public void cancel(Ticket ticket, InicisTicketRequest dto) {
+  public void cancel(Ticket ticket, InicisPaymentRequest dto) {
     try {
       String timestamp = SignatureUtil.getTimestamp();
       Map<String, String> signParam = new HashMap<>();
@@ -264,7 +233,7 @@ public class Inicis implements PaymentService<InicisValidResponse, InicisTicketR
     }
   }
 
-  public InicisPayMobileResponse payMobile(InicisTicketRequest dto) {
+  public InicisPayMobileResponse payMobile(InicisPaymentRequest dto) {
     try {
       String P_STATUS = dto.getP_STATUS(); // 인증 상태
       String P_RMESG1 = dto.getP_RMESG1(); // 인증 결과 메시지

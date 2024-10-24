@@ -154,6 +154,14 @@ public class Constants {
     }
   }
 
+  public static String moveImageToNewPlace(
+      CloudStorage cloudStorage, String tempOriginalUrl, String newPath) {
+    Storage storage = new Storage();
+    storage.setSavedFileName(tempOriginalUrl);
+    Constants.moveFileFromTemp(cloudStorage, storage, newPath);
+    return storage.getSavedFileName();
+  }
+
   private static String moveTempFile(
       CloudStorage cloudStorage, String fileFolderPath, String savedFileName) {
     if (savedFileName.startsWith(FilePathType.TEMP.getPath())) {

@@ -66,6 +66,7 @@ public class CloudStorage {
                 new AwsClientBuilder.EndpointConfiguration(END_POINT, REGION_NAME))
             .withCredentials(
                 new AWSStaticCredentialsProvider(new BasicAWSCredentials(ACCESS_KEY, SECRET_KEY)))
+            .withPathStyleAccessEnabled(true)
             .build();
     return s3;
   }
@@ -180,7 +181,9 @@ public class CloudStorage {
   public void move(String oldPath, String newPath) {
     AmazonS3 s3 = getSession();
     s3.copyObject(BUCKET, oldPath, BUCKET, newPath);
-    s3.setObjectAcl(BUCKET, newPath, CannedAccessControlList.PublicRead);
+    // s3.setObjectAcl(BUCKET, newPath, CannedAccessControlList.PublicRead);
+
+    // Delete the old object
     delete(oldPath);
   }
 

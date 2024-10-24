@@ -7,6 +7,7 @@ import javax.validation.Valid;
 
 import lombok.RequiredArgsConstructor;
 
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -17,6 +18,7 @@ import art.heredium.core.annotation.SupervisorPermission;
 import art.heredium.domain.ticket.model.dto.request.GetAdminTicketRequest;
 import art.heredium.domain.ticket.model.dto.request.PostAdminTicketGroupRequest;
 import art.heredium.domain.ticket.model.dto.request.PostAdminTicketInviteRequest;
+import art.heredium.domain.ticket.model.dto.response.GetAdminTicketResponse;
 import art.heredium.domain.ticket.type.TicketKindType;
 import art.heredium.domain.ticket.type.TicketStateType;
 import art.heredium.excel.service.ExcelService;
@@ -32,7 +34,8 @@ public class AdminTicketsController {
 
   @GetMapping
   @CoffeePermission
-  public ResponseEntity list(@Valid GetAdminTicketRequest dto, Pageable pageable) {
+  public ResponseEntity<Page<GetAdminTicketResponse>> list(
+      @Valid GetAdminTicketRequest dto, Pageable pageable) {
     return ResponseEntity.ok(ticketService.list(dto, pageable));
   }
 

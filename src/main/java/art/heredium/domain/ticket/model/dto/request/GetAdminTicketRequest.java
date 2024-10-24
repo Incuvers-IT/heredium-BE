@@ -23,6 +23,7 @@ public class GetAdminTicketRequest {
   private List<TicketKindType> kinds = new ArrayList<>();
   private List<TicketStateType> state = new ArrayList<>();
   private String text;
+  private Boolean hasMembership;
 
   @Getter
   public enum SearchDateType {

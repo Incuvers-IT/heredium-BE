@@ -3,9 +3,12 @@ package art.heredium.service;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import javax.annotation.PostConstruct;
@@ -38,6 +41,8 @@ import art.heredium.domain.common.model.ProjectInfo;
 import art.heredium.domain.common.type.ProjectPriceType;
 import art.heredium.domain.exhibition.repository.ExhibitionRepository;
 import art.heredium.domain.log.repository.LogRepository;
+import art.heredium.domain.membership.entity.MembershipRegistration;
+import art.heredium.domain.membership.repository.MembershipRegistrationRepository;
 import art.heredium.domain.program.repository.ProgramRepository;
 import art.heredium.domain.statistics.repository.StatisticsRepository;
 import art.heredium.domain.ticket.ProjectRepository;
@@ -79,6 +84,7 @@ public class TicketService {
   private final StatisticsRepository statisticsRepository;
   private final NonUserRepository nonUserRepository;
   private final CloudMail cloudMail;
+  private final MembershipRegistrationRepository membershipRegistrationRepository;
 
   @PostConstruct
   private void init() {
@@ -96,7 +102,33 @@ public class TicketService {
 
   /** 관리자 - 티켓 목록 */
   public Page<GetAdminTicketResponse> list(GetAdminTicketRequest dto, Pageable pageable) {
-    return ticketRepository.search(dto, pageable).map(GetAdminTicketResponse::new);
+    Page<Ticket> ticketPage = ticketRepository.search(dto, pageable);
+
+    List<Long> accountIds =
+        ticketPage.getContent().stream()
+            .map(Ticket::getAccount)
+            .filter(Objects::nonNull)
+            .map(Account::getId)
+            .distinct()
+            .collect(Collectors.toList());
+
+    final Map<Long, MembershipRegistration> membershipRegistrations;
+    if (!accountIds.isEmpty() && (dto.getHasMembership() == null || dto.getHasMembership())) {
+      membershipRegistrations =
+          membershipRegistrationRepository.findLatestForAccounts(accountIds).stream()
+              .collect(Collectors.toMap(mr -> mr.getAccount().getId(), Function.identity()));
+    } else {
+      membershipRegistrations = Collections.emptyMap();
+    }
+
+    return ticketPage.map(
+        ticket -> {
+          MembershipRegistration membershipRegistration = null;
+          if (ticket.getAccount() != null) {
+            membershipRegistration = membershipRegistrations.get(ticket.getAccount().getId());
+          }
+          return new GetAdminTicketResponse(ticket, membershipRegistration);
+        });
   }
 
   /** 관리자 - 티켓 상세 정보 */

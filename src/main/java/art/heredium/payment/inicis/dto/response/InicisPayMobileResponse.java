@@ -73,7 +73,7 @@ public class InicisPayMobileResponse implements PaymentTicketResponse {
   private String P_CSHR_AUTH_NO; // 발행 승인번호 가상계좌는 채번시점에선 미전달 (입금통보로 전달)
 
   @Override
-  public Long getAmount() {
+  public Long getPaymentAmount() {
     return Long.valueOf(P_AMT);
   }
 

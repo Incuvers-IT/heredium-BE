@@ -255,4 +255,16 @@ public class ExhibitionService {
 
     return new GetUserExhibitionDetailRoundInfoResponse(ticketNumber, rounds, ticketTotalNumber);
   }
+
+  public List<Exhibition> findFirstXByFutureAndIsEnabledTrue(final int count) {
+    return this.exhibitionRepository.findFirstXByFutureAndIsEnabledTrue(count);
+  }
+
+  public List<Exhibition> findFirstXByOngoingAndIsEnabledTrue(final int count) {
+    return this.exhibitionRepository.findFirstXByOngoingAndIsEnabledTrue(count);
+  }
+
+  public List<Exhibition> findFirstXByCompletedAndIsEnabledTrue(final int count) {
+    return this.exhibitionRepository.findFirstXByCompletedAndIsEnabledTrue(count);
+  }
 }

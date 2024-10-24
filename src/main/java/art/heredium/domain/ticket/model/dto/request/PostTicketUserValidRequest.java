@@ -12,4 +12,5 @@ import art.heredium.domain.ticket.model.TicketOrderInfo;
 @Setter
 public class PostTicketUserValidRequest {
   @NotNull private @Valid TicketOrderInfo ticketOrderInfo;
+  private String couponUuid;
 }
