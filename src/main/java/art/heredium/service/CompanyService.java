@@ -1,5 +1,7 @@
 package art.heredium.service;
 
+import java.util.List;
+
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
@@ -35,5 +37,9 @@ public class CompanyService {
         .getCoupons()
         .forEach(coupon -> this.couponService.createCompanyCoupon(coupon, savedCompany));
     return savedCompany.getId();
+  }
+
+  public List<Company> getAllCompanies() {
+    return companyRepository.findAll();
   }
 }
