@@ -24,7 +24,7 @@ public class Company {
   private Long id;
 
   @Comment("이름")
-  @Column(name = "name", nullable = false, length = 100, unique = true)
+  @Column(name = "name", nullable = false, unique = true)
   private String name;
 
   @Builder
