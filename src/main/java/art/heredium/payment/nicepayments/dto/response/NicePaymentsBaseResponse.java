@@ -47,7 +47,7 @@ public class NicePaymentsBaseResponse implements PaymentResponse {
 
   @Getter
   @Setter
-  private static class Card {
+  public static class Card {
     private String cardCode;
     private String cardName;
     private String cardNum;
@@ -61,13 +61,13 @@ public class NicePaymentsBaseResponse implements PaymentResponse {
 
   @Getter
   @Setter
-  private static class Coupon {
+  public static class Coupon {
     private Integer couponAmt;
   }
 
   @Getter
   @Setter
-  private static class VBank {
+  public static class VBank {
     private String vbankCode;
     private String vbankName;
     private String vbankNumber;
@@ -77,14 +77,14 @@ public class NicePaymentsBaseResponse implements PaymentResponse {
 
   @Getter
   @Setter
-  private static class Bank {
+  public static class Bank {
     private String bankCode;
     private String bankName;
   }
 
   @Getter
   @Setter
-  private static class Cancel {
+  public static class Cancel {
     private String tid;
     private Integer amount;
     private String cancelledAt;
