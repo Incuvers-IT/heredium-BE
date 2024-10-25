@@ -2,7 +2,9 @@ package art.heredium.domain.membership.repository;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import lombok.RequiredArgsConstructor;
 
@@ -40,9 +42,7 @@ public class MembershipRegistrationRepositoryImpl
     QMembershipRegistration membershipRegistration = QMembershipRegistration.membershipRegistration;
     QMembership membership = QMembership.membership;
     QAccount account = QAccount.account;
-    QCoupon coupon = QCoupon.coupon;
     QAccountInfo accountInfo = QAccountInfo.accountInfo;
-    QCouponUsage couponUsage = QCouponUsage.couponUsage;
     JPAQuery<ActiveMembershipRegistrationsResponse> query =
         queryFactory
             .select(
@@ -88,9 +88,11 @@ public class MembershipRegistrationRepositoryImpl
                 isAgreeToReceiveMarketing(request.getIsAgreeToReceiveMarketing()),
                 textContains(request.getText()),
                 isNotExpired());
-    final long total = countQuery.fetchOne();
-    List<ActiveMembershipRegistrationsResponse> content =
-        query.offset(pageable.getOffset()).limit(pageable.getPageSize()).fetch();
+    final long total = Optional.ofNullable(countQuery.fetchOne()).orElse(0L);
+    List<ActiveMembershipRegistrationsResponse> content = new ArrayList<>();
+    if (total != 0) {
+      content = query.offset(pageable.getOffset()).limit(pageable.getPageSize()).fetch();
+    }
     return new PageImpl<>(content, pageable, total);
   }
 

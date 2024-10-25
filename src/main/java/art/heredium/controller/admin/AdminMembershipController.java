@@ -31,7 +31,7 @@ public class AdminMembershipController {
     return ResponseEntity.ok().build();
   }
 
-  @GetMapping("/active")
+  @GetMapping("/users/active")
   public ResponseEntity<Page<ActiveMembershipRegistrationsResponse>> searchActiveMemberships(
       @Valid GetAllActiveMembershipsRequest request, Pageable pageable) {
     return ResponseEntity.ok(
