@@ -94,6 +94,7 @@ public class CompanyService {
     companyMembershipRegistrationResponse.setFailedCases(new ArrayList<>(initialFailedCases));
 
     Set<String> processedIdentifiers = new HashSet<>();
+    List<Long> successfulAccountIds = new ArrayList<>(); // Changed to List
 
     for (CompanyMembershipRegistrationRequest request : requests) {
       String identifier = getUniqueIdentifier(request);
@@ -125,7 +126,7 @@ public class CompanyService {
         selectedAccount = accountByPhone.orElse(null);
       }
 
-      if (selectedAccount != null) {
+      if (selectedAccount != null && !successfulAccountIds.contains(selectedAccount.getId())) {
         // Check if the account already has an active membership
         Optional<MembershipRegistration> activeMembership =
             membershipRegistrationRepository.findByAccountAndExpirationDateAfter(
@@ -150,6 +151,9 @@ public class CompanyService {
         companyMembershipRegistrationResponse
             .getSuccessCases()
             .add(request.getEmail() != null ? request.getEmail() : request.getPhone());
+
+        successfulAccountIds.add(
+            selectedAccount.getId()); // Add the account ID to the successful list
       } else {
         companyMembershipRegistrationResponse
             .getFailedCases()
