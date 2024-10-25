@@ -52,10 +52,12 @@ public interface AccountRepository extends JpaRepository<Account, Long>, Account
   Optional<Account> findByEmail(String email);
 
   @Query(
-      "SELECT a FROM Account a "
-          + "INNER JOIN a.accountInfo ai "
-          + "WHERE ai.phone = :phone "
-          + "ORDER BY ai.lastLoginDate DESC NULLS LAST "
-          + "LIMIT 1")
+      value =
+          "SELECT a.* FROM account a "
+              + "INNER JOIN account_info ai ON a.id = ai.account_id "
+              + "WHERE ai.phone = :phone "
+              + "ORDER BY ai.last_login_date DESC NULLS LAST "
+              + "LIMIT 1",
+      nativeQuery = true)
   Optional<Account> findLatestLoginAccountByPhone(@Param("phone") String phone);
 }

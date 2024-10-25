@@ -23,6 +23,7 @@ import art.heredium.domain.account.repository.AccountRepository;
 import art.heredium.domain.company.entity.Company;
 import art.heredium.domain.company.model.dto.request.CompanyCreateRequest;
 import art.heredium.domain.company.model.dto.request.CompanyMembershipRegistrationRequest;
+import art.heredium.domain.company.model.dto.response.CompanyMembershipExcelConvertResponse;
 import art.heredium.domain.company.model.dto.response.CompanyMembershipRegistrationResponse;
 import art.heredium.domain.company.model.dto.response.CompanyResponseDto;
 import art.heredium.domain.company.repository.CompanyRepository;
@@ -83,18 +84,20 @@ public class CompanyService {
             .findById(companyId)
             .orElseThrow(() -> new ApiException(ErrorCode.COMPANY_NOT_FOUND));
 
-    Map<String, Object> parseResult = parseExcelFile(file);
-    List<CompanyMembershipRegistrationRequest> requests =
-        (List<CompanyMembershipRegistrationRequest>) parseResult.get("successful");
-    List<String> initialFailedCases = (List<String>) parseResult.get("failed");
+    CompanyMembershipExcelConvertResponse response = parseExcelFile(file);
+    List<CompanyMembershipRegistrationRequest> requests = response.getSuccessfulRequests();
+    List<String> initialFailedCases = response.getFailedRequests();
 
-    CompanyMembershipRegistrationResponse response = new CompanyMembershipRegistrationResponse();
-    response.setSuccessCases(new ArrayList<>());
-    response.setFailedCases(new ArrayList<>(initialFailedCases));
+    CompanyMembershipRegistrationResponse companyMembershipRegistrationResponse =
+        new CompanyMembershipRegistrationResponse();
+    companyMembershipRegistrationResponse.setSuccessCases(new ArrayList<>());
+    companyMembershipRegistrationResponse.setFailedCases(new ArrayList<>(initialFailedCases));
 
     for (CompanyMembershipRegistrationRequest request : requests) {
       if (request.getEmail() == null && request.getPhone() == null) {
-        response.getFailedCases().add("Invalid request: both email and phone are missing");
+        companyMembershipRegistrationResponse
+            .getFailedCases()
+            .add("Invalid request: both email and phone are missing");
         continue;
       }
 
@@ -121,11 +124,11 @@ public class CompanyService {
         List<Coupon> companyCoupons = couponRepository.findByCompany(company);
         couponUsageService.distributeMembershipAndCompanyCoupons(selectedAccount, companyCoupons);
 
-        response
+        companyMembershipRegistrationResponse
             .getSuccessCases()
             .add(request.getEmail() != null ? request.getEmail() : request.getPhone());
       } else {
-        response
+        companyMembershipRegistrationResponse
             .getFailedCases()
             .add(
                 "No account found for email: "
@@ -135,10 +138,12 @@ public class CompanyService {
       }
     }
 
-    return response;
+    return companyMembershipRegistrationResponse;
   }
 
-  private Map<String, Object> parseExcelFile(MultipartFile file) throws IOException {
+  private CompanyMembershipExcelConvertResponse parseExcelFile(MultipartFile file)
+      throws IOException {
+    CompanyMembershipExcelConvertResponse response = new CompanyMembershipExcelConvertResponse();
     List<CompanyMembershipRegistrationRequest> successfulRequests = new ArrayList<>();
     List<String> failedRequests = new ArrayList<>();
     Workbook workbook = WorkbookFactory.create(file.getInputStream());
@@ -163,10 +168,9 @@ public class CompanyService {
     }
 
     workbook.close();
-    Map<String, Object> result = new HashMap<>();
-    result.put("successful", successfulRequests);
-    result.put("failed", failedRequests);
-    return result;
+    response.setSuccessfulRequests(successfulRequests);
+    response.setFailedRequests(failedRequests);
+    return response;
   }
 
   private boolean isRowEmpty(Row row) {

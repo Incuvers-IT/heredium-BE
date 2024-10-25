@@ -81,7 +81,6 @@ public enum ErrorCode {
   COUPON_ALREADY_IN_USE(HttpStatus.BAD_REQUEST),
   COMPANY_NAME_ALREADY_EXISTS(HttpStatus.BAD_REQUEST),
   COMPANY_NOT_FOUND(HttpStatus.NOT_FOUND),
-  INVALID_UPLOAD_DATA(HttpStatus.BAD_REQUEST),
   ;
   private HttpStatus status;
 
