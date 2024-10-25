@@ -39,7 +39,10 @@ public class MembershipRegistrationResponse {
   public MembershipRegistrationResponse(
       @NonNull MembershipRegistration membershipRegistration,
       @NonNull List<CouponUsage> couponUsages) {
-    this.membershipName = membershipRegistration.getMembership().getName();
+    this.membershipName =
+        membershipRegistration.getMembership() != null
+            ? membershipRegistration.getMembership().getName()
+            : null;
     this.registrationDate = membershipRegistration.getRegistrationDate();
     this.expirationDate = membershipRegistration.getExpirationDate();
     this.membershipRegistrationId = membershipRegistration.getId();
