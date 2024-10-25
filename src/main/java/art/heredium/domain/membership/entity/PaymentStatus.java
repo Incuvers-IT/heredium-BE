@@ -8,8 +8,7 @@ public enum PaymentStatus {
   EXPIRED("만료됨"),
   ;
 
-  @Getter
-  private String desc;
+  @Getter private String desc;
 
   PaymentStatus(final String desc) {
     this.desc = desc;

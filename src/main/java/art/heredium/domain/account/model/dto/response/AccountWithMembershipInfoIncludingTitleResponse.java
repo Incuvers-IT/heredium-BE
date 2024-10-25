@@ -2,7 +2,6 @@ package art.heredium.domain.account.model.dto.response;
 
 import java.time.LocalDate;
 
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -12,7 +11,6 @@ import art.heredium.domain.membership.entity.PaymentStatus;
 
 @Getter
 @NoArgsConstructor
-@AllArgsConstructor
 public class AccountWithMembershipInfoIncludingTitleResponse {
 
   @JsonProperty("membership_name")
@@ -22,7 +20,7 @@ public class AccountWithMembershipInfoIncludingTitleResponse {
   private String title;
 
   @JsonProperty("payment_status")
-  private PaymentStatus paymentStatus;
+  private String paymentStatus;
 
   @JsonProperty("payment_date")
   private LocalDate paymentDate;
@@ -47,4 +45,29 @@ public class AccountWithMembershipInfoIncludingTitleResponse {
 
   @JsonProperty("amount")
   private Long amount;
+
+  public AccountWithMembershipInfoIncludingTitleResponse(
+      final String membershipName,
+      final String title,
+      final PaymentStatus paymentStatus,
+      final LocalDate paymentDate,
+      final LocalDate startDate,
+      final LocalDate endDate,
+      final Long numberOfUsedCoupons,
+      final String email,
+      final String name,
+      final String phone,
+      final Long amount) {
+    this.membershipName = membershipName;
+    this.title = title;
+    this.paymentStatus = paymentStatus != null ? paymentStatus.getDesc() : null;
+    this.paymentDate = paymentDate;
+    this.startDate = startDate;
+    this.endDate = endDate;
+    this.numberOfUsedCoupons = numberOfUsedCoupons;
+    this.email = email;
+    this.name = name;
+    this.phone = phone;
+    this.amount = amount;
+  }
 }

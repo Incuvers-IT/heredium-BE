@@ -37,7 +37,7 @@ public class AccountInfoImpl implements CreateBody {
               createString(list.size() - (cnt++)),
               createString(entity.getMembershipName()),
               createString(entity.getTitle()),
-              createString(entity.getPaymentStatus() != null ? entity.getPaymentStatus().getDesc() : null),
+              createString(entity.getPaymentStatus()),
               createString(
                   entity.getPaymentDate() != null ? entity.getPaymentDate().format(dtfd) : null),
               createString(
