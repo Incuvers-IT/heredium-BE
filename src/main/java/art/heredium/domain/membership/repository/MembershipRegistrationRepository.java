@@ -10,7 +10,7 @@ import org.springframework.data.repository.query.Param;
 import art.heredium.domain.membership.entity.MembershipRegistration;
 
 public interface MembershipRegistrationRepository
-    extends JpaRepository<MembershipRegistration, Long> {
+    extends JpaRepository<MembershipRegistration, Long>, MembershipRegistrationRepositoryQueryDsl {
 
   @Query(
       value =
