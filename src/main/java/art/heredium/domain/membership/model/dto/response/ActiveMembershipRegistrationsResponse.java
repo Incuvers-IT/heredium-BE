@@ -2,7 +2,6 @@ package art.heredium.domain.membership.model.dto.response;
 
 import java.time.LocalDate;
 
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -12,7 +11,6 @@ import art.heredium.domain.membership.entity.PaymentStatus;
 
 @Getter
 @NoArgsConstructor
-@AllArgsConstructor
 public class ActiveMembershipRegistrationsResponse {
 
   @JsonProperty("membership_name")
@@ -28,7 +26,7 @@ public class ActiveMembershipRegistrationsResponse {
   private String phone;
 
   @JsonProperty("payment_status")
-  private PaymentStatus paymentStatus;
+  private String paymentStatus;
 
   @JsonProperty("payment_date")
   private LocalDate paymentDate;
@@ -47,4 +45,29 @@ public class ActiveMembershipRegistrationsResponse {
 
   @JsonProperty("is_agree_to_receive_marketing")
   private Boolean isAgreeToReceiveMarketing;
+
+  public ActiveMembershipRegistrationsResponse(
+      final String membership,
+      final Long accountId,
+      final String name,
+      final String phone,
+      final PaymentStatus paymentStatus,
+      final LocalDate paymentDate,
+      final Long numberOfMemberships,
+      final Long numberOfExhibitionsUsed,
+      final Long numberOfProgramsUsed,
+      final Long numberOfCoffeeUsed,
+      final Boolean isAgreeToReceiveMarketing) {
+    this.membership = membership;
+    this.accountId = accountId;
+    this.name = name;
+    this.phone = phone;
+    this.paymentStatus = paymentStatus != null ? paymentStatus.getDesc() : null;
+    this.paymentDate = paymentDate;
+    this.numberOfMemberships = numberOfMemberships;
+    this.numberOfExhibitionsUsed = numberOfExhibitionsUsed;
+    this.numberOfProgramsUsed = numberOfProgramsUsed;
+    this.numberOfCoffeeUsed = numberOfCoffeeUsed;
+    this.isAgreeToReceiveMarketing = isAgreeToReceiveMarketing;
+  }
 }
