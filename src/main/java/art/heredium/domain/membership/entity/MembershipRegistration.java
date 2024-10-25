@@ -94,7 +94,7 @@ public class MembershipRegistration {
     this.paymentDate = paymentDate;
     this.registrationType = registrationType;
     this.price = price;
-    this.uuid = java.util.UUID.randomUUID().toString();
+    this.uuid = UUID.randomUUID().toString();
   }
 
   public MembershipRegistration(

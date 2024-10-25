@@ -93,26 +93,20 @@ public class CompanyService {
     companyMembershipRegistrationResponse.setSuccessCases(new ArrayList<>());
     companyMembershipRegistrationResponse.setFailedCases(new ArrayList<>(initialFailedCases));
 
-    // Set to keep track of processed emails and phones
-    Set<String> processedEmails = new HashSet<>();
-    Set<String> processedPhones = new HashSet<>();
+    Set<String> processedIdentifiers = new HashSet<>();
 
     for (CompanyMembershipRegistrationRequest request : requests) {
-      if (request.getEmail() == null && request.getPhone() == null) {
+      String identifier = getUniqueIdentifier(request);
+
+      if (identifier == null) {
         companyMembershipRegistrationResponse
             .getFailedCases()
             .add("Invalid request: both email and phone are missing");
         continue;
       }
 
-      // Check for duplicate email or phone
-      if ((request.getEmail() != null && !processedEmails.add(request.getEmail()))
-          || (request.getPhone() != null && !processedPhones.add(request.getPhone()))) {
-        companyMembershipRegistrationResponse
-            .getFailedCases()
-            .add(
-                "Duplicate entry: "
-                    + (request.getEmail() != null ? request.getEmail() : request.getPhone()));
+      // Skip duplicate entries without adding to failed cases
+      if (!processedIdentifiers.add(identifier)) {
         continue;
       }
 
@@ -168,6 +162,15 @@ public class CompanyService {
     }
 
     return companyMembershipRegistrationResponse;
+  }
+
+  private String getUniqueIdentifier(CompanyMembershipRegistrationRequest request) {
+    if (request.getEmail() != null) {
+      return "email:" + request.getEmail();
+    } else if (request.getPhone() != null) {
+      return "phone:" + request.getPhone();
+    }
+    return null;
   }
 
   private CompanyMembershipExcelConvertResponse parseExcelFile(MultipartFile file)
