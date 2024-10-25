@@ -180,7 +180,11 @@ public class CompanyService {
 
   private LocalDate getCellValueAsLocalDate(Cell cell) {
     if (cell == null) return null;
-    return cell.getLocalDateTimeCellValue().toLocalDate();
+    try {
+      return cell.getLocalDateTimeCellValue().toLocalDate();
+    } catch (Exception e) {
+      throw new InvalidUploadDataException("Invalide date: " + getCellValueAsString(cell));
+    }
   }
 
   private Long getCellValueAsLong(Cell cell) {
@@ -188,7 +192,7 @@ public class CompanyService {
     try {
       return Long.parseLong(getCellValueAsString(cell));
     } catch (Exception e) {
-      throw new InvalidUploadDataException("Invalid number. " + getCellValueAsString(cell));
+      throw new InvalidUploadDataException("Invalid number: " + getCellValueAsString(cell));
     }
   }
 
