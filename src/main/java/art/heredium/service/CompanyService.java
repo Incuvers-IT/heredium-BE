@@ -93,11 +93,26 @@ public class CompanyService {
     companyMembershipRegistrationResponse.setSuccessCases(new ArrayList<>());
     companyMembershipRegistrationResponse.setFailedCases(new ArrayList<>(initialFailedCases));
 
+    // Set to keep track of processed emails and phones
+    Set<String> processedEmails = new HashSet<>();
+    Set<String> processedPhones = new HashSet<>();
+
     for (CompanyMembershipRegistrationRequest request : requests) {
       if (request.getEmail() == null && request.getPhone() == null) {
         companyMembershipRegistrationResponse
             .getFailedCases()
             .add("Invalid request: both email and phone are missing");
+        continue;
+      }
+
+      // Check for duplicate email or phone
+      if ((request.getEmail() != null && !processedEmails.add(request.getEmail()))
+          || (request.getPhone() != null && !processedPhones.add(request.getPhone()))) {
+        companyMembershipRegistrationResponse
+            .getFailedCases()
+            .add(
+                "Duplicate entry: "
+                    + (request.getEmail() != null ? request.getEmail() : request.getPhone()));
         continue;
       }
 
@@ -117,6 +132,20 @@ public class CompanyService {
       }
 
       if (selectedAccount != null) {
+        // Check if the account already has an active membership
+        Optional<MembershipRegistration> activeMembership =
+            membershipRegistrationRepository.findByAccountAndExpirationDateAfter(
+                selectedAccount, LocalDate.now());
+
+        if (activeMembership.isPresent()) {
+          companyMembershipRegistrationResponse
+              .getFailedCases()
+              .add(
+                  "Account already has an active membership: "
+                      + (request.getEmail() != null ? request.getEmail() : request.getPhone()));
+          continue;
+        }
+
         MembershipRegistration registration =
             createMembershipRegistration(request, selectedAccount, company);
         membershipRegistrationRepository.save(registration);

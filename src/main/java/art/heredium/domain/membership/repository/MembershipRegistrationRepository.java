@@ -1,5 +1,6 @@
 package art.heredium.domain.membership.repository;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -7,10 +8,12 @@ import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
 
 import art.heredium.domain.account.entity.Account;
 import art.heredium.domain.membership.entity.MembershipRegistration;
 
+@Repository
 public interface MembershipRegistrationRepository
     extends JpaRepository<MembershipRegistration, Long> {
 
@@ -34,4 +37,7 @@ public interface MembershipRegistrationRepository
   Optional<LocalDateTime> findLatestRegistrationDateByAccountId(@Param("accountId") Long accountId);
 
   Optional<MembershipRegistration> findTopByAccountOrderByRegistrationDateDesc(Account account);
+
+  Optional<MembershipRegistration> findByAccountAndExpirationDateAfter(
+      Account account, LocalDate date);
 }
