@@ -3,9 +3,7 @@ package art.heredium.service;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import lombok.NonNull;
@@ -19,6 +17,7 @@ import org.apache.poi.ss.usermodel.*;
 
 import art.heredium.core.config.error.entity.ApiException;
 import art.heredium.core.config.error.entity.ErrorCode;
+import art.heredium.core.config.error.entity.InvalidUploadDataException;
 import art.heredium.domain.account.entity.Account;
 import art.heredium.domain.account.repository.AccountRepository;
 import art.heredium.domain.company.entity.Company;
@@ -84,14 +83,23 @@ public class CompanyService {
             .findById(companyId)
             .orElseThrow(() -> new ApiException(ErrorCode.COMPANY_NOT_FOUND));
 
-    List<CompanyMembershipRegistrationRequest> requests = parseExcelFile(file);
+    Map<String, Object> parseResult = parseExcelFile(file);
+    List<CompanyMembershipRegistrationRequest> requests =
+        (List<CompanyMembershipRegistrationRequest>) parseResult.get("successful");
+    List<String> initialFailedCases = (List<String>) parseResult.get("failed");
+
     CompanyMembershipRegistrationResponse response = new CompanyMembershipRegistrationResponse();
     response.setSuccessCases(new ArrayList<>());
-    response.setFailedCases(new ArrayList<>());
+    response.setFailedCases(new ArrayList<>(initialFailedCases));
 
     for (CompanyMembershipRegistrationRequest request : requests) {
+      if (request.getEmailOrPhone() == null) {
+        response.getFailedCases().add("Invalid request: null or missing email/phone");
+        continue;
+      }
+
       Optional<Account> accountOpt =
-          accountRepository.findByEmailOrAccountInfo_Phone(request.getEmailOrPhone());
+          accountRepository.findByEmailOrPhone(request.getEmailOrPhone());
 
       if (accountOpt.isPresent()) {
         Account account = accountOpt.get();
@@ -104,37 +112,41 @@ public class CompanyService {
 
         response.getSuccessCases().add(request.getEmailOrPhone());
       } else {
-        response.getFailedCases().add(request.getEmailOrPhone());
+        response.getFailedCases().add(request.getEmailOrPhone() + ": Account not found");
       }
     }
 
     return response;
   }
 
-  private List<CompanyMembershipRegistrationRequest> parseExcelFile(MultipartFile file)
-      throws IOException {
-    List<CompanyMembershipRegistrationRequest> requests = new ArrayList<>();
+  private Map<String, Object> parseExcelFile(MultipartFile file) throws IOException {
+    List<CompanyMembershipRegistrationRequest> successfulRequests = new ArrayList<>();
+    List<String> failedRequests = new ArrayList<>();
     Workbook workbook = WorkbookFactory.create(file.getInputStream());
     Sheet sheet = workbook.getSheetAt(0);
 
     for (Row row : sheet) {
       if (row.getRowNum() == 0) continue; // Skip header row
-
-      // Check if the row is empty
       if (isRowEmpty(row)) continue;
 
-      CompanyMembershipRegistrationRequest request = new CompanyMembershipRegistrationRequest();
-      request.setTitle(getCellValueAsString(row.getCell(0)));
-      request.setEmailOrPhone(getCellValueAsString(row.getCell(1)));
-      request.setStartDate(getCellValueAsLocalDate(row.getCell(2)));
-      request.setPrice(getCellValueAsInteger(row.getCell(3)));
-      request.setPaymentDate(getCellValueAsLocalDate(row.getCell(4)));
-
-      requests.add(request);
+      try {
+        CompanyMembershipRegistrationRequest request = new CompanyMembershipRegistrationRequest();
+        request.setTitle(getCellValueAsString(row.getCell(0)));
+        request.setEmailOrPhone(getCellValueAsString(row.getCell(1)));
+        request.setStartDate(getCellValueAsLocalDate(row.getCell(2)));
+        request.setPrice(getCellValueAsLong(row.getCell(3)));
+        request.setPaymentDate(getCellValueAsLocalDate(row.getCell(4)));
+        successfulRequests.add(request);
+      } catch (InvalidUploadDataException e) {
+        failedRequests.add(getCellValueAsString(row.getCell(1)) + ": " + e.getMessage());
+      }
     }
 
     workbook.close();
-    return requests;
+    Map<String, Object> result = new HashMap<>();
+    result.put("successful", successfulRequests);
+    result.put("failed", failedRequests);
+    return result;
   }
 
   private boolean isRowEmpty(Row row) {
@@ -171,9 +183,13 @@ public class CompanyService {
     return cell.getLocalDateTimeCellValue().toLocalDate();
   }
 
-  private Integer getCellValueAsInteger(Cell cell) {
+  private Long getCellValueAsLong(Cell cell) {
     if (cell == null) return null;
-    return (int) cell.getNumericCellValue();
+    try {
+      return Long.parseLong(getCellValueAsString(cell));
+    } catch (Exception e) {
+      throw new InvalidUploadDataException("Invalid number. " + getCellValueAsString(cell));
+    }
   }
 
   private MembershipRegistration createMembershipRegistration(

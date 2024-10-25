@@ -50,5 +50,5 @@ public interface AccountRepository extends JpaRepository<Account, Long>, Account
 
   @Query(
       "SELECT a FROM Account a LEFT JOIN a.accountInfo ai WHERE a.email = :emailOrPhone OR ai.phone = :emailOrPhone")
-  Optional<Account> findByEmailOrAccountInfo_Phone(@Param("emailOrPhone") String emailOrPhone);
+  Optional<Account> findByEmailOrPhone(@Param("emailOrPhone") String emailOrPhone);
 }

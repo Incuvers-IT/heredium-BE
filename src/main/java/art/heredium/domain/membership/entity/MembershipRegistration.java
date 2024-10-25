@@ -73,7 +73,7 @@ public class MembershipRegistration {
 
   @Comment("가격")
   @Column(name = "price")
-  private Integer price;
+  private Long price;
 
   public MembershipRegistration(
       String title,
@@ -84,7 +84,7 @@ public class MembershipRegistration {
       @NonNull PaymentStatus paymentStatus,
       @NonNull LocalDate paymentDate,
       @NonNull RegistrationType registrationType,
-      @NonNull Integer price) {
+      @NonNull Long price) {
     this.title = title;
     this.account = account;
     this.company = company;
