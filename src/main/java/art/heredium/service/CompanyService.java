@@ -93,26 +93,45 @@ public class CompanyService {
     response.setFailedCases(new ArrayList<>(initialFailedCases));
 
     for (CompanyMembershipRegistrationRequest request : requests) {
-      if (request.getEmailOrPhone() == null) {
-        response.getFailedCases().add("Invalid request: null or missing email/phone");
+      if (request.getEmail() == null && request.getPhone() == null) {
+        response.getFailedCases().add("Invalid request: both email and phone are missing");
         continue;
       }
 
-      Optional<Account> accountOpt =
-          accountRepository.findByEmailOrPhone(request.getEmailOrPhone());
+      Account selectedAccount = null;
 
-      if (accountOpt.isPresent()) {
-        Account account = accountOpt.get();
+      // First, try to find an account by email
+      if (request.getEmail() != null) {
+        Optional<Account> accountByEmail = accountRepository.findByEmail(request.getEmail());
+        selectedAccount = accountByEmail.orElse(null);
+      }
+
+      // If no account found by email, search by phone
+      if (selectedAccount == null && request.getPhone() != null) {
+        Optional<Account> accountByPhone =
+            accountRepository.findLatestLoginAccountByPhone(request.getPhone());
+        selectedAccount = accountByPhone.orElse(null);
+      }
+
+      if (selectedAccount != null) {
         MembershipRegistration registration =
-            createMembershipRegistration(request, account, company);
+            createMembershipRegistration(request, selectedAccount, company);
         membershipRegistrationRepository.save(registration);
 
         List<Coupon> companyCoupons = couponRepository.findByCompany(company);
-        couponUsageService.distributeMembershipAndCompanyCoupons(account, companyCoupons);
+        couponUsageService.distributeMembershipAndCompanyCoupons(selectedAccount, companyCoupons);
 
-        response.getSuccessCases().add(request.getEmailOrPhone());
+        response
+            .getSuccessCases()
+            .add(request.getEmail() != null ? request.getEmail() : request.getPhone());
       } else {
-        response.getFailedCases().add(request.getEmailOrPhone() + ": Account not found");
+        response
+            .getFailedCases()
+            .add(
+                "No account found for email: "
+                    + request.getEmail()
+                    + " or phone: "
+                    + request.getPhone());
       }
     }
 
@@ -132,10 +151,11 @@ public class CompanyService {
       try {
         CompanyMembershipRegistrationRequest request = new CompanyMembershipRegistrationRequest();
         request.setTitle(getCellValueAsString(row.getCell(0)));
-        request.setEmailOrPhone(getCellValueAsString(row.getCell(1)));
-        request.setStartDate(getCellValueAsLocalDate(row.getCell(2)));
-        request.setPrice(getCellValueAsLong(row.getCell(3)));
-        request.setPaymentDate(getCellValueAsLocalDate(row.getCell(4)));
+        request.setEmail(getCellValueAsString(row.getCell(1)));
+        request.setPhone(getCellValueAsString(row.getCell(2)));
+        request.setStartDate(getCellValueAsLocalDate(row.getCell(3)));
+        request.setPrice(getCellValueAsLong(row.getCell(4)));
+        request.setPaymentDate(getCellValueAsLocalDate(row.getCell(5)));
         successfulRequests.add(request);
       } catch (InvalidUploadDataException e) {
         failedRequests.add(getCellValueAsString(row.getCell(1)) + ": " + e.getMessage());

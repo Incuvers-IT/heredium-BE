@@ -14,7 +14,9 @@ import lombok.Setter;
 public class CompanyMembershipRegistrationRequest {
   @NotBlank private String title;
 
-  @NotBlank private String emailOrPhone;
+  @NotBlank private String email;
+
+  @NotBlank private String phone;
 
   @NotNull private LocalDate startDate;
 

@@ -48,7 +48,14 @@ public interface AccountRepository extends JpaRepository<Account, Long>, Account
 
   List<Account> findByIdIn(@Param("ids") Set<Long> ids);
 
+  @EntityGraph(attributePaths = {"accountInfo", "sleeperInfo"})
+  Optional<Account> findByEmail(String email);
+
   @Query(
-      "SELECT a FROM Account a LEFT JOIN a.accountInfo ai WHERE a.email = :emailOrPhone OR ai.phone = :emailOrPhone")
-  Optional<Account> findByEmailOrPhone(@Param("emailOrPhone") String emailOrPhone);
+      "SELECT a FROM Account a "
+          + "INNER JOIN a.accountInfo ai "
+          + "WHERE ai.phone = :phone "
+          + "ORDER BY ai.lastLoginDate DESC NULLS LAST "
+          + "LIMIT 1")
+  Optional<Account> findLatestLoginAccountByPhone(@Param("phone") String phone);
 }
