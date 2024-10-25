@@ -8,8 +8,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import art.heredium.core.annotation.ManagerPermission;
-import art.heredium.domain.company.entity.Company;
 import art.heredium.domain.company.model.dto.request.CompanyCreateRequest;
+import art.heredium.domain.company.model.dto.response.CompanyResponseDto;
 import art.heredium.service.CompanyService;
 
 @RestController
@@ -25,7 +25,7 @@ public class AdminCompanyController {
   }
 
   @GetMapping
-  public ResponseEntity<List<Company>> getCompanyList() {
+  public ResponseEntity<List<CompanyResponseDto>> getCompanyList() {
     return ResponseEntity.ok(this.companyService.getAllCompanies());
   }
 }

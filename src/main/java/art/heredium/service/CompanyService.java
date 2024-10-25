@@ -1,6 +1,7 @@
 package art.heredium.service;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -12,6 +13,7 @@ import art.heredium.core.config.error.entity.ApiException;
 import art.heredium.core.config.error.entity.ErrorCode;
 import art.heredium.domain.company.entity.Company;
 import art.heredium.domain.company.model.dto.request.CompanyCreateRequest;
+import art.heredium.domain.company.model.dto.response.CompanyResponseDto;
 import art.heredium.domain.company.repository.CompanyRepository;
 
 @Service
@@ -39,7 +41,16 @@ public class CompanyService {
     return savedCompany.getId();
   }
 
-  public List<Company> getAllCompanies() {
-    return companyRepository.findAll();
+  public List<CompanyResponseDto> getAllCompanies() {
+    return companyRepository.findAll().stream()
+        .map(this::convertToDto)
+        .collect(Collectors.toList());
+  }
+
+  private CompanyResponseDto convertToDto(Company company) {
+    CompanyResponseDto dto = new CompanyResponseDto();
+    dto.setId(company.getId());
+    dto.setName(company.getName());
+    return dto;
   }
 }
