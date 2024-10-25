@@ -227,7 +227,7 @@ public class CompanyService {
         account,
         company,
         request.getStartDate(),
-        request.getStartDate().plusDays(364),
+        request.getStartDate().plusDays(365),
         PaymentStatus.COMPLETED,
         request.getPaymentDate(),
         RegistrationType.COMPANY,
