@@ -1,8 +1,8 @@
 package art.heredium.service;
 
-import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
 
@@ -21,6 +21,7 @@ import art.heredium.domain.membership.entity.MembershipRegistration;
 import art.heredium.domain.membership.entity.PaymentStatus;
 import art.heredium.domain.membership.entity.RegistrationType;
 import art.heredium.domain.membership.model.dto.response.MembershipRegistrationResponse;
+import art.heredium.domain.membership.model.dto.response.RegisterMembershipResponse;
 import art.heredium.domain.membership.repository.MembershipRegistrationRepository;
 import art.heredium.domain.membership.repository.MembershipRepository;
 import art.heredium.domain.post.repository.PostRepository;
@@ -51,7 +52,7 @@ public class MembershipRegistrationService {
   }
 
   @Transactional(rollbackFor = Exception.class)
-  public long registerMembership(long membershipId) {
+  public RegisterMembershipResponse registerMembership(long membershipId) {
     final long accountId =
         AuthUtil.getCurrentUserAccountId()
             .orElseThrow(() -> new ApiException(ErrorCode.ANONYMOUS_USER));
@@ -71,21 +72,16 @@ public class MembershipRegistrationService {
         this.accountRepository
             .findById(accountId)
             .orElseThrow(() -> new ApiException(ErrorCode.USER_NOT_FOUND));
-    // TODO: IH-9 Implement payment
-    final LocalDate registrationDate = LocalDate.now();
-    final LocalDate expirationDate = registrationDate.plusMonths(membership.getPeriod());
+    final String paymentOrderId = UUID.randomUUID().toString();
     final MembershipRegistration membershipRegistration =
         this.membershipRegistrationRepository.save(
             new MembershipRegistration(
                 account,
                 membership,
-                registrationDate,
-                expirationDate,
                 RegistrationType.MEMBERSHIP_PACKAGE,
-                PaymentStatus.COMPLETED,
-                registrationDate));
+                PaymentStatus.PENDING,
+                paymentOrderId));
     this.couponUsageService.distributeMembershipAndCompanyCoupons(account, membership.getCoupons());
-    // TODO: IH-6 Send notification
-    return membershipRegistration.getId();
+    return new RegisterMembershipResponse(membershipRegistration);
   }
 }

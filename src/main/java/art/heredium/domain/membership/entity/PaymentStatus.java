@@ -3,6 +3,7 @@ package art.heredium.domain.membership.entity;
 import lombok.Getter;
 
 public enum PaymentStatus {
+  PENDING("보류중"),
   COMPLETED("완전한"),
   REFUND("환불하다"),
   EXPIRED("만료됨"),

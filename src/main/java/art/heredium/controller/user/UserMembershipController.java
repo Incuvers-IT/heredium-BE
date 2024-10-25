@@ -31,7 +31,6 @@ public class UserMembershipController {
   public ResponseEntity<RegisterMembershipResponse> registerMembership(
       @RequestBody RegisterMembershipRequest request) {
     return ResponseEntity.ok(
-        new RegisterMembershipResponse(
-            this.membershipRegistrationService.registerMembership(request.getMembershipId())));
+        this.membershipRegistrationService.registerMembership(request.getMembershipId()));
   }
 }
