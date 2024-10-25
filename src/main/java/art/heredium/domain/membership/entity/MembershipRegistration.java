@@ -52,11 +52,11 @@ public class MembershipRegistration {
   private Company company;
 
   @Comment("가입일시")
-  @Column(name = "registration_date", nullable = false)
+  @Column(name = "registration_date")
   private LocalDate registrationDate;
 
   @Comment("만료일시")
-  @Column(name = "expiration_date", nullable = false)
+  @Column(name = "expiration_date")
   private LocalDate expirationDate;
 
   @Comment("결제 상태")
@@ -64,8 +64,11 @@ public class MembershipRegistration {
   @Enumerated(EnumType.STRING)
   private PaymentStatus paymentStatus;
 
-  @Column(name = "payment_date", nullable = false)
+  @Column(name = "payment_date")
   private LocalDate paymentDate;
+
+  @Column(name = "payment_order_id", length = 36, unique = true, updatable = false)
+  private String paymentOrderId;
 
   @Comment("등록 유형")
   @Column(name = "registration_type", nullable = false)
@@ -74,11 +77,26 @@ public class MembershipRegistration {
   public MembershipRegistration(
       @NonNull Account account,
       @NonNull Membership membership,
+      @NonNull RegistrationType registrationType,
+      @NonNull PaymentStatus paymentStatus,
+      @NonNull String paymentOrderId) {
+    this.uuid = UUID.randomUUID().toString();
+    this.account = account;
+    this.membership = membership;
+    this.registrationType = registrationType;
+    this.paymentStatus = paymentStatus;
+    this.paymentOrderId = paymentOrderId;
+  }
+
+  public MembershipRegistration(
+      @NonNull Account account,
+      @NonNull Membership membership,
       @NonNull LocalDate registrationDate,
       @NonNull LocalDate expirationDate,
       @NonNull RegistrationType registrationType,
       @NonNull PaymentStatus paymentStatus,
-      @NonNull LocalDate paymentDate) {
+      @NonNull LocalDate paymentDate,
+      @NonNull String paymentOrderId) {
     this.uuid = UUID.randomUUID().toString();
     this.account = account;
     this.membership = membership;
@@ -87,6 +105,7 @@ public class MembershipRegistration {
     this.registrationType = registrationType;
     this.paymentStatus = paymentStatus;
     this.paymentDate = paymentDate;
+    this.paymentOrderId = paymentOrderId;
   }
 
   public MembershipRegistration(
