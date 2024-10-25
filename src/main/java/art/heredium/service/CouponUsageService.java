@@ -1,5 +1,6 @@
 package art.heredium.service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -22,6 +23,8 @@ import art.heredium.domain.coupon.model.dto.response.CouponResponseDto;
 import art.heredium.domain.coupon.model.dto.response.CouponUsageResponse;
 import art.heredium.domain.coupon.repository.CouponRepository;
 import art.heredium.domain.coupon.repository.CouponUsageRepository;
+import art.heredium.domain.membership.entity.MembershipRegistration;
+import art.heredium.domain.membership.repository.MembershipRegistrationRepository;
 
 @Service
 @RequiredArgsConstructor
@@ -29,6 +32,7 @@ public class CouponUsageService {
   private final CouponUsageRepository couponUsageRepository;
   private final CouponRepository couponRepository;
   private final AccountRepository accountRepository;
+  private final MembershipRegistrationRepository membershipRegistrationRepository;
 
   public List<CouponResponseDto> getCouponsWithUsageByAccountId(Long accountId) {
     List<Coupon> coupons = couponUsageRepository.findDistinctCouponsByAccountId(accountId);
@@ -131,21 +135,7 @@ public class CouponUsageService {
       @NonNull final CouponSource source) {
     long numberOfUses = Optional.ofNullable(coupon.getNumberOfUses()).orElse(1L);
     boolean isPermanentCoupon = Boolean.TRUE.equals(coupon.getIsPermanent());
-    LocalDateTime startedDate = null;
-    LocalDateTime endedDate = null;
-    if (source == CouponSource.MEMBERSHIP_PACKAGE) {
-      startedDate = LocalDateTime.now();
-      endedDate = startedDate.plusDays(coupon.getPeriodInDays());
-    } else if (source == CouponSource.ADMIN_SITE) {
-      startedDate = coupon.getStartedDate();
-      endedDate = coupon.getEndedDate();
-    } else if (source == CouponSource.COMPANY) {
-      startedDate = LocalDateTime.now();
-      endedDate = startedDate.plusDays(coupon.getPeriodInDays());
-    }
     List<CouponUsage> couponUsages = new ArrayList<>();
-    LocalDateTime couponStartedDate = startedDate;
-    LocalDateTime couponEndedDate = endedDate;
     Set<Long> accountIdSet = new HashSet<>(accountIds);
     Map<Long, Account> accountMap =
         this.accountRepository.findByIdIn(accountIdSet).stream()
@@ -153,8 +143,42 @@ public class CouponUsageService {
     if (accountMap.entrySet().size() != accountIdSet.size()) {
       throw new ApiException(ErrorCode.USER_NOT_FOUND);
     }
+
+    LocalDateTime now = LocalDateTime.now();
+
     accountMap.forEach(
         (accountId, account) -> {
+          LocalDateTime couponStartedDate;
+          LocalDateTime couponEndedDate;
+
+          if (source == CouponSource.MEMBERSHIP_PACKAGE) {
+            couponStartedDate = now;
+            couponEndedDate = couponStartedDate.plusDays(coupon.getPeriodInDays());
+          } else if (source == CouponSource.ADMIN_SITE) {
+            couponStartedDate = coupon.getStartedDate();
+            couponEndedDate = coupon.getEndedDate();
+          } else if (source == CouponSource.COMPANY) {
+            MembershipRegistration membershipRegistration =
+                membershipRegistrationRepository
+                    .findTopByAccountOrderByRegistrationDateDesc(account)
+                    .orElse(null);
+
+            LocalDate registrationDate =
+                membershipRegistration != null
+                    ? membershipRegistration.getRegistrationDate()
+                    : null;
+
+            couponStartedDate =
+                registrationDate != null
+                    ? registrationDate.isAfter(now.toLocalDate())
+                        ? registrationDate.atStartOfDay()
+                        : now
+                    : now;
+            couponEndedDate = couponStartedDate.plusDays(coupon.getPeriodInDays());
+          } else {
+            throw new ApiException(ErrorCode.INVALID_COUPON_SOURCE);
+          }
+
           if (isPermanentCoupon) {
             CouponUsage couponUsage =
                 new CouponUsage(coupon, account, couponStartedDate, couponEndedDate, true, 0L);
@@ -167,6 +191,7 @@ public class CouponUsageService {
             }
           }
         });
+
     return this.couponUsageRepository.saveAll(couponUsages);
   }
 }
