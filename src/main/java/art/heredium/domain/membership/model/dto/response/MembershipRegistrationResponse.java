@@ -13,6 +13,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import art.heredium.domain.coupon.entity.CouponType;
 import art.heredium.domain.coupon.entity.CouponUsage;
 import art.heredium.domain.membership.entity.MembershipRegistration;
+import art.heredium.domain.membership.entity.RegistrationType;
 
 @Getter
 @Setter
@@ -27,6 +28,9 @@ public class MembershipRegistrationResponse {
   @JsonProperty("membership_name")
   private String membershipName;
 
+  @JsonProperty("company_name")
+  private String companyName;
+
   @JsonProperty("registration_date")
   private LocalDate registrationDate;
 
@@ -36,12 +40,19 @@ public class MembershipRegistrationResponse {
   @JsonProperty("coupons")
   private List<CouponCountByTypeResponse> coupons = new ArrayList<>();
 
+  @JsonProperty("registration_type")
+  private RegistrationType registrationType;
+
   public MembershipRegistrationResponse(
       @NonNull MembershipRegistration membershipRegistration,
       @NonNull List<CouponUsage> couponUsages) {
     this.membershipName =
         membershipRegistration.getMembership() != null
             ? membershipRegistration.getMembership().getName()
+            : null;
+    this.companyName =
+        membershipRegistration.getCompany() != null
+            ? membershipRegistration.getCompany().getName()
             : null;
     this.registrationDate = membershipRegistration.getRegistrationDate();
     this.expirationDate = membershipRegistration.getExpirationDate();
@@ -55,5 +66,6 @@ public class MembershipRegistrationResponse {
                   .filter(couponUsage -> couponUsage.getCoupon().getCouponType() == couponType)
                   .count()));
     }
+    this.registrationType = membershipRegistration.getRegistrationType();
   }
 }
