@@ -74,6 +74,32 @@ public class MembershipRegistration {
   @Column(name = "registration_type", nullable = false)
   private RegistrationType registrationType;
 
+  @Comment("가격")
+  @Column(name = "price")
+  private Long price;
+
+  public MembershipRegistration(
+      String title,
+      @NonNull Account account,
+      @NonNull Company company,
+      @NonNull LocalDate registrationDate,
+      @NonNull LocalDate expirationDate,
+      @NonNull PaymentStatus paymentStatus,
+      @NonNull LocalDate paymentDate,
+      @NonNull RegistrationType registrationType,
+      @NonNull Long price) {
+    this.title = title;
+    this.account = account;
+    this.company = company;
+    this.registrationDate = registrationDate;
+    this.expirationDate = expirationDate;
+    this.paymentStatus = paymentStatus;
+    this.paymentDate = paymentDate;
+    this.registrationType = registrationType;
+    this.price = price;
+    this.uuid = UUID.randomUUID().toString();
+  }
+
   public MembershipRegistration(
       @NonNull Account account,
       @NonNull Membership membership,

@@ -1,14 +1,18 @@
 package art.heredium.domain.membership.repository;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
 
+import art.heredium.domain.account.entity.Account;
 import art.heredium.domain.membership.entity.MembershipRegistration;
 
+@Repository
 public interface MembershipRegistrationRepository
     extends JpaRepository<MembershipRegistration, Long>, MembershipRegistrationRepositoryQueryDsl {
 
@@ -26,4 +30,9 @@ public interface MembershipRegistrationRepository
       "SELECT mr FROM MembershipRegistration mr WHERE mr.account.id = :accountId "
           + "AND mr.registrationDate = (SELECT MAX(mr2.registrationDate) FROM MembershipRegistration mr2 WHERE mr2.account = mr.account)")
   Optional<MembershipRegistration> findLatestForAccount(@Param("accountId") Long accountId);
+
+  Optional<MembershipRegistration> findTopByAccountOrderByRegistrationDateDesc(Account account);
+
+  Optional<MembershipRegistration> findByAccountAndExpirationDateAfter(
+      Account account, LocalDate date);
 }

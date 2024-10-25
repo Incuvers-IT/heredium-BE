@@ -80,6 +80,8 @@ public enum ErrorCode {
   COUPON_NOT_APPLICABLE(HttpStatus.BAD_REQUEST),
   COUPON_ALREADY_IN_USE(HttpStatus.BAD_REQUEST),
   COMPANY_NAME_ALREADY_EXISTS(HttpStatus.BAD_REQUEST),
+  COMPANY_NOT_FOUND(HttpStatus.NOT_FOUND),
+  INVALID_COUPON_SOURCE(HttpStatus.BAD_REQUEST),
   ;
   private HttpStatus status;
 
