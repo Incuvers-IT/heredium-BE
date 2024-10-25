@@ -29,11 +29,11 @@ public class ActiveMembershipImpl implements CreateBody {
             "전화 번호",
             "지불 상태",
             "지불 날짜",
-            "멤버십수",
-            "전시쿠폰 사용수",
-            "프로그램쿠폰 사용수",
-            "커피쿠폰 사용수",
-            "마케팅 수신 여부");
+            "멤버십횟수",
+            "전시사용횟수",
+            "프로그램사용횟수",
+            "음료사용횟수",
+            "마케팅수신동의");
     return new ArrayList<>(headList);
   }
 

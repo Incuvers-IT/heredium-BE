@@ -91,7 +91,7 @@ public class ExcelService {
     return enm.getMap();
   }
 
-  public Map<String, Object> activeMmbershipDownload(
+  public Map<String, Object> activeMembershipDownload(
       GetAllActiveMembershipsRequest dto, String fileName) {
     List<ActiveMembershipRegistrationsResponse> activeMemberships =
         this.membershipRegistrationRepository.listActiveMembershipRegistrations(dto);

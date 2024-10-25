@@ -48,7 +48,7 @@ public class AdminMembershipController {
   @SupervisorPermission
   public ModelAndView searchActiveMemberships(
       @Valid GetAllActiveMembershipsRequest request, @RequestParam("fileName") String fileName) {
-    Map<String, Object> data = this.excelService.activeMmbershipDownload(request, fileName);
+    Map<String, Object> data = this.excelService.activeMembershipDownload(request, fileName);
     return new ModelAndView("xlsxView", data);
   }
 }
