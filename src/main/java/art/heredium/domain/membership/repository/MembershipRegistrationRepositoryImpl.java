@@ -44,34 +44,7 @@ public class MembershipRegistrationRepositoryImpl
     QAccount account = QAccount.account;
     QAccountInfo accountInfo = QAccountInfo.accountInfo;
     JPAQuery<ActiveMembershipRegistrationsResponse> query =
-        queryFactory
-            .select(
-                Projections.constructor(
-                    ActiveMembershipRegistrationsResponse.class,
-                    membership.name,
-                    account.id,
-                    accountInfo.name,
-                    accountInfo.phone,
-                    membershipRegistration.paymentStatus,
-                    membershipRegistration.paymentDate,
-                    JPAExpressions.select(membershipRegistration.count())
-                        .from(membershipRegistration)
-                        .where(membershipRegistration.account.eq(account)),
-                    countUsedCouponsByType(CouponType.EXHIBITION),
-                    countUsedCouponsByType(CouponType.PROGRAM),
-                    countUsedCouponsByType(CouponType.COFFEE),
-                    accountInfo.isMarketingReceive))
-            .from(account)
-            .innerJoin(account.accountInfo, accountInfo)
-            .leftJoin(membershipRegistration)
-            .on(membershipRegistration.account.eq(account))
-            .leftJoin(membership)
-            .on(membershipRegistration.membership.eq(membership))
-            .where(
-                signedUpDateBetween(request.getSignUpDateFrom(), request.getSignUpDateTo()),
-                isAgreeToReceiveMarketing(request.getIsAgreeToReceiveMarketing()),
-                textContains(request.getText()),
-                isNotExpired());
+        this.queryActiveMembershipRegistrations(request);
 
     // Create a count query
     JPAQuery<Long> countQuery =
@@ -94,6 +67,48 @@ public class MembershipRegistrationRepositoryImpl
       content = query.offset(pageable.getOffset()).limit(pageable.getPageSize()).fetch();
     }
     return new PageImpl<>(content, pageable, total);
+  }
+
+  @Override
+  public List<ActiveMembershipRegistrationsResponse> listActiveMembershipRegistrations(
+      GetAllActiveMembershipsRequest request) {
+    return this.queryActiveMembershipRegistrations(request).fetch();
+  }
+
+  private JPAQuery<ActiveMembershipRegistrationsResponse> queryActiveMembershipRegistrations(
+      final GetAllActiveMembershipsRequest request) {
+    QMembership membership = QMembership.membership;
+    QAccount account = QAccount.account;
+    QAccountInfo accountInfo = QAccountInfo.accountInfo;
+    QMembershipRegistration membershipRegistration = QMembershipRegistration.membershipRegistration;
+    return queryFactory
+        .select(
+            Projections.constructor(
+                ActiveMembershipRegistrationsResponse.class,
+                membership.name,
+                account.id,
+                accountInfo.name,
+                accountInfo.phone,
+                membershipRegistration.paymentStatus,
+                membershipRegistration.paymentDate,
+                JPAExpressions.select(membershipRegistration.count())
+                    .from(membershipRegistration)
+                    .where(membershipRegistration.account.eq(account)),
+                countUsedCouponsByType(CouponType.EXHIBITION),
+                countUsedCouponsByType(CouponType.PROGRAM),
+                countUsedCouponsByType(CouponType.COFFEE),
+                accountInfo.isMarketingReceive))
+        .from(account)
+        .innerJoin(account.accountInfo, accountInfo)
+        .leftJoin(membershipRegistration)
+        .on(membershipRegistration.account.eq(account))
+        .leftJoin(membership)
+        .on(membershipRegistration.membership.eq(membership))
+        .where(
+            signedUpDateBetween(request.getSignUpDateFrom(), request.getSignUpDateTo()),
+            isAgreeToReceiveMarketing(request.getIsAgreeToReceiveMarketing()),
+            textContains(request.getText()),
+            isNotExpired());
   }
 
   private JPQLQuery<Long> countUsedCouponsByType(final CouponType couponType) {

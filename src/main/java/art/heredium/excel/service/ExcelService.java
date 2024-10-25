@@ -31,15 +31,14 @@ import art.heredium.domain.account.model.dto.response.GetAdminAccountResponse;
 import art.heredium.domain.account.model.dto.response.GetAdminSleeperResponse;
 import art.heredium.domain.account.repository.AccountRepositoryImpl;
 import art.heredium.domain.membership.entity.MembershipRegistration;
+import art.heredium.domain.membership.model.dto.request.GetAllActiveMembershipsRequest;
+import art.heredium.domain.membership.model.dto.response.ActiveMembershipRegistrationsResponse;
 import art.heredium.domain.membership.repository.MembershipRegistrationRepository;
 import art.heredium.domain.ticket.entity.Ticket;
 import art.heredium.domain.ticket.model.dto.request.GetAdminTicketRequest;
 import art.heredium.domain.ticket.repository.TicketRepositoryImpl;
 import art.heredium.excel.constants.ExcelConstant;
-import art.heredium.excel.impl.AccountImpl;
-import art.heredium.excel.impl.AccountInfoImpl;
-import art.heredium.excel.impl.SlepperImpl;
-import art.heredium.excel.impl.TicketImpl;
+import art.heredium.excel.impl.*;
 import art.heredium.excel.manager.ExcelModelManager;
 
 @Service
@@ -89,6 +88,18 @@ public class ExcelService {
     AccountInfoImpl accountInfo = new AccountInfoImpl(accountInfos);
     enm.addHead(accountInfo.head(), "Sheet1");
     enm.addBody(accountInfo.body());
+    return enm.getMap();
+  }
+
+  public Map<String, Object> activeMmbershipDownload(
+      GetAllActiveMembershipsRequest dto, String fileName) {
+    List<ActiveMembershipRegistrationsResponse> activeMemberships =
+        this.membershipRegistrationRepository.listActiveMembershipRegistrations(dto);
+    ExcelModelManager enm = new ExcelModelManager();
+    enm.setFileName(fileName);
+    ActiveMembershipImpl activeMembership = new ActiveMembershipImpl(activeMemberships);
+    enm.addHead(activeMembership.head(), "Sheet1");
+    enm.addBody(activeMembership.body());
     return enm.getMap();
   }
 
