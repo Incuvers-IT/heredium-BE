@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import lombok.RequiredArgsConstructor;
 
@@ -111,11 +112,12 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
                 paymentStatusIn(dto.getPaymentStatus()),
                 textContains(dto.getText()));
 
-    long total = countQuery.fetchOne();
+    final long total = Optional.ofNullable(countQuery.fetchOne()).orElse(0L);
 
-    List<AccountWithMembershipInfoIncludingTitleResponse> content =
-        query.offset(pageable.getOffset()).limit(pageable.getPageSize()).fetch();
-
+    List<AccountWithMembershipInfoIncludingTitleResponse> content = new ArrayList<>();
+    if (total != 0) {
+      content = query.offset(pageable.getOffset()).limit(pageable.getPageSize()).fetch();
+    }
     return new PageImpl<>(content, pageable, total);
   }
 
@@ -540,10 +542,12 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
                 searchByText(dto.getText()),
                 idNotIn(dto.getExcludeIds()));
 
-    long total = countQuery.fetchOne();
+    final long total = Optional.ofNullable(countQuery.fetchOne()).orElse(0L);
 
-    List<AccountWithMembershipInfoResponse> content =
-        query.offset(pageable.getOffset()).limit(pageable.getPageSize()).fetch();
+    List<AccountWithMembershipInfoResponse> content = new ArrayList<>();
+    if (total != 0) {
+      content = query.offset(pageable.getOffset()).limit(pageable.getPageSize()).fetch();
+    }
 
     return new PageImpl<>(content, pageable, total);
   }

@@ -5,6 +5,8 @@ import java.util.List;
 
 import lombok.RequiredArgsConstructor;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,7 +18,10 @@ import art.heredium.core.util.Constants;
 import art.heredium.core.util.ValidationUtil;
 import art.heredium.domain.common.type.FilePathType;
 import art.heredium.domain.membership.entity.Membership;
+import art.heredium.domain.membership.model.dto.request.GetAllActiveMembershipsRequest;
 import art.heredium.domain.membership.model.dto.request.MembershipCreateRequest;
+import art.heredium.domain.membership.model.dto.response.ActiveMembershipRegistrationsResponse;
+import art.heredium.domain.membership.repository.MembershipRegistrationRepository;
 import art.heredium.domain.membership.repository.MembershipRepository;
 import art.heredium.domain.post.entity.Post;
 import art.heredium.domain.post.repository.PostRepository;
@@ -31,6 +36,7 @@ public class MembershipService {
   private static final Long DEFAULT_MEMBERSHIP_PERIOD = 12L; // months
 
   private final MembershipRepository membershipRepository;
+  private final MembershipRegistrationRepository membershipRegistrationRepository;
   private final PostRepository postRepository;
   private final CouponService couponService;
   private final CloudStorage cloudStorage;
@@ -108,5 +114,11 @@ public class MembershipService {
       throw new ApiException(ErrorCode.INVALID_POST_STATUS_TO_ENABLE_MEMBERSHIP);
     }
     existingMembership.updateIsEnabled(isEnabled);
+  }
+
+  public Page<ActiveMembershipRegistrationsResponse> listActiveMembershipsWithFilter(
+      GetAllActiveMembershipsRequest request, Pageable pageable) {
+    return this.membershipRegistrationRepository.getAllActiveMembershipRegistrations(
+        request, pageable);
   }
 }
