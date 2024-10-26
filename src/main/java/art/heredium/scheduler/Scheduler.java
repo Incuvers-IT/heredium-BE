@@ -1,5 +1,6 @@
 package art.heredium.scheduler;
 
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -26,6 +27,9 @@ import art.heredium.domain.account.repository.AccountInfoRepository;
 import art.heredium.domain.account.repository.AccountRepository;
 import art.heredium.domain.account.repository.NonUserRepository;
 import art.heredium.domain.account.repository.SleeperInfoRepository;
+import art.heredium.domain.membership.entity.MembershipRegistration;
+import art.heredium.domain.membership.entity.PaymentStatus;
+import art.heredium.domain.membership.repository.MembershipRegistrationRepository;
 import art.heredium.domain.ticket.repository.TicketRepository;
 import art.heredium.ncloud.bean.CloudMail;
 import art.heredium.ncloud.bean.CloudStorage;
@@ -50,6 +54,7 @@ public class Scheduler {
   private final NonUserRepository nonUserRepository;
   private final AccountInfoRepository accountInfoRepository;
   private final SleeperInfoRepository sleeperInfoRepository;
+  private final MembershipRegistrationRepository membershipRegistrationRepository;
   private final HerediumProperties herediumProperties;
   private final int accountSleepDay = 365;
   private final int accountTerminateDay = 365 * 2;
@@ -75,6 +80,20 @@ public class Scheduler {
     terminateSendMail();
     terminateAccount();
     terminateNonUser();
+  }
+
+  @Async
+  @Scheduled(cron = "0 0 0 * * ?")
+  @Transactional(rollbackFor = Exception.class)
+  public void removeMembershipRegistrations() {
+    final List<Long> redundantMembershipRegistrationIds =
+        this.membershipRegistrationRepository
+            .findByPaymentStatusAndCreatedDateBefore(
+                PaymentStatus.PENDING, LocalDateTime.now().minusDays(1))
+            .stream()
+            .map(MembershipRegistration::getId)
+            .collect(Collectors.toList());
+    this.membershipRegistrationRepository.deleteAllById(redundantMembershipRegistrationIds);
   }
 
   private void sleepAccountSendMail() {

@@ -17,6 +17,7 @@ import org.hibernate.annotations.DynamicInsert;
 import org.hibernate.annotations.TypeDef;
 
 import art.heredium.domain.account.entity.Account;
+import art.heredium.domain.common.entity.BaseEntity;
 import art.heredium.domain.company.entity.Company;
 
 @Entity
@@ -27,7 +28,7 @@ import art.heredium.domain.company.entity.Company;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @ToString
 // 멤버십등록
-public class MembershipRegistration {
+public class MembershipRegistration extends BaseEntity {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;

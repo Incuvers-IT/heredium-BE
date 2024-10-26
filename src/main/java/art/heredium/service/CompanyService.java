@@ -297,7 +297,7 @@ public class CompanyService {
     try {
       return cell.getLocalDateTimeCellValue().toLocalDate();
     } catch (Exception e) {
-      throw new InvalidUploadDataException("Invalide date: " + getCellValueAsString(cell));
+      throw new InvalidUploadDataException("Invalid date: " + getCellValueAsString(cell));
     }
   }
 
