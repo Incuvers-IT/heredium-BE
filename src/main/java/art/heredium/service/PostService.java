@@ -25,7 +25,6 @@ import art.heredium.domain.coupon.entity.Coupon;
 import art.heredium.domain.coupon.entity.CouponSource;
 import art.heredium.domain.coupon.model.dto.request.MembershipCouponCreateRequest;
 import art.heredium.domain.coupon.repository.CouponRepository;
-import art.heredium.domain.coupon.validation.CouponValidationUtil;
 import art.heredium.domain.membership.entity.Membership;
 import art.heredium.domain.membership.model.dto.request.MembershipCreateRequest;
 import art.heredium.domain.membership.repository.MembershipRepository;
@@ -354,8 +353,8 @@ public class PostService {
   private void createNewCoupon(Membership membership, MembershipCouponUpdateRequest request) {
     MembershipCouponCreateRequest createRequest = convertToCouponCreateRequest(request);
 
-    CouponValidationUtil.validateCouponRequest(createRequest);
     ValidationUtil.validateImage(this.cloudStorage, createRequest.getImageUrl());
+    final long numberOfUses = request.getIsPermanent() ? 0 : request.getNumberOfUses();
 
     Coupon newCoupon =
         Coupon.builder()
@@ -365,7 +364,7 @@ public class PostService {
             .periodInDays(createRequest.getPeriodInDays())
             .imageUrl(createRequest.getImageUrl())
             .membership(membership)
-            .numberOfUses(createRequest.getNumberOfUses())
+            .numberOfUses(numberOfUses)
             .isPermanent(createRequest.getIsPermanent())
             .fromSource(CouponSource.MEMBERSHIP_PACKAGE)
             .build();
