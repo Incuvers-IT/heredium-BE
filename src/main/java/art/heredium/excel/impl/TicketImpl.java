@@ -68,7 +68,7 @@ public class TicketImpl implements CreateBody {
       MembershipRegistration registration =
           membershipRegistrations.get(ticket.getAccount().getId());
       if (registration != null) {
-        return createString(registration.getMembership().getName());
+        return createString(registration.getMembershipOrCompanyName());
       }
     }
     return "";

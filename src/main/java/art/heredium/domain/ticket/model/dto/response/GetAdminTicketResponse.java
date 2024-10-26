@@ -53,7 +53,7 @@ public class GetAdminTicketResponse {
       this.membershipRegistrationInfo =
           new TicketMembershipRegistrationInfo(
               membershipRegistration.getId(),
-              membershipRegistration.getMembership().getName(),
+              membershipRegistration.getMembershipOrCompanyName(),
               membershipRegistration.getRegistrationDate(),
               membershipRegistration.getExpirationDate());
     }

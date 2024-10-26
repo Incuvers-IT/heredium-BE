@@ -14,7 +14,7 @@ import art.heredium.domain.membership.entity.PaymentStatus;
 public class ActiveMembershipRegistrationsResponse {
 
   @JsonProperty("membership_name")
-  private String membership;
+  private String membershipOrCompanyName;
 
   @JsonProperty("account_id")
   private Long accountId;
@@ -47,7 +47,7 @@ public class ActiveMembershipRegistrationsResponse {
   private Boolean isAgreeToReceiveMarketing;
 
   public ActiveMembershipRegistrationsResponse(
-      final String membership,
+      final String membershipOrCompanyName,
       final Long accountId,
       final String name,
       final String phone,
@@ -58,7 +58,7 @@ public class ActiveMembershipRegistrationsResponse {
       final Long numberOfProgramsUsed,
       final Long numberOfCoffeeUsed,
       final Boolean isAgreeToReceiveMarketing) {
-    this.membership = membership;
+    this.membershipOrCompanyName = membershipOrCompanyName;
     this.accountId = accountId;
     this.name = name;
     this.phone = phone;

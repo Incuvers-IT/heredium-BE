@@ -72,6 +72,7 @@ public class MembershipRegistration {
 
   @Comment("등록 유형")
   @Column(name = "registration_type", nullable = false)
+  @Enumerated(EnumType.STRING)
   private RegistrationType registrationType;
 
   @Comment("가격")
@@ -163,5 +164,16 @@ public class MembershipRegistration {
 
   public void updatePaymentDate(LocalDate paymentDate) {
     this.paymentDate = paymentDate;
+  }
+
+  public String getMembershipOrCompanyName() {
+    switch (registrationType) {
+      case COMPANY:
+        return this.company.getName();
+      case MEMBERSHIP_PACKAGE:
+        return this.membership.getName();
+      default:
+        return null;
+    }
   }
 }
