@@ -53,7 +53,7 @@ public interface AccountRepository extends JpaRepository<Account, Long>, Account
           "SELECT a.* FROM account a "
               + "INNER JOIN account_info ai ON a.id = ai.account_id "
               + "WHERE ai.phone = :phone "
-              + "ORDER BY ai.last_login_date DESC NULLS LAST "
+              + "ORDER BY ai.last_login_date IS NULL, ai.last_login_date DESC"
               + "LIMIT 1",
       nativeQuery = true)
   Optional<Account> findLatestLoginAccountByPhone(@Param("phone") String phone);
@@ -63,7 +63,7 @@ public interface AccountRepository extends JpaRepository<Account, Long>, Account
           "SELECT a.* FROM account a "
               + "INNER JOIN account_info ai ON a.id = ai.account_id "
               + "WHERE a.email = :email "
-              + "ORDER BY ai.last_login_date DESC NULLS LAST "
+              + "ORDER BY ai.last_login_date IS NULL, ai.last_login_date DESC"
               + "LIMIT 1",
       nativeQuery = true)
   Optional<Account> findLatestLoginAccountByEmail(@Param("email") String email);
