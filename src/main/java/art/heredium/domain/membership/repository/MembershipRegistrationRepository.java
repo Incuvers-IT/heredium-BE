@@ -35,4 +35,6 @@ public interface MembershipRegistrationRepository
 
   Optional<MembershipRegistration> findByAccountAndExpirationDateAfter(
       Account account, LocalDate date);
+
+  Optional<MembershipRegistration> findByPaymentOrderId(String orderId);
 }

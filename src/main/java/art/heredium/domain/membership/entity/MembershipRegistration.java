@@ -148,4 +148,20 @@ public class MembershipRegistration {
     this.registrationType = registrationType;
     // TODO: Add paymentStatus and paymentDate
   }
+
+  public void updateRegistrationDate(LocalDate registrationDate) {
+    this.registrationDate = registrationDate;
+  }
+
+  public void updateExpirationDate(LocalDate expirationDate) {
+    this.expirationDate = expirationDate;
+  }
+
+  public void updatePaymentStatus(PaymentStatus paymentStatus) {
+    this.paymentStatus = paymentStatus;
+  }
+
+  public void updatePaymentDate(LocalDate paymentDate) {
+    this.paymentDate = paymentDate;
+  }
 }
