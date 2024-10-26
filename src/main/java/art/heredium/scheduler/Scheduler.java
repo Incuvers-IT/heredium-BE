@@ -86,7 +86,14 @@ public class Scheduler {
   @Scheduled(cron = "0 0 0 * * ?")
   @Transactional(rollbackFor = Exception.class)
   public void removeMembershipRegistrations() {
-    removeRedundantMembershipRegistrations();
+    final List<Long> redundantMembershipRegistrationIds =
+        this.membershipRegistrationRepository
+            .findByPaymentStatusAndCreatedDateBefore(
+                PaymentStatus.PENDING, LocalDateTime.now().minusDays(1))
+            .stream()
+            .map(MembershipRegistration::getId)
+            .collect(Collectors.toList());
+    this.membershipRegistrationRepository.deleteAllById(redundantMembershipRegistrationIds);
   }
 
   private void sleepAccountSendMail() {
@@ -218,16 +225,5 @@ public class Scheduler {
     } catch (Exception e) {
       log.error("비회원 개인정보 삭제 스케쥴러 에러", e);
     }
-  }
-
-  private void removeRedundantMembershipRegistrations() {
-    final List<Long> redundantMembershipRegistrationIds =
-        this.membershipRegistrationRepository
-            .findByPaymentStatusAndCreatedDateIsBefore(
-                PaymentStatus.PENDING, LocalDateTime.now().minusDays(1))
-            .stream()
-            .map(MembershipRegistration::getId)
-            .collect(Collectors.toList());
-    this.membershipRegistrationRepository.deleteAllById(redundantMembershipRegistrationIds);
   }
 }
