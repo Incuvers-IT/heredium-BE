@@ -14,7 +14,7 @@ import art.heredium.payment.nicepayments.feign.config.NicePaymentsFeignConfig;
 
 @FeignClient(
     name = "nicepay",
-    url = "https://sandbox-api.nicepay.co.kr/v1",
+    url = "https://sandbox-api.nicepay.co.kr",
     configuration = NicePaymentsFeignConfig.class)
 public interface NicePaymentsClient {
 
