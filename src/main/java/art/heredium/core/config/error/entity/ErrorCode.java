@@ -82,6 +82,7 @@ public enum ErrorCode {
   COMPANY_NAME_ALREADY_EXISTS(HttpStatus.BAD_REQUEST),
   COMPANY_NOT_FOUND(HttpStatus.NOT_FOUND),
   INVALID_COUPON_SOURCE(HttpStatus.BAD_REQUEST),
+  PAYMENT_ORDER_ID_NOT_FOUND(HttpStatus.NOT_FOUND),
   ;
   private HttpStatus status;
 
