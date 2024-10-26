@@ -29,4 +29,7 @@ public interface AccountRepositoryQueryDsl {
 
   List<AccountWithMembershipInfoIncludingTitleResponse> listWithMembershipInfoIncludingTitle(
       final GetAccountWithMembershipInfoIncludingTitleRequest dto);
+
+  List<AccountWithMembershipInfoResponse> listWithMembershipInfo(
+      GetAccountWithMembershipInfoRequest dto);
 }

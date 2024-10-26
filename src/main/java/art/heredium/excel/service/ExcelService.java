@@ -24,9 +24,11 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import art.heredium.domain.account.entity.Account;
 import art.heredium.domain.account.model.dto.request.GetAccountWithMembershipInfoIncludingTitleRequest;
+import art.heredium.domain.account.model.dto.request.GetAccountWithMembershipInfoRequest;
 import art.heredium.domain.account.model.dto.request.GetAdminAccountRequest;
 import art.heredium.domain.account.model.dto.request.GetAdminSleeperRequest;
 import art.heredium.domain.account.model.dto.response.AccountWithMembershipInfoIncludingTitleResponse;
+import art.heredium.domain.account.model.dto.response.AccountWithMembershipInfoResponse;
 import art.heredium.domain.account.model.dto.response.GetAdminAccountResponse;
 import art.heredium.domain.account.model.dto.response.GetAdminSleeperResponse;
 import art.heredium.domain.account.repository.AccountRepositoryImpl;
@@ -127,6 +129,18 @@ public class ExcelService {
     emm.addBody(experience.body());
     // 자동으로 SHEET지 계산 후 Return.
     return emm.getMap();
+  }
+
+  public Map<String, Object> accountWithMembershipInfoDownload(
+      GetAccountWithMembershipInfoRequest dto, String fileName) {
+    List<AccountWithMembershipInfoResponse> accountInfos =
+        this.accountRepository.listWithMembershipInfo(dto);
+    ExcelModelManager enm = new ExcelModelManager();
+    enm.setFileName(fileName);
+    AccountWithMembershipInfoImpl accountInfo = new AccountWithMembershipInfoImpl(accountInfos);
+    enm.addHead(accountInfo.head(), "Sheet1");
+    enm.addBody(accountInfo.body());
+    return enm.getMap();
   }
 
   private boolean isEmpty(Object obj) {
