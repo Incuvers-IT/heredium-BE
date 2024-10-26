@@ -1,6 +1,7 @@
 package art.heredium.domain.company.model.dto.response;
 
 import java.util.List;
+import java.util.Map;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -10,6 +11,6 @@ import art.heredium.domain.company.model.dto.request.CompanyMembershipRegistrati
 @Getter
 @Setter
 public class CompanyMembershipExcelConvertResponse {
-  private List<CompanyMembershipRegistrationRequest> successfulRequests;
+  private Map<CompanyMembershipRegistrationRequest, Long> successfulRequests;
   private List<String> failedRequests;
 }
