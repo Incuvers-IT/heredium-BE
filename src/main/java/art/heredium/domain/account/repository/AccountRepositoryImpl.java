@@ -463,9 +463,8 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
     return value != null && value.size() > 0 ? QAccount.account.id.notIn(value) : null;
   }
 
-  @Override
-  public Page<AccountWithMembershipInfoResponse> searchWithMembershipInfo(
-      GetAccountWithMembershipInfoRequest dto, Pageable pageable) {
+  private JPAQuery<AccountWithMembershipInfoResponse> createBaseQuery(
+      GetAccountWithMembershipInfoRequest dto) {
     QAccount account = QAccount.account;
     QAccountInfo accountInfo = QAccountInfo.accountInfo;
     QTicket ticket = QTicket.ticket;
@@ -473,74 +472,62 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
     QMembershipRegistration membershipRegistration = QMembershipRegistration.membershipRegistration;
     QMembership membership = QMembership.membership;
 
-    JPAQuery<AccountWithMembershipInfoResponse> query =
-        queryFactory
-            .select(
+    return queryFactory
+        .select(
+            Projections.constructor(
+                AccountWithMembershipInfoResponse.class,
+                account.id,
+                account.email,
+                accountInfo.name,
+                accountInfo.phone,
+                account.createdDate,
+                accountInfo.lastLoginDate,
+                JPAExpressions.selectOne()
+                    .from(ticket)
+                    .where(
+                        ticket
+                            .account
+                            .eq(account)
+                            .and(ticket.kind.in(TicketKindType.PROGRAM, TicketKindType.EXHIBITION)))
+                    .exists(),
+                JPAExpressions.selectOne()
+                    .from(couponUsage)
+                    .where(couponUsage.account.eq(account).and(couponUsage.isUsed.isTrue()))
+                    .exists(),
+                membership.name,
+                JPAExpressions.select(Wildcard.count)
+                    .from(ticket)
+                    .where(
+                        ticket.account.eq(account),
+                        ticket.kind.in(TicketKindType.EXHIBITION, TicketKindType.PROGRAM),
+                        ticket.state.eq(TicketStateType.USED)),
                 Projections.constructor(
-                    AccountWithMembershipInfoResponse.class,
-                    account.id,
-                    account.email,
-                    accountInfo.name,
-                    accountInfo.phone,
-                    account.createdDate,
-                    accountInfo.lastLoginDate,
-                    JPAExpressions.selectOne()
-                        .from(ticket)
-                        .where(
-                            ticket
-                                .account
-                                .eq(account)
-                                .and(
-                                    ticket.kind.in(
-                                        TicketKindType.PROGRAM, TicketKindType.EXHIBITION)))
-                        .exists(),
-                    JPAExpressions.selectOne()
-                        .from(couponUsage)
-                        .where(couponUsage.account.eq(account).and(couponUsage.isUsed.isTrue()))
-                        .exists(),
-                    membership.name,
-                    JPAExpressions.select(Wildcard.count)
-                        .from(ticket)
-                        .where(
-                            ticket.account.eq(account),
-                            ticket.kind.in(TicketKindType.EXHIBITION, TicketKindType.PROGRAM),
-                            ticket.state.eq(TicketStateType.USED)),
-                    Projections.constructor(
-                        AccountMembershipRegistrationInfo.class,
-                        membershipRegistration.id,
-                        membershipRegistration.registrationDate,
-                        membershipRegistration.expirationDate)))
-            .from(account)
-            .innerJoin(account.accountInfo, accountInfo)
-            .leftJoin(membershipRegistration)
-            .on(membershipRegistration.account.eq(account))
-            .leftJoin(membershipRegistration.membership, membership)
-            .where(
-                createdDateBetween(dto.getSignUpDateFrom(), dto.getSignUpDateTo()),
-                hasNumberOfEntries(dto.getHasNumberOfEntries()),
-                alreadyLoginedBefore(dto.getAlreadyLoginedBefore()),
-                alreadyUsedCouponBefore(dto.getAlreadyUsedCouponBefore()),
-                hasMembership(dto.getHasMembership()),
-                searchByText(dto.getText()),
-                idNotIn(dto.getExcludeIds()));
+                    AccountMembershipRegistrationInfo.class,
+                    membershipRegistration.id,
+                    membershipRegistration.registrationDate,
+                    membershipRegistration.expirationDate)))
+        .from(account)
+        .innerJoin(account.accountInfo, accountInfo)
+        .leftJoin(membershipRegistration)
+        .on(membershipRegistration.account.eq(account))
+        .leftJoin(membershipRegistration.membership, membership)
+        .where(
+            createdDateBetween(dto.getSignUpDateFrom(), dto.getSignUpDateTo()),
+            hasNumberOfEntries(dto.getHasNumberOfEntries()),
+            alreadyLoginedBefore(dto.getAlreadyLoginedBefore()),
+            alreadyUsedCouponBefore(dto.getAlreadyUsedCouponBefore()),
+            hasMembership(dto.getHasMembership()),
+            searchByText(dto.getText()),
+            idNotIn(dto.getExcludeIds()));
+  }
+
+  @Override
+  public Page<AccountWithMembershipInfoResponse> searchWithMembershipInfo(
+      GetAccountWithMembershipInfoRequest dto, Pageable pageable) {
+    JPAQuery<AccountWithMembershipInfoResponse> query = createBaseQuery(dto);
 
     // Create a count query
-    JPAQuery<Long> countQuery =
-        queryFactory
-            .select(account.count())
-            .from(account)
-            .innerJoin(account.accountInfo, accountInfo)
-            .leftJoin(membershipRegistration)
-            .on(membershipRegistration.account.eq(account))
-            .leftJoin(membershipRegistration.membership, membership)
-            .where(
-                createdDateBetween(dto.getSignUpDateFrom(), dto.getSignUpDateTo()),
-                hasNumberOfEntries(dto.getHasNumberOfEntries()),
-                alreadyLoginedBefore(dto.getAlreadyLoginedBefore()),
-                alreadyUsedCouponBefore(dto.getAlreadyUsedCouponBefore()),
-                hasMembership(dto.getHasMembership()),
-                searchByText(dto.getText()),
-                idNotIn(dto.getExcludeIds()));
+    JPAQuery<Long> countQuery = query.clone().select(Wildcard.count);
 
     final long total = Optional.ofNullable(countQuery.fetchOne()).orElse(0L);
 
@@ -550,6 +537,12 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
     }
 
     return new PageImpl<>(content, pageable, total);
+  }
+
+  @Override
+  public List<AccountWithMembershipInfoResponse> listWithMembershipInfo(
+      final GetAccountWithMembershipInfoRequest dto) {
+    return createBaseQuery(dto).fetch();
   }
 
   private BooleanExpression createdDateBetween(LocalDateTime from, LocalDateTime to) {

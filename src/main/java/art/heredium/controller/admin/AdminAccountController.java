@@ -120,4 +120,13 @@ public class AdminAccountController {
     Map<String, Object> data = excelService.accountInfoDownload(request, fileName);
     return new ModelAndView("xlsxView", data);
   }
+
+  @GetMapping("/with-membership/excel")
+  @SupervisorPermission
+  public ModelAndView downloadExcelWithMembership(
+      @Valid GetAccountWithMembershipInfoRequest request,
+      @RequestParam("fileName") String fileName) {
+    Map<String, Object> data = excelService.accountWithMembershipInfoDownload(request, fileName);
+    return new ModelAndView("xlsxView", data);
+  }
 }
