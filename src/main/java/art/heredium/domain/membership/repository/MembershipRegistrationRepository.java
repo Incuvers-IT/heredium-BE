@@ -1,6 +1,7 @@
 package art.heredium.domain.membership.repository;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -11,6 +12,7 @@ import org.springframework.stereotype.Repository;
 
 import art.heredium.domain.account.entity.Account;
 import art.heredium.domain.membership.entity.MembershipRegistration;
+import art.heredium.domain.membership.entity.PaymentStatus;
 
 @Repository
 public interface MembershipRegistrationRepository
@@ -37,4 +39,7 @@ public interface MembershipRegistrationRepository
       Account account, LocalDate date);
 
   Optional<MembershipRegistration> findByPaymentOrderId(String orderId);
+
+  List<MembershipRegistration> findByPaymentStatusAndCreatedDateIsBefore(
+      PaymentStatus paymentStatus, LocalDateTime dateTime);
 }
