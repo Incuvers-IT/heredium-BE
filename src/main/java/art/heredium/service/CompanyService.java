@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.ss.usermodel.*;
 
 import art.heredium.core.config.error.entity.ApiException;
@@ -114,7 +115,7 @@ public class CompanyService {
       Account selectedAccount = null;
 
       // First, try to find an account by email with the latest login
-      if (request.getEmail() != null) {
+      if (StringUtils.isNotBlank(request.getEmail())) {
         Optional<Account> accountByEmail =
             accountRepository.findLatestLoginAccountByEmail(request.getEmail());
         selectedAccount = accountByEmail.orElse(null);
