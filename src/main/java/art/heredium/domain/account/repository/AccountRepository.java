@@ -48,9 +48,6 @@ public interface AccountRepository extends JpaRepository<Account, Long>, Account
 
   List<Account> findByIdIn(@Param("ids") Set<Long> ids);
 
-  @EntityGraph(attributePaths = {"accountInfo", "sleeperInfo"})
-  Optional<Account> findByEmail(String email);
-
   @Query(
       value =
           "SELECT a.* FROM account a "
@@ -60,4 +57,14 @@ public interface AccountRepository extends JpaRepository<Account, Long>, Account
               + "LIMIT 1",
       nativeQuery = true)
   Optional<Account> findLatestLoginAccountByPhone(@Param("phone") String phone);
+
+  @Query(
+      value =
+          "SELECT a.* FROM account a "
+              + "INNER JOIN account_info ai ON a.id = ai.account_id "
+              + "WHERE a.email = :email "
+              + "ORDER BY ai.last_login_date DESC NULLS LAST "
+              + "LIMIT 1",
+      nativeQuery = true)
+  Optional<Account> findLatestLoginAccountByEmail(@Param("email") String email);
 }

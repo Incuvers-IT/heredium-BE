@@ -113,9 +113,10 @@ public class CompanyService {
 
       Account selectedAccount = null;
 
-      // First, try to find an account by email
+      // First, try to find an account by email with the latest login
       if (request.getEmail() != null) {
-        Optional<Account> accountByEmail = accountRepository.findByEmail(request.getEmail());
+        Optional<Account> accountByEmail =
+            accountRepository.findLatestLoginAccountByEmail(request.getEmail());
         selectedAccount = accountByEmail.orElse(null);
       }
 
