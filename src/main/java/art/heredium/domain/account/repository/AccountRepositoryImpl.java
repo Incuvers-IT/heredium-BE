@@ -35,6 +35,8 @@ import art.heredium.domain.account.model.dto.request.GetAccountWithMembershipInf
 import art.heredium.domain.account.model.dto.response.*;
 import art.heredium.domain.account.model.dto.response.AccountWithMembershipInfoResponse;
 import art.heredium.domain.company.entity.QCompany;
+import art.heredium.domain.coupon.entity.CouponSource;
+import art.heredium.domain.coupon.entity.QCoupon;
 import art.heredium.domain.coupon.entity.QCouponUsage;
 import art.heredium.domain.membership.entity.PaymentStatus;
 import art.heredium.domain.membership.entity.QMembership;
@@ -481,8 +483,10 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
     QAccountInfo accountInfo = QAccountInfo.accountInfo;
     QTicket ticket = QTicket.ticket;
     QCouponUsage couponUsage = QCouponUsage.couponUsage;
+    QCoupon coupon = QCoupon.coupon;
     QMembershipRegistration membershipRegistration = QMembershipRegistration.membershipRegistration;
     QMembership membership = QMembership.membership;
+    QCompany company = QCompany.company;
 
     return queryFactory
         .select(
@@ -504,9 +508,19 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
                     .exists(),
                 JPAExpressions.selectOne()
                     .from(couponUsage)
-                    .where(couponUsage.account.eq(account).and(couponUsage.isUsed.isTrue()))
+                    .join(couponUsage.coupon, coupon)
+                    .where(
+                        couponUsage
+                            .account
+                            .eq(account)
+                            .and(coupon.fromSource.eq(CouponSource.ADMIN_SITE)))
                     .exists(),
-                membership.name,
+                Expressions.cases()
+                    .when(membership.isNotNull())
+                    .then(membership.name)
+                    .when(company.isNotNull())
+                    .then(company.name.prepend(COMPANY_PREFIX))
+                    .otherwise((String) null),
                 JPAExpressions.select(Wildcard.count)
                     .from(ticket)
                     .where(
@@ -523,11 +537,12 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
         .leftJoin(membershipRegistration)
         .on(membershipRegistration.account.eq(account))
         .leftJoin(membershipRegistration.membership, membership)
+        .leftJoin(membershipRegistration.company, company)
         .where(
             createdDateBetween(dto.getSignUpDateFrom(), dto.getSignUpDateTo()),
             hasNumberOfEntries(dto.getHasNumberOfEntries()),
             alreadyLoginedBefore(dto.getAlreadyLoginedBefore()),
-            alreadyUsedCouponBefore(dto.getAlreadyUsedCouponBefore()),
+            alreadyUsedCouponBefore(dto.getAlreadyDeliveredAdminSiteCoupon()),
             hasMembership(dto.getHasMembership()),
             searchByText(dto.getText()),
             idNotIn(dto.getExcludeIds()));
@@ -627,13 +642,15 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
     return null;
   }
 
-  private BooleanExpression alreadyUsedCouponBefore(Boolean alreadyUsedCoupon) {
-    if (Boolean.TRUE.equals(alreadyUsedCoupon)) {
+  private BooleanExpression alreadyUsedCouponBefore(Boolean alreadyDeliveredAdminSiteCoupon) {
+    if (Boolean.TRUE.equals(alreadyDeliveredAdminSiteCoupon)) {
       QAccount account = QAccount.account;
       QCouponUsage couponUsage = QCouponUsage.couponUsage;
+      QCoupon coupon = QCoupon.coupon;
       return JPAExpressions.selectOne()
           .from(couponUsage)
-          .where(couponUsage.account.eq(account).and(couponUsage.isUsed.isTrue()))
+          .join(couponUsage.coupon, coupon)
+          .where(couponUsage.account.eq(account).and(coupon.fromSource.eq(CouponSource.ADMIN_SITE)))
           .exists();
     }
     return null;

@@ -13,7 +13,7 @@ public class GetAccountWithMembershipInfoRequest {
   private LocalDateTime signUpDateTo;
   private Boolean hasNumberOfEntries;
   private Boolean alreadyLoginedBefore;
-  private Boolean alreadyUsedCouponBefore;
+  private Boolean alreadyDeliveredAdminSiteCoupon;
   private Boolean hasMembership;
   private String text;
   private List<Long> excludeIds;

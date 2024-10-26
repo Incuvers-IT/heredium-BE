@@ -19,7 +19,7 @@ public class AccountWithMembershipInfoResponse {
   private LocalDateTime createdDate;
   private LocalDateTime lastLoginDate;
   private Boolean hasEntries;
-  private Boolean hasUsedCoupon;
+  private Boolean hasAdminSiteDeliveredCoupon;
   private String membershipName;
   private Long numberOfEntries;
   private AccountMembershipRegistrationInfo membershipRegistrationInfo;
