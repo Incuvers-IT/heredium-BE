@@ -15,6 +15,7 @@ import org.springframework.data.domain.Pageable;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.DateTimeExpression;
+import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.JPQLQuery;
 import com.querydsl.jpa.impl.JPAQuery;
@@ -22,17 +23,20 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 
 import art.heredium.domain.account.entity.QAccount;
 import art.heredium.domain.account.entity.QAccountInfo;
+import art.heredium.domain.company.entity.QCompany;
 import art.heredium.domain.coupon.entity.CouponType;
 import art.heredium.domain.coupon.entity.QCoupon;
 import art.heredium.domain.coupon.entity.QCouponUsage;
 import art.heredium.domain.membership.entity.QMembership;
 import art.heredium.domain.membership.entity.QMembershipRegistration;
+import art.heredium.domain.membership.entity.RegistrationType;
 import art.heredium.domain.membership.model.dto.request.GetAllActiveMembershipsRequest;
 import art.heredium.domain.membership.model.dto.response.ActiveMembershipRegistrationsResponse;
 
 @RequiredArgsConstructor
 public class MembershipRegistrationRepositoryImpl
     implements MembershipRegistrationRepositoryQueryDsl {
+  private static final String COMPANY_PREFIX = "Company-";
 
   private final JPAQueryFactory queryFactory;
 
@@ -78,6 +82,7 @@ public class MembershipRegistrationRepositoryImpl
   private JPAQuery<ActiveMembershipRegistrationsResponse> queryActiveMembershipRegistrations(
       final GetAllActiveMembershipsRequest request) {
     QMembership membership = QMembership.membership;
+    QCompany company = QCompany.company;
     QAccount account = QAccount.account;
     QAccountInfo accountInfo = QAccountInfo.accountInfo;
     QMembershipRegistration membershipRegistration = QMembershipRegistration.membershipRegistration;
@@ -85,7 +90,14 @@ public class MembershipRegistrationRepositoryImpl
         .select(
             Projections.constructor(
                 ActiveMembershipRegistrationsResponse.class,
-                membership.name,
+                Expressions.cases()
+                    .when(
+                        membershipRegistration.registrationType.eq(
+                            RegistrationType.MEMBERSHIP_PACKAGE))
+                    .then(membership.name)
+                    .when(membershipRegistration.registrationType.eq(RegistrationType.COMPANY))
+                    .then(company.name.prepend(COMPANY_PREFIX))
+                    .otherwise((String) null),
                 account.id,
                 accountInfo.name,
                 accountInfo.phone,
@@ -102,8 +114,8 @@ public class MembershipRegistrationRepositoryImpl
         .innerJoin(account.accountInfo, accountInfo)
         .leftJoin(membershipRegistration)
         .on(membershipRegistration.account.eq(account))
-        .leftJoin(membership)
-        .on(membershipRegistration.membership.eq(membership))
+        .leftJoin(membershipRegistration.membership, membership)
+        .leftJoin(membershipRegistration.company, company)
         .where(
             signedUpDateBetween(request.getSignUpDateFrom(), request.getSignUpDateTo()),
             isAgreeToReceiveMarketing(request.getIsAgreeToReceiveMarketing()),

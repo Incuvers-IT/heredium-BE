@@ -46,7 +46,7 @@ public class ActiveMembershipImpl implements CreateBody {
       List<String> asList =
           Arrays.asList(
               createString(list.size() - (cnt++)),
-              createString(entity.getMembership()),
+              createString(entity.getMembershipOrCompanyName()),
               createString(entity.getAccountId()),
               createString(entity.getName()),
               createString(entity.getPhone()),

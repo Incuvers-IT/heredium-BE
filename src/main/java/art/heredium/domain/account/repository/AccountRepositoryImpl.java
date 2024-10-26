@@ -34,10 +34,12 @@ import art.heredium.domain.account.model.dto.request.*;
 import art.heredium.domain.account.model.dto.request.GetAccountWithMembershipInfoRequest;
 import art.heredium.domain.account.model.dto.response.*;
 import art.heredium.domain.account.model.dto.response.AccountWithMembershipInfoResponse;
+import art.heredium.domain.company.entity.QCompany;
 import art.heredium.domain.coupon.entity.QCouponUsage;
 import art.heredium.domain.membership.entity.PaymentStatus;
 import art.heredium.domain.membership.entity.QMembership;
 import art.heredium.domain.membership.entity.QMembershipRegistration;
+import art.heredium.domain.membership.entity.RegistrationType;
 import art.heredium.domain.ticket.entity.QTicket;
 import art.heredium.domain.ticket.type.TicketKindType;
 import art.heredium.domain.ticket.type.TicketStateType;
@@ -45,6 +47,7 @@ import art.heredium.domain.ticket.type.TicketType;
 
 @RequiredArgsConstructor
 public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
+  private static final String COMPANY_PREFIX = "Company-";
 
   private final JPAQueryFactory queryFactory;
 
@@ -132,6 +135,7 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
     QAccount account = QAccount.account;
     QAccountInfo accountInfo = QAccountInfo.accountInfo;
     QCouponUsage couponUsage = QCouponUsage.couponUsage;
+    QCompany company = QCompany.company;
     QMembershipRegistration membershipRegistration = QMembershipRegistration.membershipRegistration;
     QMembership membership = QMembership.membership;
     QTicket ticket = QTicket.ticket;
@@ -140,7 +144,14 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
         .select(
             Projections.constructor(
                 AccountWithMembershipInfoIncludingTitleResponse.class,
-                membership.name,
+                Expressions.cases()
+                    .when(
+                        membershipRegistration.registrationType.eq(
+                            RegistrationType.MEMBERSHIP_PACKAGE))
+                    .then(membership.name)
+                    .when(membershipRegistration.registrationType.eq(RegistrationType.COMPANY))
+                    .then(company.name.prepend(COMPANY_PREFIX))
+                    .otherwise((String) null),
                 membershipRegistration.title,
                 membershipRegistration.paymentStatus,
                 membershipRegistration.paymentDate,
@@ -160,6 +171,7 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
         .leftJoin(membershipRegistration)
         .on(membershipRegistration.account.eq(account))
         .leftJoin(membershipRegistration.membership, membership)
+        .leftJoin(membershipRegistration.company, company)
         .where(
             paymentDateBetween(dto.getPaymentDateFrom(), dto.getPaymentDateTo()),
             paymentStatusIn(dto.getPaymentStatus()),
