@@ -24,7 +24,6 @@ import art.heredium.domain.coupon.model.dto.request.CouponCreateRequest;
 import art.heredium.domain.coupon.model.dto.request.MembershipCouponCreateRequest;
 import art.heredium.domain.coupon.model.dto.request.NonMembershipCouponCreateRequest;
 import art.heredium.domain.coupon.repository.CouponRepository;
-import art.heredium.domain.coupon.validation.CouponValidationUtil;
 import art.heredium.domain.membership.entity.Membership;
 import art.heredium.ncloud.bean.CloudStorage;
 
@@ -86,9 +85,9 @@ public class CouponService {
     } else if (isCompanyCoupon) {
       periodInDays = ((CompanyCouponCreateRequest) request).getPeriodInDays();
     }
-    CouponValidationUtil.validateCouponRequest(request);
 
     ValidationUtil.validateImage(this.cloudStorage, request.getImageUrl());
+    final long numberOfUses = request.getIsPermanent() ? 0 : request.getNumberOfUses();
 
     Coupon coupon =
         Coupon.builder()
@@ -101,7 +100,7 @@ public class CouponService {
             .imageUrl(request.getImageUrl())
             .membership(membership)
             .company(company)
-            .numberOfUses(request.getNumberOfUses())
+            .numberOfUses(numberOfUses)
             .isPermanent(request.getIsPermanent())
             .fromSource(fromSource)
             .build();
