@@ -83,7 +83,8 @@ public enum ErrorCode {
   COMPANY_NOT_FOUND(HttpStatus.NOT_FOUND),
   INVALID_COUPON_SOURCE(HttpStatus.BAD_REQUEST),
   PAYMENT_ORDER_ID_NOT_FOUND(HttpStatus.NOT_FOUND),
-  ;
+  INVALID_EXCEL_FILE(HttpStatus.BAD_REQUEST),
+  INVALID_EXCEL_COLUMNS(HttpStatus.BAD_REQUEST);
   private HttpStatus status;
 
   ErrorCode(final HttpStatus status) {

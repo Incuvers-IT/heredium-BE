@@ -36,11 +36,13 @@ import art.heredium.domain.membership.entity.RegistrationStatus;
 import art.heredium.domain.membership.entity.RegistrationType;
 import art.heredium.domain.membership.model.dto.request.CompanyMembershipRegistrationHistoryCreateRequest;
 import art.heredium.domain.membership.repository.MembershipRegistrationRepository;
+import art.heredium.excel.constants.UploadedMembershipRegistrationColumns;
 
 @Service
 @RequiredArgsConstructor
 @Transactional(rollbackFor = Exception.class)
 public class CompanyService {
+
   private final CompanyRepository companyRepository;
   private final CouponRepository couponRepository;
   private final AccountRepository accountRepository;
@@ -211,7 +213,10 @@ public class CompanyService {
     Sheet sheet = workbook.getSheetAt(0);
 
     for (Row row : sheet) {
-      if (row.getRowNum() == 0) continue; // Skip header row
+      if (row.getRowNum() == 0) {
+        this.validateUploadedMembershipRegistrationExcelColumns(row);
+        continue; // Skip header row
+      }
       if (isRowEmpty(row)) continue;
 
       final String title = getCellValueAsString(row.getCell(0));
@@ -261,6 +266,19 @@ public class CompanyService {
     response.setSuccessfulRequests(successfulRequests);
     response.setFailedRequests(failedRequests);
     return response;
+  }
+
+  private void validateUploadedMembershipRegistrationExcelColumns(final @NonNull Row headerRow) {
+    for (int i = 0; i <= 5; i++) {
+      final String columnName = getCellValueAsString(headerRow.getCell(i));
+      final String expectedColumnName =
+          UploadedMembershipRegistrationColumns.getColumnNameByIndex(i);
+      if (!expectedColumnName.equals(StringUtils.trim(columnName))) {
+        throw new ApiException(
+            ErrorCode.INVALID_EXCEL_COLUMNS,
+            "Column names should be ['제목', '이메일', '핸드폰', '시작 날짜', '가격', '지불 날짜', '이름']");
+      }
+    }
   }
 
   private boolean isRowEmpty(Row row) {
