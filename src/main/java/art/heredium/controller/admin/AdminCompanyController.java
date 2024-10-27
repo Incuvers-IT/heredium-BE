@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import art.heredium.core.annotation.ManagerPermission;
+import art.heredium.core.util.ValidationUtil;
 import art.heredium.domain.company.model.dto.request.CompanyCreateRequest;
 import art.heredium.domain.company.model.dto.response.CompanyMembershipRegistrationResponse;
 import art.heredium.domain.company.model.dto.response.CompanyResponseDto;
@@ -35,6 +36,7 @@ public class AdminCompanyController {
   @PostMapping("/{companyId}/membership-registrations/upload")
   public ResponseEntity<CompanyMembershipRegistrationResponse> uploadMembershipRegistrations(
       @PathVariable Long companyId, @RequestParam("file") MultipartFile file) throws IOException {
+    ValidationUtil.validateExcelExtension(file);
     CompanyMembershipRegistrationResponse response =
         companyService.uploadMembershipRegistration(companyId, file);
     return ResponseEntity.ok(response);
