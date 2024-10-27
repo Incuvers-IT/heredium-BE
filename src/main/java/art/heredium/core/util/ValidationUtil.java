@@ -9,11 +9,10 @@ import org.apache.commons.lang3.StringUtils;
 
 import art.heredium.core.config.error.entity.ApiException;
 import art.heredium.core.config.error.entity.ErrorCode;
+import art.heredium.excel.constants.ExcelConstant;
 import art.heredium.ncloud.bean.CloudStorage;
 
 public class ValidationUtil {
-
-  private static final String XLSX_EXTENSION = "xlsx";
 
   public static void validateImage(CloudStorage cloudStorage, String imageUrl) {
     if (StringUtils.isNotEmpty(imageUrl) && !cloudStorage.isExistObject(imageUrl)) {
@@ -22,8 +21,10 @@ public class ValidationUtil {
   }
 
   public static void validateExcelExtension(@NonNull MultipartFile multipartFile) {
-    if (!XLSX_EXTENSION.equals(FilenameUtils.getExtension(multipartFile.getOriginalFilename()))) {
-      throw new ApiException(ErrorCode.INVALID_EXCEL_FILE, "Uploaded file should be .xlsx");
+    final String fileExtension = FilenameUtils.getExtension(multipartFile.getOriginalFilename());
+    if (!ExcelConstant.XLS.equalsIgnoreCase(fileExtension)
+        && !ExcelConstant.XLSX.equalsIgnoreCase(fileExtension)) {
+      throw new ApiException(ErrorCode.INVALID_EXCEL_FILE, "Uploaded file should be .xls or .xlsx");
     }
   }
 }
