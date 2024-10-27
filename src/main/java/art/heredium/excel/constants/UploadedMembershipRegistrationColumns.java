@@ -5,9 +5,6 @@ import java.util.Arrays;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
-import art.heredium.core.config.error.entity.ApiException;
-import art.heredium.core.config.error.entity.ErrorCode;
-
 @AllArgsConstructor
 @Getter
 public enum UploadedMembershipRegistrationColumns {
@@ -24,14 +21,14 @@ public enum UploadedMembershipRegistrationColumns {
   private final String columnName;
 
   public static String getColumnNameByIndex(int columnIndex) {
+    if (columnIndex < 0 || columnIndex > 6) {
+      throw new IndexOutOfBoundsException(
+          "Invalid column index: " + columnIndex); // This case will never happen
+    }
     return Arrays.stream(UploadedMembershipRegistrationColumns.values())
         .filter(col -> col.getColumnIndex() == columnIndex)
         .map(UploadedMembershipRegistrationColumns::getColumnName)
         .findFirst()
-        .orElseThrow(
-            () ->
-                new ApiException(
-                    ErrorCode.INVALID_EXCEL_COLUMNS,
-                    "Column names should be ['제목', '이메일', '핸드폰', '시작 날짜', '가격', '지불 날짜', '이름']"));
+        .get();
   }
 }
