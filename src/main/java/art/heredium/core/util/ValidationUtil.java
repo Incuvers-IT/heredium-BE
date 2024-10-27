@@ -24,7 +24,7 @@ public class ValidationUtil {
     final String fileExtension = FilenameUtils.getExtension(multipartFile.getOriginalFilename());
     if (!ExcelConstant.XLS.equalsIgnoreCase(fileExtension)
         && !ExcelConstant.XLSX.equalsIgnoreCase(fileExtension)) {
-      throw new ApiException(ErrorCode.INVALID_EXCEL_FILE, "Uploaded file should be .xlsx");
+      throw new ApiException(ErrorCode.INVALID_EXCEL_FILE, "Uploaded file should be .xls or .xlsx");
     }
   }
 }
