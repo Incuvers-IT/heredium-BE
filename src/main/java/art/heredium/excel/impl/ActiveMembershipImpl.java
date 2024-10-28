@@ -24,7 +24,7 @@ public class ActiveMembershipImpl implements CreateBody {
         Arrays.asList(
             "NO",
             "멤버십 이름",
-            "연락처",
+            "아이디",
             "이름",
             "연락처",
             "결제상태",
