@@ -24,11 +24,11 @@ public class ActiveMembershipImpl implements CreateBody {
         Arrays.asList(
             "NO",
             "멤버십 이름",
-            "회원 ID",
+            "연락처",
             "이름",
             "연락처",
             "결제상태",
-            "지불 날짜",
+            "결제일시",
             "멤버십횟수",
             "전시사용횟수",
             "프로그램사용횟수",
