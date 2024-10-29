@@ -31,8 +31,6 @@ import art.heredium.ncloud.bean.CloudStorage;
 @RequiredArgsConstructor
 @Transactional(rollbackFor = Exception.class)
 public class MembershipService {
-
-  private static final boolean DEFAULT_ENABLED_STATUS = true;
   private static final Long DEFAULT_MEMBERSHIP_PERIOD = 12L; // months
 
   private final MembershipRepository membershipRepository;
@@ -68,7 +66,7 @@ public class MembershipService {
               .name(request.getName())
               .period(DEFAULT_MEMBERSHIP_PERIOD)
               .price(request.getPrice())
-              .isEnabled(DEFAULT_ENABLED_STATUS)
+              .isEnabled(request.getIsEnabled())
               .imageUrl(request.getImageUrl())
               .post(post)
               .build();

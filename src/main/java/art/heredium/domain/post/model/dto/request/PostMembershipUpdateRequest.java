@@ -23,5 +23,8 @@ public class PostMembershipUpdateRequest {
 
   private Long period;
 
+  @JsonProperty("is_enabled")
+  private Boolean isEnabled;
+
   @Valid private List<MembershipCouponUpdateRequest> coupons;
 }

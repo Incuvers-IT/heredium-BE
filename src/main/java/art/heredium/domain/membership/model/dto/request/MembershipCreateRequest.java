@@ -25,5 +25,8 @@ public class MembershipCreateRequest {
   @JsonProperty("image_url")
   private String imageUrl;
 
+  @JsonProperty("is_enabled")
+  private Boolean isEnabled;
+
   @NotEmpty @Valid private List<MembershipCouponCreateRequest> coupons;
 }
