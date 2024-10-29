@@ -14,6 +14,7 @@ import art.heredium.core.config.error.entity.ErrorCode;
 import art.heredium.core.util.AuthUtil;
 import art.heredium.domain.account.entity.Account;
 import art.heredium.domain.account.repository.AccountRepository;
+import art.heredium.domain.coupon.entity.CouponSource;
 import art.heredium.domain.coupon.entity.CouponUsage;
 import art.heredium.domain.coupon.repository.CouponUsageRepository;
 import art.heredium.domain.membership.entity.Membership;
@@ -47,7 +48,8 @@ public class MembershipRegistrationService {
             .findByAccountIdAndNotExpired(accountId)
             .orElseThrow(() -> new ApiException(ErrorCode.MEMBERSHIP_REGISTRATION_NOT_FOUND));
     final List<CouponUsage> couponUsages =
-        this.couponUsageRepository.findByAccountIdAndIsUsedFalseAndNotExpired(accountId);
+        this.couponUsageRepository.findByAccountIdAndIsUsedFalseAndNotExpiredAndSource(
+            accountId, CouponSource.MEMBERSHIP_PACKAGE);
     return new MembershipRegistrationResponse(membershipRegistration, couponUsages);
   }
 
