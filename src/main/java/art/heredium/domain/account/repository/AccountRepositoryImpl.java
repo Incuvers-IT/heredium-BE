@@ -669,7 +669,8 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
               membershipRegistration
                   .account
                   .eq(account)
-                  .and(membershipRegistration.expirationDate.goe(currentDate)))
+                  .and(membershipRegistration.expirationDate.goe(currentDate))
+                  .and(membershipRegistration.paymentStatus.eq(PaymentStatus.COMPLETED)))
           .exists();
     }
     return null;
