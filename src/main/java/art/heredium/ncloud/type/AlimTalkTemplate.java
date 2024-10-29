@@ -18,6 +18,30 @@ public enum AlimTalkTemplate {
   ACCOUNT_SLEEP_TERMINATE("자동탈퇴 완료", "@heredium", "HEREDIUM011", "@spadecompany", "HEREDIUM011"),
   ACCOUNT_TERMINATE("회원탈퇴 안내", "@heredium", "HEREDIUM012", "@spadecompany", "HEREDIUM012"),
   COFFEE_COMPLETE("커피제작 완료", "@heredium", "HEREDIUM013", "@spadecompany", "HEREDIUM013"),
+  USER_REGISTER_MEMBERSHIP_PACKAGE(
+      "사용자 등록 멤버십 패키지",
+      "@heredium",
+      "HEREDIUM017",
+      "@spadecompany",
+      ""), // dev templateCode has not been created
+  COUPON_HAS_BEEN_USED(
+      "쿠폰이 사용되었습니다",
+      "@heredium",
+      "HEREDIUM018",
+      "@spadecompany",
+      ""), // dev templateCode has not been created
+  MEMBERSHIP_PACKAGE_HAS_EXPIRED(
+      "멤버십 패키지가 만료되었습니다",
+      "@heredium",
+      "HEREDIUM020",
+      "@spadecompany",
+      ""), // dev templateCode has not been created
+  COUPON_HAS_BEEN_DELIVERED(
+      "쿠폰이 발급되었습니다",
+      "@heredium",
+      "HEREDIUM019",
+      "@spadecompany",
+      ""), // dev templateCode has not been created
   ;
 
   private String prodPlusFriendId;
