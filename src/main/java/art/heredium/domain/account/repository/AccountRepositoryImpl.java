@@ -488,6 +488,8 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
     QMembership membership = QMembership.membership;
     QCompany company = QCompany.company;
 
+    LocalDate currentDate = LocalDate.now();
+
     return queryFactory
         .select(
             Projections.constructor(
@@ -535,7 +537,12 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
         .from(account)
         .innerJoin(account.accountInfo, accountInfo)
         .leftJoin(membershipRegistration)
-        .on(membershipRegistration.account.eq(account))
+        .on(
+            membershipRegistration
+                .account
+                .eq(account)
+                .and(membershipRegistration.expirationDate.goe(currentDate))
+                .and(membershipRegistration.paymentStatus.eq(PaymentStatus.COMPLETED)))
         .leftJoin(membershipRegistration.membership, membership)
         .leftJoin(membershipRegistration.company, company)
         .where(
