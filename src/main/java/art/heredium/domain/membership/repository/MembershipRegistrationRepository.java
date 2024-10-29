@@ -40,6 +40,9 @@ public interface MembershipRegistrationRepository
 
   Optional<MembershipRegistration> findByPaymentOrderId(String orderId);
 
-  List<MembershipRegistration> findByPaymentStatusAndCreatedDateBefore(
-      PaymentStatus paymentStatus, LocalDateTime dateTime);
+  List<MembershipRegistration> findByPaymentStatusInAndCreatedDateBefore(
+      List<PaymentStatus> paymentStatuses, LocalDateTime dateTime);
+
+  List<MembershipRegistration> findByAccountIdAndPaymentStatus(
+      long accountId, PaymentStatus paymentStatus);
 }

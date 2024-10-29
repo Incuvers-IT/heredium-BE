@@ -3,10 +3,7 @@ package art.heredium.scheduler;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import lombok.RequiredArgsConstructor;
@@ -88,8 +85,9 @@ public class Scheduler {
   public void removeMembershipRegistrations() {
     final List<Long> redundantMembershipRegistrationIds =
         this.membershipRegistrationRepository
-            .findByPaymentStatusAndCreatedDateBefore(
-                PaymentStatus.PENDING, LocalDateTime.now().minusDays(1))
+            .findByPaymentStatusInAndCreatedDateBefore(
+                Arrays.asList(PaymentStatus.PENDING, PaymentStatus.IGNORED),
+                LocalDateTime.now().minusDays(1))
             .stream()
             .map(MembershipRegistration::getId)
             .collect(Collectors.toList());

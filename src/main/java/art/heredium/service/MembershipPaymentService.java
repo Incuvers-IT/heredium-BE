@@ -42,6 +42,8 @@ public class MembershipPaymentService {
       throw new ApiException(ErrorCode.PAYMENT_ORDER_ID_NOT_FOUND);
 
     this.updateMembershipRegistrationToSuccess(membershipRegistration.get());
+    this.updatePendingMembershipRegistrationsToIgnore(
+        membershipRegistration.get().getAccount().getId());
     this.deliverCouponsToUser(membershipRegistration.get());
 
     PaymentTicketResponse pay =
@@ -66,5 +68,15 @@ public class MembershipPaymentService {
     membershipRegistration.updatePaymentDate(now);
     membershipRegistration.updatePaymentStatus(PaymentStatus.COMPLETED);
     this.membershipRegistrationRepository.save(membershipRegistration);
+  }
+
+  private void updatePendingMembershipRegistrationsToIgnore(final long accountId) {
+    List<MembershipRegistration> pendingMembershipRegistrations =
+        this.membershipRegistrationRepository.findByAccountIdAndPaymentStatus(
+            accountId, PaymentStatus.PENDING);
+    pendingMembershipRegistrations.forEach(
+        membershipRegistration ->
+            membershipRegistration.updatePaymentStatus(PaymentStatus.IGNORED));
+    this.membershipRegistrationRepository.saveAll(pendingMembershipRegistrations);
   }
 }
