@@ -32,7 +32,7 @@ public interface CouponUsageRepository extends JpaRepository<CouponUsage, Long> 
   List<CouponUsage> findByAccountIdAndCouponIdAndIsUsedTrue(
       @Param("accountId") Long accountId, @Param("couponId") Long couponId);
 
-  List<CouponUsage> findByAccountIdAndCouponIdAndIsUsedFalse(
+  List<CouponUsage> findByAccountIdAndCouponIdAndIsUsedFalseOrIsPermanentTrue(
       @Param("accountId") Long accountId, @Param("couponId") Long couponId);
 
   Optional<CouponUsage> findByUuid(String uuid);
