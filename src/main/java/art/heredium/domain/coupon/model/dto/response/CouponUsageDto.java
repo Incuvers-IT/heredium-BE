@@ -28,6 +28,9 @@ public class CouponUsageDto {
   @JsonProperty("is_expired")
   private boolean isExpired;
 
+  @JsonProperty("is_permanent")
+  private boolean isPermanent;
+
   public CouponUsageDto(CouponUsage couponUsage) {
     this.id = couponUsage.getId();
     this.deliveredDate = couponUsage.getDeliveredDate();
@@ -35,5 +38,6 @@ public class CouponUsageDto {
     this.expirationDate = couponUsage.getExpirationDate();
     this.uuid = couponUsage.getUuid();
     this.isExpired = LocalDateTime.now().isAfter(couponUsage.getExpirationDate());
+    this.isPermanent = couponUsage.isPermanent();
   }
 }
