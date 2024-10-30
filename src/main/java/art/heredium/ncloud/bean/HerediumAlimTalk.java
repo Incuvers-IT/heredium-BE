@@ -75,6 +75,22 @@ public class HerediumAlimTalk {
   }
 
   public List<String> sendAlimTalk(
+      String to, List<Map<String, String>> params, AlimTalkTemplate template) {
+    List<NCloudBizAlimTalkMessage> messages =
+        params.stream()
+            .map(
+                variables ->
+                    new NCloudBizAlimTalkMessageBuilder()
+                        .variables(variables)
+                        .to(to)
+                        .title(template.getTitle())
+                        .failOver(new NCloudBizAlimTalkFailOverConfig())
+                        .build())
+            .collect(Collectors.toList());
+    return sendAlimTalk(messages, template, null);
+  }
+
+  public List<String> sendAlimTalk(
       String to, Map<String, String> variable, AlimTalkTemplate template) {
     return sendAlimTalk(to, variable, template, null);
   }
