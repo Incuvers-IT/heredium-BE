@@ -129,7 +129,7 @@ public class MembershipPaymentService {
             coupon ->
                 String.format(
                     " - %s, %s%% : %s",
-                    coupon.getCoupon().getCouponType().getDesc(),
+                    coupon.getCoupon().getName(),
                     coupon.getCoupon().getDiscountPercent(),
                     Boolean.TRUE.equals(coupon.getCoupon().getIsPermanent())
                         ? "상시할인"
