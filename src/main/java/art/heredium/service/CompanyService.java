@@ -305,7 +305,7 @@ public class CompanyService {
         return cell.getStringCellValue();
       case NUMERIC:
         if (DateUtil.isCellDateFormatted(cell)) {
-          return cell.getLocalDateTimeCellValue().toString();
+          return cell.getLocalDateTimeCellValue().toLocalDate().toString();
         }
         // Use BigDecimal to avoid scientific notation
         return new BigDecimal(cell.getNumericCellValue()).toPlainString();
