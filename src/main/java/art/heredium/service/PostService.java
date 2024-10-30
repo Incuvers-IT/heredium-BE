@@ -284,7 +284,7 @@ public class PostService {
     createRequest.setName(request.getName());
     createRequest.setPrice(request.getPrice());
     createRequest.setImageUrl(request.getImageUrl());
-    createRequest.setIsEnabled(request.getIsEnabled());
+    createRequest.setIsEnabled(request.getIsEnabled() == null || request.getIsEnabled());
     createRequest.setCoupons(convertToCouponCreateRequests(request.getCoupons()));
 
     membershipService.createMemberships(post.getId(), Arrays.asList(createRequest));

@@ -66,7 +66,7 @@ public class MembershipService {
               .name(request.getName())
               .period(DEFAULT_MEMBERSHIP_PERIOD)
               .price(request.getPrice())
-              .isEnabled(request.getIsEnabled())
+              .isEnabled(request.getIsEnabled() == null || request.getIsEnabled())
               .imageUrl(request.getImageUrl())
               .post(post)
               .build();
