@@ -320,10 +320,17 @@ public class CompanyService {
 
   private LocalDate getCellValueAsLocalDate(Cell cell) {
     if (cell == null) return null;
+
+    String dateStr = getCellValueAsString(cell).trim();
+    // Check if the date string matches YYYY-MM-DD format
+    if (!dateStr.matches("\\d{4}-\\d{2}-\\d{2}")) {
+      throw new InvalidUploadDataException("Date must be in YYYY-MM-DD format: " + dateStr);
+    }
+
     try {
-      return cell.getLocalDateTimeCellValue().toLocalDate();
+      return LocalDate.parse(dateStr);
     } catch (Exception e) {
-      throw new InvalidUploadDataException("Invalid date: " + getCellValueAsString(cell));
+      throw new InvalidUploadDataException("Invalid date: " + dateStr);
     }
   }
 
