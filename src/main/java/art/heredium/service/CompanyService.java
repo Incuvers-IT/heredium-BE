@@ -119,6 +119,14 @@ public class CompanyService {
         continue;
       }
 
+      if (request.getStartDate() == null) {
+        companyMembershipRegistrationResponse
+            .getFailedCases()
+            .add("Invalid request: startDate is missing");
+        failedMembershipRegistrationHistoryIds.add(requestHistoryMap.get(request));
+        continue;
+      }
+
       // Skip duplicate entries without adding to failed cases
       if (!processedIdentifiers.add(identifier)) {
         continue;
