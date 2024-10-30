@@ -47,7 +47,7 @@ public class TicketUserService {
 
   public PostUserTicketResponse insert(PostTicketUserValidRequest dto) {
     TicketUserInfo ticketUserInfo = createTicketUserInfo();
-    return ticketPayService.insert(dto.getTicketOrderInfo(), ticketUserInfo);
+    return ticketPayService.insert(dto.getTicketOrderInfo(), ticketUserInfo, dto.getCouponUuid());
   }
 
   public TicketUserInfo createTicketUserInfo() {
