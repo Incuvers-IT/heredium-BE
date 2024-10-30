@@ -215,6 +215,9 @@ public class PostService {
     }
 
     String noteImageUrl = noteImage.getNoteImageUrl();
+    if (noteImageUrl.equals("")) {
+      post.setImageUrl(null);
+    }
     if (!StringUtils.isEmpty(noteImageUrl)) {
       String fileFolderPath = String.format("%s/%d", FilePathType.POST.getPath(), post.getId());
       ValidationUtil.validateImage(this.cloudStorage, noteImageUrl);
