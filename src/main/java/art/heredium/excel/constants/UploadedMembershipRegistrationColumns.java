@@ -11,9 +11,9 @@ public enum UploadedMembershipRegistrationColumns {
   TITLE(0, "제목"),
   EMAIL(1, "이메일"),
   PHONE(2, "핸드폰"),
-  START_DATE(3, "시작 날짜"),
+  START_DATE(3, "시작 날짜 (YYYY-MM-DD)"),
   PRICE(4, "가격"),
-  PAYMENT_DATE(5, "지불 날짜"),
+  PAYMENT_DATE(5, "지불 날짜 (YYYY-MM-DD)"),
   NAME(6, "이름"),
   ;
 
