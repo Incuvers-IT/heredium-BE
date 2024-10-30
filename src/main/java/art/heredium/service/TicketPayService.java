@@ -273,6 +273,7 @@ public class TicketPayService {
       throw new ApiException(ErrorCode.BAD_VALID, "결제가 필요합니다.");
     }
     ticketRepository.saveAndFlush(entity);
+    couponUsageService.checkoutCouponUsage(couponUuid);
 
     Map<String, String> mailParam = entity.getMailParam(herediumProperties);
     if (!StringUtils.isBlank(entity.getEmail())) {
@@ -290,7 +291,6 @@ public class TicketPayService {
             entity.getStartDate().minusDays(1).withHour(10));
     entity.updateSmsRequestId(smsRequestId);
     ticketRepository.saveAndFlush(entity);
-    couponUsageService.checkoutCouponUsage(couponUuid);
     return new PostUserTicketResponse(entity);
   }
 
