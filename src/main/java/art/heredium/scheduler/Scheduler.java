@@ -1,5 +1,6 @@
 package art.heredium.scheduler;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
@@ -92,6 +93,29 @@ public class Scheduler {
             .map(MembershipRegistration::getId)
             .collect(Collectors.toList());
     this.membershipRegistrationRepository.deleteAllById(redundantMembershipRegistrationIds);
+  }
+
+  @Async
+  @Scheduled(cron = "0 0 0 * * ?") // Run at midnight every day
+  @Transactional(rollbackFor = Exception.class)
+  public void updateExpiredMemberships() {
+    try {
+      List<MembershipRegistration> expiredMemberships =
+          membershipRegistrationRepository.findByExpirationDateBeforeAndPaymentStatusNot(
+              LocalDate.now(), PaymentStatus.EXPIRED);
+
+      expiredMemberships.forEach(
+          membership -> {
+            membership.updatePaymentStatus(PaymentStatus.EXPIRED);
+            membershipRegistrationRepository.save(membership);
+          });
+
+      if (!expiredMemberships.isEmpty()) {
+        log.info("Updated {} expired memberships", expiredMemberships.size());
+      }
+    } catch (Exception e) {
+      log.error("Error updating expired memberships", e);
+    }
   }
 
   private void sleepAccountSendMail() {

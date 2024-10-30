@@ -45,4 +45,7 @@ public interface MembershipRegistrationRepository
 
   List<MembershipRegistration> findByAccountIdAndPaymentStatus(
       long accountId, PaymentStatus paymentStatus);
+
+  List<MembershipRegistration> findByExpirationDateBeforeAndPaymentStatusNot(
+      LocalDate date, PaymentStatus status);
 }
