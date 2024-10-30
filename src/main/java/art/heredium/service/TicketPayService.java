@@ -256,6 +256,44 @@ public class TicketPayService {
     return new PostUserTicketResponse(entity);
   }
 
+  public PostUserTicketResponse insert(
+      TicketOrderInfo dto, TicketUserInfo ticketUserInfo, String couponUuid) {
+
+    // Validate coupon first
+    CouponUsage couponUsage = validateCouponUsage(couponUuid, dto.getKind());
+
+    Ticket entity = createTicket(dto, ticketUserInfo, Constants.getUUID());
+
+    // Apply coupon discount if valid
+    if (couponUsage != null) {
+      applyCouponDiscount(entity, couponUsage);
+    }
+
+    if (!StringUtils.isEmpty(entity.getPgId()) || entity.getPrice() > 0) {
+      throw new ApiException(ErrorCode.BAD_VALID, "결제가 필요합니다.");
+    }
+    ticketRepository.saveAndFlush(entity);
+    couponUsageService.checkoutCouponUsage(couponUuid);
+
+    Map<String, String> mailParam = entity.getMailParam(herediumProperties);
+    if (!StringUtils.isBlank(entity.getEmail())) {
+      cloudMail.mail(entity.getEmail(), mailParam, MailTemplate.TICKET_ISSUANCE);
+    }
+    alimTalk.sendAlimTalk(
+        entity.getPhone(),
+        entity.getMailParam(herediumProperties),
+        AlimTalkTemplate.TICKET_ISSUANCE);
+    List<String> smsRequestId =
+        alimTalk.sendAlimTalk(
+            entity.getPhone(),
+            entity.getMailParam(herediumProperties),
+            AlimTalkTemplate.TICKET_INFORMATION,
+            entity.getStartDate().minusDays(1).withHour(10));
+    entity.updateSmsRequestId(smsRequestId);
+    ticketRepository.saveAndFlush(entity);
+    return new PostUserTicketResponse(entity);
+  }
+
   private Ticket createTicket(TicketOrderInfo dto, TicketUserInfo ticketUserInfo, String uuid) {
 
     ProjectRounderRepository rounder = ProjectRounderRepository.finder(dto.getKind());
