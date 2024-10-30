@@ -290,9 +290,7 @@ public class TicketPayService {
             entity.getStartDate().minusDays(1).withHour(10));
     entity.updateSmsRequestId(smsRequestId);
     ticketRepository.saveAndFlush(entity);
-    if (couponUuid != null) {
-      couponUsageService.checkoutCouponUsage(couponUuid);
-    }
+    couponUsageService.checkoutCouponUsage(couponUuid);
     return new PostUserTicketResponse(entity);
   }
 
