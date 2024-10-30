@@ -46,9 +46,7 @@ public class CouponUsageService {
               .collect(Collectors.toList());
 
       List<CouponUsage> unusedCoupons =
-          couponUsageRepository
-              .findByAccountIdAndCouponIdAndIsUsedFalseOrIsPermanentTrue(accountId, coupon.getId())
-              .stream()
+          couponUsageRepository.findUnusedOrPermanentCoupons(accountId, coupon.getId()).stream()
               .sorted(Comparator.comparing(CouponUsage::getExpirationDate))
               .collect(Collectors.toList());
 
