@@ -49,7 +49,7 @@
 헤레디움 쿠폰#{couponName}이 발급되었습니다.
 
 [#{couponName}]  
-쿠폰혜택 : {couponName},{discountPercent}) : #{numberOfUses}개
+쿠폰혜택 : #{couponName},#{discountPercent}) : #{numberOfUses}개
 사용기한 : #{couponStartDate} ~ #{couponEndDate}
 
 클래식 음악과 컨템포러리 아트가 함께하는 헤레디움, 다양한 전시와 공연을 만나보세요 !
