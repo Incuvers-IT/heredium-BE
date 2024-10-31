@@ -30,11 +30,24 @@ public class TossPayments implements PaymentService<PaymentsPayRequest> {
   @Override
   public TossPaymentsPayResponse pay(PaymentsPayRequest dto, Long amount) {
     try {
-      String authorization = getAuthorization(dto.getType());
-      return client.pay(authorization, TossPaymentsPayRequest.from(dto));
+      // TODO: Will be fixed
+      //      String authorization = getAuthorization(dto.getType());
+      //      return client.pay(authorization, TossPaymentsPayRequest.from(dto));
+      return confirmPaymentWithIosKey(dto);
     } catch (FeignException e) {
-      e.printStackTrace();
-      throw new ApiException(ErrorCode.BAD_REQUEST, e.responseBody());
+      // TODO: Will be fixed
+      //      e.printStackTrace();
+      //      throw new ApiException(ErrorCode.BAD_REQUEST, e.responseBody());
+      try {
+        return confirmPaymentWithAndroidKey(dto);
+      } catch (FeignException ex) {
+        try {
+          return confirmPaymentWithWebKey(dto);
+        } catch (FeignException exception) {
+          exception.printStackTrace();
+          throw new ApiException(ErrorCode.BAD_REQUEST, exception.responseBody());
+        }
+      }
     }
   }
 
@@ -59,5 +72,20 @@ public class TossPayments implements PaymentService<PaymentsPayRequest> {
   private String getAuthorization(PaymentType type) {
     String secretKey = environment.getProperty(type.getPropertyKeyName());
     return Base64Encoder.encodeAuthorization(secretKey + ":");
+  }
+
+  private TossPaymentsPayResponse confirmPaymentWithWebKey(PaymentsPayRequest dto) {
+    String authorization = getAuthorization(PaymentType.TOSSPAYMENTS);
+    return client.pay(authorization, TossPaymentsPayRequest.from(dto));
+  }
+
+  private TossPaymentsPayResponse confirmPaymentWithAndroidKey(PaymentsPayRequest dto) {
+    String authorization = getAuthorization(PaymentType.TOSSPAYMENTS_ANDROID);
+    return client.pay(authorization, TossPaymentsPayRequest.from(dto));
+  }
+
+  private TossPaymentsPayResponse confirmPaymentWithIosKey(PaymentsPayRequest dto) {
+    String authorization = getAuthorization(PaymentType.TOSSPAYMENTS_IOS);
+    return client.pay(authorization, TossPaymentsPayRequest.from(dto));
   }
 }
