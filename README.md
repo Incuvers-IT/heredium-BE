@@ -34,7 +34,7 @@
 안녕하세요 #{accountName}님
 헤레디움 멤버십#{membershipName}이 만료되었습니다.
 
-[#{멤버십등급}] 멤버십 적용 : #{startDate} ~ #{endDate}
+[#{membershipName}] 멤버십 적용 : #{startDate} ~ #{endDate}
 
 [멤버십 재가입 방법]
 

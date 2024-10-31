@@ -13,6 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import art.heredium.core.config.properties.HerediumProperties;
@@ -58,6 +59,8 @@ public class Scheduler {
   private final int accountTerminateDay = 365 * 2;
   private final int accountMailSendDay = 30;
   private final int nonUserTerminateDay = 365 * 2;
+  private static final DateTimeFormatter MEMBERSHIP_REGISTER_DATETIME_FORMAT =
+      DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
   @Async
   @Scheduled(cron = "0 0 1 * * ?") // every  day at 1am
@@ -112,10 +115,52 @@ public class Scheduler {
 
       if (!expiredMemberships.isEmpty()) {
         log.info("Updated {} expired memberships", expiredMemberships.size());
+        sendExpiredMembershipNotifications(expiredMemberships);
       }
     } catch (Exception e) {
       log.error("Error updating expired memberships", e);
     }
+  }
+
+  @Async
+  @Transactional(propagation = Propagation.NEVER)
+  public void sendExpiredMembershipNotifications(List<MembershipRegistration> expiredMemberships) {
+    expiredMemberships.forEach(
+        membership -> {
+          try {
+            sendMembershipExpiredMessageToAlimTalk(
+                membership.getAccount().getAccountInfo().getPhone(), membership);
+          } catch (Exception e) {
+            log.error(
+                "Failed to send AlimTalk notification for membership {}: {}",
+                membership.getId(),
+                e.getMessage());
+          }
+        });
+  }
+
+  private void sendMembershipExpiredMessageToAlimTalk(
+      final String toPhone, final MembershipRegistration membership) {
+    Map<String, String> params = createMembershipExpiredParams(membership);
+    try {
+      this.alimTalk.sendAlimTalk(toPhone, params, AlimTalkTemplate.MEMBERSHIP_PACKAGE_HAS_EXPIRED);
+    } catch (Exception e) {
+      log.warn(
+          "Sending message to AlimTalk failed: {}, message params: {}", e.getMessage(), params);
+    }
+  }
+
+  private Map<String, String> createMembershipExpiredParams(MembershipRegistration membership) {
+    Map<String, String> variables = new HashMap<>();
+    variables.put("accountName", membership.getAccount().getAccountInfo().getName());
+    variables.put("membershipName", membership.getMembershipOrCompanyName());
+    variables.put(
+        "startDate", membership.getRegistrationDate().format(MEMBERSHIP_REGISTER_DATETIME_FORMAT));
+    variables.put(
+        "endDate", membership.getExpirationDate().format(MEMBERSHIP_REGISTER_DATETIME_FORMAT));
+    variables.put("CSTel", herediumProperties.getTel());
+    variables.put("CSEmail", herediumProperties.getEmail());
+    return variables;
   }
 
   private void sleepAccountSendMail() {
