@@ -94,7 +94,7 @@ public class InicisPayResponse implements PaymentTicketResponse {
   private String PHNB_Num; // 승인 전화번호
 
   @Override
-  public Long getAmount() {
+  public Long getPaymentAmount() {
     return Long.valueOf(TotPrice);
   }
 

@@ -5,7 +5,9 @@ import java.time.LocalDateTime;
 import lombok.Getter;
 import lombok.Setter;
 
+import art.heredium.domain.membership.entity.MembershipRegistration;
 import art.heredium.domain.ticket.entity.Ticket;
+import art.heredium.domain.ticket.model.TicketMembershipRegistrationInfo;
 import art.heredium.domain.ticket.type.TicketKindType;
 import art.heredium.domain.ticket.type.TicketStateType;
 import art.heredium.domain.ticket.type.TicketType;
@@ -29,7 +31,9 @@ public class GetAdminTicketResponse {
   private LocalDateTime createdDate;
   private TicketStateType state;
 
-  public GetAdminTicketResponse(Ticket entity) {
+  private TicketMembershipRegistrationInfo membershipRegistrationInfo;
+
+  public GetAdminTicketResponse(Ticket entity, MembershipRegistration membershipRegistration) {
     this.id = entity.getId();
     this.kind = entity.getKind();
     this.type = entity.getType();
@@ -45,5 +49,13 @@ public class GetAdminTicketResponse {
     this.pgId = entity.getPgId();
     this.createdDate = entity.getCreatedDate();
     this.state = entity.getState();
+    if (membershipRegistration != null) {
+      this.membershipRegistrationInfo =
+          new TicketMembershipRegistrationInfo(
+              membershipRegistration.getId(),
+              membershipRegistration.getMembershipOrCompanyName(),
+              membershipRegistration.getRegistrationDate(),
+              membershipRegistration.getExpirationDate());
+    }
   }
 }

@@ -255,4 +255,16 @@ public class ProgramService {
 
     return new GetUserProgramDetailRoundInfoResponse(ticketNumber, rounds, ticketTotalNumber);
   }
+
+  public List<Program> findFirstXByFutureAndIsEnabledTrue(final int count) {
+    return this.programRepository.findFirstXByFutureAndIsEnabledTrue(count);
+  }
+
+  public List<Program> findFirstXByOngoingAndIsEnabledTrue(final int count) {
+    return this.programRepository.findFirstXByOngoingAndIsEnabledTrue(count);
+  }
+
+  public List<Program> findFirstXByCompletedAndIsEnabledTrue(final int count) {
+    return this.programRepository.findFirstXByCompletedAndIsEnabledTrue(count);
+  }
 }

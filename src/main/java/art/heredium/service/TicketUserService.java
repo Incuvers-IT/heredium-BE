@@ -12,6 +12,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import org.apache.commons.lang3.StringUtils;
+
 import art.heredium.core.config.error.entity.ApiException;
 import art.heredium.core.config.error.entity.ErrorCode;
 import art.heredium.domain.account.entity.UserPrincipal;
@@ -38,7 +40,7 @@ public class TicketUserService {
 
   public Object valid(PostTicketUserValidRequest dto) {
     TicketUserInfo ticketUserInfo = createTicketUserInfo();
-    return ticketPayService.valid(dto.getTicketOrderInfo(), ticketUserInfo);
+    return ticketPayService.valid(dto.getTicketOrderInfo(), ticketUserInfo, dto.getCouponUuid());
   }
 
   public PostUserTicketResponse insert(PostTicketUserRequest dto) {
@@ -47,6 +49,9 @@ public class TicketUserService {
 
   public PostUserTicketResponse insert(PostTicketUserValidRequest dto) {
     TicketUserInfo ticketUserInfo = createTicketUserInfo();
+    if (StringUtils.isNotEmpty(dto.getCouponUuid())) {
+      return ticketPayService.insert(dto.getTicketOrderInfo(), ticketUserInfo, dto.getCouponUuid());
+    }
     return ticketPayService.insert(dto.getTicketOrderInfo(), ticketUserInfo);
   }
 

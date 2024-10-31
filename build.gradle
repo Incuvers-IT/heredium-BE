@@ -15,7 +15,7 @@ plugins {
     id 'java'
     id 'war'
     id 'org.hidetake.ssh' version '2.10.1'
-    id "com.diffplug.spotless" version "6.18.0"
+    id "com.diffplug.spotless" version "5.14.3"
 }
 
 apply plugin: 'io.spring.dependency-management'
@@ -85,6 +85,9 @@ dependencies {
     implementation 'org.apache.poi:poi-ooxml:5.2.2'
     implementation 'org.jsoup:jsoup:1.15.3'
     implementation 'io.github.openfeign:feign-gson'
+
+    // Swagger
+    implementation 'org.springdoc:springdoc-openapi-ui:1.6.15'
 
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
     runtimeOnly 'mysql:mysql-connector-java:8.0.28'

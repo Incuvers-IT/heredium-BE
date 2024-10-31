@@ -1,11 +1,10 @@
 package art.heredium.scheduler;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import lombok.RequiredArgsConstructor;
@@ -26,6 +25,9 @@ import art.heredium.domain.account.repository.AccountInfoRepository;
 import art.heredium.domain.account.repository.AccountRepository;
 import art.heredium.domain.account.repository.NonUserRepository;
 import art.heredium.domain.account.repository.SleeperInfoRepository;
+import art.heredium.domain.membership.entity.MembershipRegistration;
+import art.heredium.domain.membership.entity.PaymentStatus;
+import art.heredium.domain.membership.repository.MembershipRegistrationRepository;
 import art.heredium.domain.ticket.repository.TicketRepository;
 import art.heredium.ncloud.bean.CloudMail;
 import art.heredium.ncloud.bean.CloudStorage;
@@ -50,6 +52,7 @@ public class Scheduler {
   private final NonUserRepository nonUserRepository;
   private final AccountInfoRepository accountInfoRepository;
   private final SleeperInfoRepository sleeperInfoRepository;
+  private final MembershipRegistrationRepository membershipRegistrationRepository;
   private final HerediumProperties herediumProperties;
   private final int accountSleepDay = 365;
   private final int accountTerminateDay = 365 * 2;
@@ -75,6 +78,44 @@ public class Scheduler {
     terminateSendMail();
     terminateAccount();
     terminateNonUser();
+  }
+
+  @Async
+  @Scheduled(cron = "0 0 0 * * ?")
+  @Transactional(rollbackFor = Exception.class)
+  public void removeMembershipRegistrations() {
+    final List<Long> redundantMembershipRegistrationIds =
+        this.membershipRegistrationRepository
+            .findByPaymentStatusInAndCreatedDateBefore(
+                Arrays.asList(PaymentStatus.PENDING, PaymentStatus.IGNORED),
+                LocalDateTime.now().minusDays(1))
+            .stream()
+            .map(MembershipRegistration::getId)
+            .collect(Collectors.toList());
+    this.membershipRegistrationRepository.deleteAllById(redundantMembershipRegistrationIds);
+  }
+
+  @Async
+  @Scheduled(cron = "0 0 0 * * ?") // Run at midnight every day
+  @Transactional(rollbackFor = Exception.class)
+  public void updateExpiredMemberships() {
+    try {
+      List<MembershipRegistration> expiredMemberships =
+          membershipRegistrationRepository.findByExpirationDateBeforeAndPaymentStatusNot(
+              LocalDate.now(), PaymentStatus.EXPIRED);
+
+      expiredMemberships.forEach(
+          membership -> {
+            membership.updatePaymentStatus(PaymentStatus.EXPIRED);
+            membershipRegistrationRepository.save(membership);
+          });
+
+      if (!expiredMemberships.isEmpty()) {
+        log.info("Updated {} expired memberships", expiredMemberships.size());
+      }
+    } catch (Exception e) {
+      log.error("Error updating expired memberships", e);
+    }
   }
 
   private void sleepAccountSendMail() {

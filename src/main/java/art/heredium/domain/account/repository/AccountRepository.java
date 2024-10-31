@@ -3,6 +3,7 @@ package art.heredium.domain.account.repository;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -44,4 +45,26 @@ public interface AccountRepository extends JpaRepository<Account, Long>, Account
   @Query(
       "SELECT a FROM Account a INNER JOIN FETCH AccountInfo ai ON a.id = ai.id WHERE ai.phone = :phone")
   List<Account> findEmailByPhone(@Param("phone") String phone);
+
+  List<Account> findByIdIn(@Param("ids") Set<Long> ids);
+
+  @Query(
+      value =
+          "SELECT a.* FROM account a "
+              + "INNER JOIN account_info ai ON a.id = ai.account_id "
+              + "WHERE ai.phone = :phone "
+              + "ORDER BY ai.last_login_date IS NULL, ai.last_login_date DESC "
+              + "LIMIT 1",
+      nativeQuery = true)
+  Optional<Account> findLatestLoginAccountByPhone(@Param("phone") String phone);
+
+  @Query(
+      value =
+          "SELECT a.* FROM account a "
+              + "INNER JOIN account_info ai ON a.id = ai.account_id "
+              + "WHERE a.email = :email "
+              + "ORDER BY ai.last_login_date IS NULL, ai.last_login_date DESC "
+              + "LIMIT 1",
+      nativeQuery = true)
+  Optional<Account> findLatestLoginAccountByEmail(@Param("email") String email);
 }
