@@ -9,6 +9,7 @@ import java.util.stream.Stream;
 
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,6 +34,7 @@ import art.heredium.ncloud.type.AlimTalkTemplate;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class CouponUsageService {
   private static final DateTimeFormatter COUPON_DATETIME_FORMAT =
       DateTimeFormatter.ofPattern("yyyy-MM-dd hh:mm");
@@ -237,10 +239,15 @@ public class CouponUsageService {
     params.put("remainedDetailCoupons", this.buildCouponDetails(remainedCouponUsages));
     params.put("CSTel", herediumProperties.getTel());
     params.put("CSEmail", herediumProperties.getEmail());
-    this.alimTalk.sendAlimTalk(
-        couponUsage.getAccount().getAccountInfo().getPhone(),
-        params,
-        AlimTalkTemplate.COUPON_HAS_BEEN_USED);
+    try {
+      this.alimTalk.sendAlimTalk(
+          couponUsage.getAccount().getAccountInfo().getPhone(),
+          params,
+          AlimTalkTemplate.COUPON_HAS_BEEN_USED);
+    } catch (Exception e) {
+      log.warn(
+          "Sending message to AlimTalk failed: {}, message params: {}", e.getMessage(), params);
+    }
   }
 
   private String buildCouponDetails(List<CouponUsage> coupons) {
