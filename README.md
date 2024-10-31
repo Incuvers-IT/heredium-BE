@@ -21,7 +21,7 @@
 
 ■ #{membershipName} 멤버십 이용 내역 :
 ● 이용 일시 : #{issuedDate}
-● 이용 혜택 : {issuedCouponName}
+● 이용 혜택 : #{issuedCouponName}
 
 ■ #{membershipName}잔여 혜택
 ● #{remainedDetailCoupons}
