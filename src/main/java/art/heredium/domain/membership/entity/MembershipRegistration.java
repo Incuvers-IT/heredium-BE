@@ -33,7 +33,7 @@ public class MembershipRegistration extends BaseEntity {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
-  @Column(name = "title", length = 100, unique = true)
+  @Column(name = "title", length = 100)
   private String title;
 
   @Comment("티켓 uuid")
