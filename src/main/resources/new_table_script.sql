@@ -99,7 +99,7 @@ CREATE TABLE coupon (
 
 CREATE TABLE coupon_usage (
     id BIGINT NOT NULL AUTO_INCREMENT,
-    coupon_type_id BIGINT NOT NULL,
+    coupon_id BIGINT NOT NULL,
     account_id BIGINT NOT NULL,
     is_used BOOLEAN NOT NULL,
     delivered_date DATETIME NOT NULL,
@@ -114,7 +114,7 @@ CREATE TABLE coupon_usage (
     last_modified_name VARCHAR(10) NOT NULL DEFAULT '',
     PRIMARY KEY (id),
     CONSTRAINT uk_coupon_usage_uuid UNIQUE (uuid),
-    CONSTRAINT fk_coupon_usage_coupon FOREIGN KEY (coupon_type_id) REFERENCES coupon(id),
+    CONSTRAINT fk_coupon_usage_coupon FOREIGN KEY (coupon_id) REFERENCES coupon(id),
     CONSTRAINT fk_coupon_usage_account FOREIGN KEY (account_id) REFERENCES account(id)
 );
 
@@ -138,5 +138,5 @@ CREATE INDEX idx_membership_post ON membership(post_id);
 CREATE INDEX idx_membership_registration_account ON membership_registration(account_id);
 CREATE INDEX idx_coupon_membership ON coupon(membership_id);
 CREATE INDEX idx_coupon_company ON coupon(company_id);
-CREATE INDEX idx_coupon_usage_coupon ON coupon_usage(coupon_type_id);
+CREATE INDEX idx_coupon_usage_coupon ON coupon_usage(coupon_id);
 CREATE INDEX idx_coupon_usage_account ON coupon_usage(account_id);
