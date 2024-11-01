@@ -1,0 +1,1 @@
+ALTER TABLE membership ADD COLUMN is_register_membership_button_shown BOOLEAN NOT NULL DEFAULT true;

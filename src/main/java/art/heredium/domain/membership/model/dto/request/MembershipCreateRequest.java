@@ -28,5 +28,8 @@ public class MembershipCreateRequest {
   @JsonProperty("is_enabled")
   private Boolean isEnabled;
 
+  @JsonProperty("is_register_membership_button_shown")
+  private Boolean isRegisterMembershipButtonShown;
+
   @NotEmpty @Valid private List<MembershipCouponCreateRequest> coupons;
 }
