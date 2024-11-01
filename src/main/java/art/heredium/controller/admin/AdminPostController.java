@@ -1,5 +1,7 @@
 package art.heredium.controller.admin;
 
+import java.util.Optional;
+
 import javax.validation.Valid;
 
 import lombok.RequiredArgsConstructor;
@@ -10,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import art.heredium.core.annotation.ManagerPermission;
 import art.heredium.core.config.error.entity.ApiException;
 import art.heredium.core.config.error.entity.ErrorCode;
+import art.heredium.domain.post.entity.Post;
 import art.heredium.domain.post.model.dto.request.PostCreateRequest;
 import art.heredium.domain.post.model.dto.request.PostUpdateRequest;
 import art.heredium.domain.post.model.dto.response.AdminPostDetailsResponse;
@@ -32,6 +35,8 @@ public class AdminPostController {
       throw new ApiException(
           ErrorCode.BAD_VALID, "Memberships cannot be created for disabled posts");
     }
+    Optional<Post> existingPost = this.postService.findFirst();
+    if (existingPost.isPresent()) throw new ApiException(ErrorCode.POST_ALREADY_EXISTED);
 
     Long postId = postService.createPost(request);
 
