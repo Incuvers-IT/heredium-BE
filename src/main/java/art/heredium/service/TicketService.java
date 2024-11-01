@@ -220,8 +220,10 @@ public class TicketService {
           if (entity.getType() == TicketType.NORMAL && !StringUtils.isEmpty(entity.getPgId())) {
             entity.getPayment().refund(entity);
           }
-          if (entity.getCouponUuid() != null && !entity.getIsCouponAlreadyRefund()) {
+          if (entity.getCouponUuid() != null && entity.getIsCouponAlreadyRefund() == false) {
             couponUsageService.rollbackCouponUsage(entity.getCouponUuid());
+            entity.setCouponAlreadyRefund(true);
+            this.ticketRepository.save(entity);
           }
         });
 
@@ -382,9 +384,10 @@ public class TicketService {
     if (!StringUtils.isEmpty(entity.getPgId())) {
       entity.getPayment().refund(entity);
     }
-    if (entity.getCouponUuid() != null && !entity.getIsCouponAlreadyRefund()) {
+    if (entity.getCouponUuid() != null && entity.getIsCouponAlreadyRefund() == false) {
       couponUsageService.rollbackCouponUsage(entity.getCouponUuid());
       entity.setCouponAlreadyRefund(true);
+      this.ticketRepository.save(entity);
     }
     if (!StringUtils.isBlank(entity.getEmail())) {
       cloudMail.mail(
