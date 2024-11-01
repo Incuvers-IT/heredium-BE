@@ -67,10 +67,6 @@ public class Coupon extends BaseEntity {
   @Column(name = "is_permanent")
   private Boolean isPermanent;
 
-  @Comment("멤버십 쿠폰이 아닙")
-  @Column(name = "is_non_membership_coupon")
-  private Boolean isNonMembershipCoupon;
-
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "membership_id")
   private Membership membership;
