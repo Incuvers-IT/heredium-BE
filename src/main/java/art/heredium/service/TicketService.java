@@ -71,6 +71,7 @@ import art.heredium.ncloud.type.MailTemplate;
 @Transactional(rollbackFor = Exception.class)
 public class TicketService {
 
+  private final CouponUsageService couponUsageService;
   private final HerediumProperties herediumProperties;
   private final RestTemplate restTemplate = new RestTemplate();
   private final HerediumAlimTalk alimTalk;
@@ -218,6 +219,9 @@ public class TicketService {
         entity -> {
           if (entity.getType() == TicketType.NORMAL && !StringUtils.isEmpty(entity.getPgId())) {
             entity.getPayment().refund(entity);
+          }
+          if (entity.getCouponUuid() != null && !entity.getIsCouponAlreadyRefund()) {
+            couponUsageService.rollbackCouponUsage(entity.getCouponUuid());
           }
         });
 
@@ -378,7 +382,10 @@ public class TicketService {
     if (!StringUtils.isEmpty(entity.getPgId())) {
       entity.getPayment().refund(entity);
     }
-
+    if (entity.getCouponUuid() != null && !entity.getIsCouponAlreadyRefund()) {
+      couponUsageService.rollbackCouponUsage(entity.getCouponUuid());
+      entity.setCouponAlreadyRefund(true);
+    }
     if (!StringUtils.isBlank(entity.getEmail())) {
       cloudMail.mail(
           entity.getEmail(),

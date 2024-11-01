@@ -42,7 +42,7 @@ public class UserCouponController {
   @GetMapping("/usage/{coupon-uuid}")
   public ResponseEntity<CouponUsageResponse> getCouponByUuid(
       @PathVariable(value = "coupon-uuid") String couponUuid) {
-    return ResponseEntity.ok(this.couponUsageService.getCouponUsageByUuid(couponUuid));
+    return ResponseEntity.ok(this.couponUsageService.getCouponUsageResponseByUuid(couponUuid));
   }
 
   @PostMapping("/uncheck-coupon/{coupon-uuid}")
