@@ -31,21 +31,25 @@ public class TossPayments implements PaymentService<PaymentsPayRequest> {
   public TossPaymentsPayResponse pay(PaymentsPayRequest dto, Long amount) {
     try {
       // TODO: Will be fixed
-      //      String authorization = getAuthorization(dto.getType());
-      //      return client.pay(authorization, TossPaymentsPayRequest.from(dto));
-      return confirmPaymentWithIosKey(dto);
+      //            String authorization = getAuthorization(dto.getType());
+      //            return client.pay(authorization, TossPaymentsPayRequest.from(dto));
+      return confirmPaymentWithRequestPaymentType(dto);
     } catch (FeignException e) {
       // TODO: Will be fixed
       //      e.printStackTrace();
       //      throw new ApiException(ErrorCode.BAD_REQUEST, e.responseBody());
       try {
-        return confirmPaymentWithAndroidKey(dto);
+        return confirmPaymentWithIosKey(dto);
       } catch (FeignException ex) {
         try {
-          return confirmPaymentWithWebKey(dto);
+          return confirmPaymentWithAndroidKey(dto);
         } catch (FeignException exception) {
-          exception.printStackTrace();
-          throw new ApiException(ErrorCode.BAD_REQUEST, exception.responseBody());
+          try {
+            return confirmPaymentWithWebKey(dto);
+          } catch (FeignException excep) {
+            excep.printStackTrace();
+            throw new ApiException(ErrorCode.BAD_REQUEST, excep.responseBody());
+          }
         }
       }
     }
@@ -72,6 +76,11 @@ public class TossPayments implements PaymentService<PaymentsPayRequest> {
   private String getAuthorization(PaymentType type) {
     String secretKey = environment.getProperty(type.getPropertyKeyName());
     return Base64Encoder.encodeAuthorization(secretKey + ":");
+  }
+
+  private TossPaymentsPayResponse confirmPaymentWithRequestPaymentType(PaymentsPayRequest dto) {
+    String authorization = getAuthorization(dto.getType());
+    return client.pay(authorization, TossPaymentsPayRequest.from(dto));
   }
 
   private TossPaymentsPayResponse confirmPaymentWithWebKey(PaymentsPayRequest dto) {
