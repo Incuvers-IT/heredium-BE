@@ -31,7 +31,7 @@ import art.heredium.ncloud.bean.CloudStorage;
 @RequiredArgsConstructor
 @Transactional(rollbackFor = Exception.class)
 public class MembershipService {
-  private static final Long DEFAULT_MEMBERSHIP_PERIOD = 12L; // months
+  private static final Long DEFAULT_MEMBERSHIP_PERIOD = 364L; // days
 
   private final MembershipRepository membershipRepository;
   private final MembershipRegistrationRepository membershipRegistrationRepository;

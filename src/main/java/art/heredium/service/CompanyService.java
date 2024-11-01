@@ -43,6 +43,8 @@ import art.heredium.excel.constants.UploadedMembershipRegistrationColumns;
 @Transactional(rollbackFor = Exception.class)
 public class CompanyService {
 
+  private static final Long DEFAULT_MEMBERSHIP_PERIOD = 364L; // days
+
   private final CompanyRepository companyRepository;
   private final CouponRepository couponRepository;
   private final AccountRepository accountRepository;
@@ -350,7 +352,7 @@ public class CompanyService {
         account,
         company,
         request.getStartDate(),
-        request.getStartDate().plusDays(365),
+        request.getStartDate().plusDays(DEFAULT_MEMBERSHIP_PERIOD),
         PaymentStatus.COMPLETED,
         request.getPaymentDate(),
         RegistrationType.COMPANY,
