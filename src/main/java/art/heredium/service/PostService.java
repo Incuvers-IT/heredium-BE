@@ -276,6 +276,8 @@ public class PostService {
     }
     if (request.getPeriod() != null) membership.setPeriod(request.getPeriod());
     if (request.getIsEnabled() != null) membership.setIsEnabled(request.getIsEnabled());
+    if (request.getIsRegisterMembershipButtonShown() != null)
+      membership.setIsRegisterMembershipButtonShown(request.getIsRegisterMembershipButtonShown());
 
     membershipRepository.save(membership);
 
@@ -289,6 +291,9 @@ public class PostService {
     createRequest.setImageUrl(request.getImageUrl());
     createRequest.setIsEnabled(request.getIsEnabled() == null || request.getIsEnabled());
     createRequest.setCoupons(convertToCouponCreateRequests(request.getCoupons()));
+    createRequest.setIsRegisterMembershipButtonShown(
+        request.getIsRegisterMembershipButtonShown() == null
+            || request.getIsRegisterMembershipButtonShown());
 
     membershipService.createMemberships(post.getId(), Arrays.asList(createRequest));
   }

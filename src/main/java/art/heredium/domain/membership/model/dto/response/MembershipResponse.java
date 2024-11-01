@@ -32,6 +32,9 @@ public class MembershipResponse {
   @JsonProperty("is_enabled")
   private Boolean isEnabled;
 
+  @JsonProperty("is_register_membership_button_shown")
+  private Boolean isRegisterMembershipButtonShown;
+
   public MembershipResponse(Membership membership) {
     this.coupons =
         membership.getCoupons().stream().map(CouponResponse::new).collect(Collectors.toList());
@@ -41,5 +44,6 @@ public class MembershipResponse {
     this.price = membership.getPrice();
     this.imageUrl = membership.getImageUrl();
     this.isEnabled = membership.getIsEnabled();
+    this.isRegisterMembershipButtonShown = membership.getIsRegisterMembershipButtonShown();
   }
 }

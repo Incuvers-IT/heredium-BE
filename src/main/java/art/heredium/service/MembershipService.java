@@ -69,6 +69,9 @@ public class MembershipService {
               .isEnabled(request.getIsEnabled() == null || request.getIsEnabled())
               .imageUrl(request.getImageUrl())
               .post(post)
+              .isRegisterMembershipButtonShown(
+                  request.getIsRegisterMembershipButtonShown() == null
+                      || request.getIsRegisterMembershipButtonShown())
               .build();
 
       Membership savedMembership = membershipRepository.save(membership);

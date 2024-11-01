@@ -79,6 +79,10 @@ public class Membership extends BaseEntity implements Serializable {
   @Column(name = "image_url")
   private String imageUrl;
 
+  @Comment("가입하기 버튼 활성화 여부")
+  @Column(name = "is_register_membership_button_shown", nullable = false)
+  private Boolean isRegisterMembershipButtonShown;
+
   public void updateIsEnabled(boolean isEnabled) {
     this.isEnabled = isEnabled;
   }
@@ -89,12 +93,19 @@ public class Membership extends BaseEntity implements Serializable {
 
   @Builder
   public Membership(
-      String name, Long period, Integer price, Boolean isEnabled, String imageUrl, Post post) {
+      String name,
+      Long period,
+      Integer price,
+      Boolean isEnabled,
+      String imageUrl,
+      Post post,
+      Boolean isRegisterMembershipButtonShown) {
     this.name = name;
     this.period = period;
     this.price = price;
     this.isEnabled = isEnabled;
     this.imageUrl = imageUrl;
     this.post = post;
+    this.isRegisterMembershipButtonShown = isRegisterMembershipButtonShown;
   }
 }
