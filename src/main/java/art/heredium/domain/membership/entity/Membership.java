@@ -61,7 +61,7 @@ public class Membership extends BaseEntity implements Serializable {
   @Column(name = "name", nullable = false)
   private String name;
 
-  @Comment("멤버십기간 (월)")
+  @Comment("멤버십기간 (일)")
   @Column(name = "membership_period", nullable = false)
   @Min(1)
   private Long period;

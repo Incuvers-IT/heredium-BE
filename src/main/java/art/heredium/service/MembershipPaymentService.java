@@ -26,7 +26,7 @@ import art.heredium.payment.inf.PaymentTicketResponse;
 @Service
 @RequiredArgsConstructor
 public class MembershipPaymentService {
-  private static final Long DEFAULT_MEMBERSHIP_PERIOD = 12L; // months
+  private static final Long DEFAULT_MEMBERSHIP_PERIOD = 364L; // days
 
   private final CouponUsageService couponUsageService;
   private final MembershipRegistrationRepository membershipRegistrationRepository;
@@ -64,7 +64,11 @@ public class MembershipPaymentService {
       @NonNull MembershipRegistration membershipRegistration) {
     final LocalDate now = LocalDate.now();
     membershipRegistration.updateRegistrationDate(now);
-    membershipRegistration.updateExpirationDate(now.plusMonths(DEFAULT_MEMBERSHIP_PERIOD));
+    membershipRegistration.updateExpirationDate(
+        now.plusDays(
+            Optional.ofNullable(membershipRegistration.getMembership())
+                .map(Membership::getPeriod)
+                .orElse(DEFAULT_MEMBERSHIP_PERIOD)));
     membershipRegistration.updatePaymentDate(now);
     membershipRegistration.updatePaymentStatus(PaymentStatus.COMPLETED);
     this.membershipRegistrationRepository.save(membershipRegistration);
