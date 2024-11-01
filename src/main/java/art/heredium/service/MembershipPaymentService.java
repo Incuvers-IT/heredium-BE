@@ -64,7 +64,11 @@ public class MembershipPaymentService {
       @NonNull MembershipRegistration membershipRegistration) {
     final LocalDate now = LocalDate.now();
     membershipRegistration.updateRegistrationDate(now);
-    membershipRegistration.updateExpirationDate(now.plusDays(DEFAULT_MEMBERSHIP_PERIOD));
+    membershipRegistration.updateExpirationDate(
+        now.plusDays(
+            Optional.ofNullable(membershipRegistration.getMembership())
+                .map(Membership::getPeriod)
+                .orElse(DEFAULT_MEMBERSHIP_PERIOD)));
     membershipRegistration.updatePaymentDate(now);
     membershipRegistration.updatePaymentStatus(PaymentStatus.COMPLETED);
     this.membershipRegistrationRepository.save(membershipRegistration);
