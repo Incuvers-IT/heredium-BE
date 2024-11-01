@@ -171,6 +171,14 @@ public class Ticket implements Serializable {
   @OrderBy("createdDate DESC")
   private List<TicketLog> logs = new ArrayList<>();
 
+  @Comment("coupon-uuid")
+  @Column(name = "coupon_uuid", length = 100)
+  private String couponUuid;
+
+  @Comment("already-refund-coupon")
+  @Column(name = "is_coupon_already_refund")
+  private Boolean isCouponAlreadyRefund;
+
   public Ticket(
       List<TicketPrice> prices,
       TicketUserInfo ticketUserInfo,
@@ -292,6 +300,14 @@ public class Ticket implements Serializable {
 
   public void updateSmsRequestId(List<String> smsRequestId) {
     this.smsRequestId = smsRequestId;
+  }
+
+  public void updateCouponUuid(String couponUuid) {
+    this.couponUuid = couponUuid;
+  }
+
+  public void setCouponAlreadyRefund(boolean isCouponAlreadyRefund) {
+    this.isCouponAlreadyRefund = isCouponAlreadyRefund;
   }
 
   public void setPrice(long price) {

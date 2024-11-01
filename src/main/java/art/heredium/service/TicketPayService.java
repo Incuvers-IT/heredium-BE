@@ -213,6 +213,7 @@ public class TicketPayService {
               AlimTalkTemplate.TICKET_INFORMATION,
               entity.getStartDate().minusDays(1).withHour(10));
       entity.updateSmsRequestId(smsRequestId);
+      entity.updateCouponUuid(couponUuid);
       ticketRepository.saveAndFlush(entity);
     } catch (Exception e) {
       log.error("티켓구매 에러", e);
@@ -267,6 +268,7 @@ public class TicketPayService {
     // Apply coupon discount if valid
     if (couponUsage != null) {
       applyCouponDiscount(entity, couponUsage);
+      entity.updateCouponUuid(couponUuid);
     }
 
     if (!StringUtils.isEmpty(entity.getPgId()) || entity.getPrice() > 0) {

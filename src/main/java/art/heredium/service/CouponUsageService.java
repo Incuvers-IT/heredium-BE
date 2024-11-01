@@ -94,28 +94,29 @@ public class CouponUsageService {
     return this.couponUsageRepository.saveAll(couponUsages);
   }
 
-  public CouponUsageResponse getCouponUsageByUuid(@NonNull final String uuid) {
-    return new CouponUsageResponse(this.getCouponUsageByUuid(uuid, LocalDateTime.now()));
+  public CouponUsageResponse getCouponUsageResponseByUuid(@NonNull final String uuid) {
+    return new CouponUsageResponse(this.getCouponUsageByUuid(uuid));
   }
 
   @Transactional(rollbackFor = Exception.class)
   public void checkoutCouponUsage(String uuid) {
-    LocalDateTime now = LocalDateTime.now();
-    final CouponUsage couponUsage = this.getCouponUsageByUuid(uuid, now);
-
+    final CouponUsage couponUsage = this.getCouponUsageByUuid(uuid);
     couponUsage.setUsedCount(couponUsage.getUsedCount() + 1);
     couponUsage.setIsUsed(true);
-
-    couponUsage.setUsedDate(now);
+    couponUsage.setUsedDate(LocalDateTime.now());
     couponUsageRepository.save(couponUsage);
   }
 
-  private CouponUsage getCouponUsageByUuid(
-      @NonNull final String uuid, @NonNull final LocalDateTime now) {
+  private CouponUsage getCouponUsageByUuid(@NonNull final String uuid) {
+    LocalDateTime now = LocalDateTime.now();
     final CouponUsage couponUsage =
         couponUsageRepository
             .findByUuid(uuid)
-            .orElseThrow(() -> new ApiException(ErrorCode.COUPON_NOT_FOUND, "Coupon not found"));
+            .orElseThrow(
+                () ->
+                    new ApiException(
+                        ErrorCode.COUPON_USAGE_NOT_FOUND,
+                        "Coupon usage not found by uuid " + uuid));
 
     if (couponUsage.getExpirationDate().isBefore(now)) {
       throw new ApiException(ErrorCode.COUPON_EXPIRED, "Coupon is expired");
@@ -191,5 +192,20 @@ public class CouponUsageService {
         });
 
     return this.couponUsageRepository.saveAll(couponUsages);
+  }
+
+  public void rollbackCouponUsage(String couponUuid) {
+    Optional<CouponUsage> couponUsageOptional = couponUsageRepository.findByUuid(couponUuid);
+    if (!couponUsageOptional.isPresent())
+      throw new ApiException(
+          ErrorCode.COUPON_USAGE_NOT_FOUND, "Coupon usage not found by uuid " + couponUuid);
+    CouponUsage couponUsage = couponUsageOptional.get();
+    long usedCount = couponUsage.getUsedCount();
+    couponUsage.setUsedCount(--usedCount);
+    if (usedCount == 0) {
+      couponUsage.setIsUsed(false);
+      couponUsage.setUsedDate(null);
+    }
+    couponUsageRepository.save(couponUsage);
   }
 }
