@@ -215,6 +215,7 @@ public class Ticket implements Serializable {
     prices.forEach(price -> price.setTicket(this));
     this.prices = prices;
     this.logs.add(new TicketLog(this, null, this.getName(), null, this.getState()));
+    this.isCouponAlreadyRefund = false;
   }
 
   public Ticket(
@@ -247,6 +248,7 @@ public class Ticket implements Serializable {
             null));
     this.logs.add(
         new TicketLog(this, admin, admin.getAdminInfo().getName(), null, this.getState()));
+    this.isCouponAlreadyRefund = false;
   }
 
   public Ticket(TicketInviteCreateInfo info, Account account, Admin admin) {
@@ -272,6 +274,7 @@ public class Ticket implements Serializable {
         new TicketPrice(this, ProjectPriceType.INVITE.getDesc(), this.getNumber(), 0L, 0L, null));
     this.logs.add(
         new TicketLog(this, admin, admin.getAdminInfo().getName(), null, this.getState()));
+    this.isCouponAlreadyRefund = false;
   }
 
   public Log createInsertLog(Admin admin) {
