@@ -39,27 +39,13 @@
     </rollingPolicy>
   </appender>
 
-  <appender name="logstash" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
-    <param name="Encoding" value="UTF-8" />
-    <!-- <remoteHost>localhost</remoteHost> -->
-    <!-- <port>1704</port> -->
-    <destination>localhost:1704</destination>
-    <encoder class="net.logstash.logback.encoder.LogstashEncoder">
-      <customFields>{"app_name": "heredium-staging"}</customFields>
-    </encoder>
-  </appender>
-
   <logger name="art.heredium" level="DEBUG" additivity="false">
     <appender-ref ref="SAMPLE" />
-  </logger>
-  <logger name="art.heredium" level="TRACE" additivity="false">
-    <appender-ref ref="logstash" />
   </logger>
   <logger name="art.heredium" level="INFO" additivity="false">
     <appender-ref ref="DAILY_ROLLING_FILE_APPENDER" />
   </logger>
   <root level="INFO">
     <appender-ref ref="STDOUT" />
-    <appender-ref ref="logstash" />
   </root>
 </configuration>
