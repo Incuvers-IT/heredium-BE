@@ -83,8 +83,6 @@ public class MembershipRegistrationService {
                 RegistrationType.MEMBERSHIP_PACKAGE,
                 PaymentStatus.PENDING,
                 paymentOrderId));
-    //    this.couponUsageService.distributeMembershipAndCompanyCoupons(account,
-    // membership.getCoupons());
     return new RegisterMembershipResponse(membershipRegistration);
   }
 }
