@@ -8,14 +8,19 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import art.heredium.core.util.Constants;
 import art.heredium.ncloud.service.sens.biz.component.NCloudBizAlimTalk;
 import art.heredium.ncloud.service.sens.biz.model.kit.NCloudBizAlimTalkBuilder;
 import art.heredium.ncloud.service.sens.biz.model.kit.NCloudBizAlimTalkMessageBuilder;
+import art.heredium.ncloud.service.sens.biz.model.kit.NCloudBizAlimTalkRequest;
 import art.heredium.ncloud.service.sens.biz.model.ncloud.NCloudBizAlimTalkFailOverConfig;
 import art.heredium.ncloud.service.sens.biz.model.ncloud.NCloudBizAlimTalkMessage;
 import art.heredium.ncloud.service.sens.biz.model.ncloud.NCloudBizAlimTalkResponse;
@@ -23,12 +28,14 @@ import art.heredium.ncloud.type.AlimTalkTemplate;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class HerediumAlimTalk {
 
   @Value("${spring.profiles.active}")
   public String ACTIVE;
 
   private final NCloudBizAlimTalk bizAlimTalkService;
+  private final ObjectMapper objectMapper = new ObjectMapper();
 
   public List<String> sendAlimTalk(
       List<NCloudBizAlimTalkMessage> messages,
@@ -38,6 +45,7 @@ public class HerediumAlimTalk {
       NCloudBizAlimTalkBuilder builder =
           new NCloudBizAlimTalkBuilder(
               template.getPlusFriendId(ACTIVE), template.getTemplateCode(ACTIVE));
+
       if (reserveTime != null) {
         if (!Constants.getNow().plusMinutes(10).isBefore(reserveTime)) {
           return null;
@@ -45,10 +53,22 @@ public class HerediumAlimTalk {
         builder.useReserve(reserveTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")));
       }
       builder.messages(messages);
-      return bizAlimTalkService.send(builder.build()).stream()
-          .map(NCloudBizAlimTalkResponse::getRequestId)
-          .collect(Collectors.toList());
+      final NCloudBizAlimTalkRequest request = builder.build();
+      try {
+        final String requestStr = this.objectMapper.writeValueAsString(request);
+        log.info("SNT sendAlimTalk {}", requestStr);
+      } catch (JsonProcessingException e) {
+        log.error("Error deserialize NCloudBizAlimTalkBuilder ", e);
+      }
+
+      final List<String> results =
+          bizAlimTalkService.send(request).stream()
+              .map(NCloudBizAlimTalkResponse::getRequestId)
+              .collect(Collectors.toList());
+      log.info("RCV sendAlimTalk {}", results);
+
     } catch (Exception e) {
+      log.error("Error sendAlimTalk " + e);
       e.printStackTrace();
     }
     return null;
