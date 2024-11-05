@@ -42,8 +42,8 @@ public class CouponUsageService {
   private final CouponRepository couponRepository;
   private final AccountRepository accountRepository;
   private final MembershipRegistrationRepository membershipRegistrationRepository;
-  private final HerediumAlimTalk alimTalk;
   private final HerediumProperties herediumProperties;
+  private final HerediumAlimTalk alimTalk;
 
   public List<CouponResponseDto> getCouponsWithUsageByAccountId(Long accountId) {
     List<Coupon> coupons = couponUsageRepository.findDistinctCouponsByAccountId(accountId);
@@ -102,6 +102,7 @@ public class CouponUsageService {
                   Stream.of(account.getId()).collect(Collectors.toList()),
                   coupon.getFromSource()));
         });
+    this.sendCouponDeliveredMessageToAlimTalk(account.getAccountInfo().getPhone(), couponUsages);
     return this.couponUsageRepository.saveAll(couponUsages);
   }
 
@@ -212,6 +213,39 @@ public class CouponUsageService {
         });
 
     return this.couponUsageRepository.saveAll(couponUsages);
+  }
+
+  private void sendCouponDeliveredMessageToAlimTalk(
+      final String toPhone, final List<CouponUsage> coupons) {
+    List<Map<String, String>> params =
+        coupons.stream()
+            .map(
+                coupon -> {
+                  Map<String, String> variables = new HashMap<>();
+                  variables.put("accountName", coupon.getAccount().getAccountInfo().getName());
+                  variables.put("couponName", coupon.getCoupon().getName());
+                  variables.put(
+                      "discountPercent", String.valueOf(coupon.getCoupon().getDiscountPercent()));
+                  variables.put(
+                      "couponStartDate", coupon.getDeliveredDate().format(COUPON_DATETIME_FORMAT));
+                  variables.put(
+                      "couponEndDate", coupon.getExpirationDate().format(COUPON_DATETIME_FORMAT));
+                  variables.put(
+                      "numberOfUses",
+                      coupon.isPermanent()
+                          ? "상시할인"
+                          : String.valueOf(coupon.getCoupon().getNumberOfUses()));
+                  variables.put("CSTel", herediumProperties.getTel());
+                  variables.put("CSEmail", herediumProperties.getEmail());
+                  return variables;
+                })
+            .collect(Collectors.toList());
+    try {
+      this.alimTalk.sendAlimTalk(toPhone, params, AlimTalkTemplate.COUPON_HAS_BEEN_DELIVERED);
+    } catch (Exception e) {
+      log.warn(
+          "Sending message to AlimTalk failed: {}, message params: {}", e.getMessage(), params);
+    }
   }
 
   public void rollbackCouponUsage(String couponUuid) {

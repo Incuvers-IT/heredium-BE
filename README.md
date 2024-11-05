@@ -46,10 +46,12 @@
 헤레디움 [쿠폰 발급 안내]
 
 안녕하세요 #{accountName}님
-헤레디움 쿠폰#{couponName}이 발급되었습니다.
+헤레디움 쿠폰 #{couponName}이 발급되었습니다.
 
-[#{couponName}]  
-쿠폰혜택 : {couponName},{discountPercent}) : #{numberOfUses}개
+[#{couponName}]
+쿠폰혜택 : #{couponName}, #{discountPercent} : #{numberOfUses}개
 사용기한 : #{couponStartDate} ~ #{couponEndDate}
 
-클래식 음악과 컨템포러리 아트가 함께하는 헤레디움, 다양한 전시와 공연을 만나보세요 !
+이 메시지는 고객님의 동의에 의해 지급된 쿠폰 안내 메시지입니다.
+
+클래식 음악과 컨템포러리 아트가 함께하는 헤레디움, 다양한 전시와 공연을 만나보세요!
