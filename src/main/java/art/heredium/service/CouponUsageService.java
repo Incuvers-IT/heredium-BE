@@ -2,18 +2,22 @@ package art.heredium.service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import art.heredium.core.config.error.entity.ApiException;
 import art.heredium.core.config.error.entity.ErrorCode;
+import art.heredium.core.config.properties.HerediumProperties;
+import art.heredium.core.util.AuthUtil;
 import art.heredium.domain.account.entity.Account;
 import art.heredium.domain.account.repository.AccountRepository;
 import art.heredium.domain.coupon.entity.Coupon;
@@ -25,14 +29,21 @@ import art.heredium.domain.coupon.repository.CouponRepository;
 import art.heredium.domain.coupon.repository.CouponUsageRepository;
 import art.heredium.domain.membership.entity.MembershipRegistration;
 import art.heredium.domain.membership.repository.MembershipRegistrationRepository;
+import art.heredium.ncloud.bean.HerediumAlimTalk;
+import art.heredium.ncloud.type.AlimTalkTemplate;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class CouponUsageService {
+  private static final DateTimeFormatter COUPON_DATETIME_FORMAT =
+      DateTimeFormatter.ofPattern("yyyy-MM-dd hh:mm");
   private final CouponUsageRepository couponUsageRepository;
   private final CouponRepository couponRepository;
   private final AccountRepository accountRepository;
   private final MembershipRegistrationRepository membershipRegistrationRepository;
+  private final HerediumAlimTalk alimTalk;
+  private final HerediumProperties herediumProperties;
 
   public List<CouponResponseDto> getCouponsWithUsageByAccountId(Long accountId) {
     List<Coupon> coupons = couponUsageRepository.findDistinctCouponsByAccountId(accountId);
@@ -100,11 +111,20 @@ public class CouponUsageService {
 
   @Transactional(rollbackFor = Exception.class)
   public void checkoutCouponUsage(String uuid) {
+    Long accountId =
+        AuthUtil.getCurrentUserAccountId()
+            .orElseThrow(() -> new ApiException(ErrorCode.USER_NOT_FOUND, "User not found"));
+    LocalDateTime now = LocalDateTime.now();
     final CouponUsage couponUsage = this.getCouponUsageByUuid(uuid);
+
     couponUsage.setUsedCount(couponUsage.getUsedCount() + 1);
     couponUsage.setIsUsed(true);
     couponUsage.setUsedDate(LocalDateTime.now());
     couponUsageRepository.save(couponUsage);
+    List<CouponUsage> remainedCouponUsages =
+        this.couponUsageRepository.findByAccountIdAndIsUsedFalseAndNotExpiredAndSource(
+            accountId, CouponSource.MEMBERSHIP_PACKAGE);
+    this.sendCouponUsedMessageToAlimTalk(couponUsage, remainedCouponUsages);
   }
 
   private CouponUsage getCouponUsageByUuid(@NonNull final String uuid) {
@@ -207,5 +227,40 @@ public class CouponUsageService {
       couponUsage.setUsedDate(null);
     }
     couponUsageRepository.save(couponUsage);
+  }
+
+  private void sendCouponUsedMessageToAlimTalk(
+      final CouponUsage couponUsage, final List<CouponUsage> remainedCouponUsages) {
+    Map<String, String> params = new HashMap<>();
+    params.put("accountName", couponUsage.getAccount().getAccountInfo().getName());
+    params.put("membershipName", couponUsage.getCoupon().getMembership().getName());
+    params.put("issuedDate", couponUsage.getDeliveredDate().format(COUPON_DATETIME_FORMAT));
+    params.put("issuedCouponName", couponUsage.getCoupon().getName());
+    params.put("remainedDetailCoupons", this.buildCouponDetails(remainedCouponUsages));
+    params.put("CSTel", herediumProperties.getTel());
+    params.put("CSEmail", herediumProperties.getEmail());
+    try {
+      this.alimTalk.sendAlimTalk(
+          couponUsage.getAccount().getAccountInfo().getPhone(),
+          params,
+          AlimTalkTemplate.COUPON_HAS_BEEN_USED);
+    } catch (Exception e) {
+      log.warn(
+          "Sending message to AlimTalk failed: {}, message params: {}", e.getMessage(), params);
+    }
+  }
+
+  private String buildCouponDetails(List<CouponUsage> coupons) {
+    return coupons.stream()
+        .map(
+            coupon ->
+                String.format(
+                    " - %s, %s%% : %s",
+                    coupon.getCoupon().getName(),
+                    coupon.getCoupon().getDiscountPercent(),
+                    Boolean.TRUE.equals(coupon.getCoupon().getIsPermanent())
+                        ? "상시할인"
+                        : coupon.getCoupon().getNumberOfUses()))
+        .collect(Collectors.joining("\n"));
   }
 }
