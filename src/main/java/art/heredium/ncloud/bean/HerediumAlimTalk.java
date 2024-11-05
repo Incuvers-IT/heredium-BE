@@ -45,7 +45,6 @@ public class HerediumAlimTalk {
       NCloudBizAlimTalkBuilder builder =
           new NCloudBizAlimTalkBuilder(
               template.getPlusFriendId(ACTIVE), template.getTemplateCode(ACTIVE));
-
       if (reserveTime != null) {
         if (!Constants.getNow().plusMinutes(10).isBefore(reserveTime)) {
           return null;
@@ -66,7 +65,7 @@ public class HerediumAlimTalk {
               .map(NCloudBizAlimTalkResponse::getRequestId)
               .collect(Collectors.toList());
       log.info("RCV sendAlimTalk {}", results);
-
+      return results;
     } catch (Exception e) {
       log.error("Error sendAlimTalk " + e);
       e.printStackTrace();
