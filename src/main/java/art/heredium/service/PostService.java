@@ -141,6 +141,10 @@ public class PostService {
   }
 
   private String moveEditorContent(final String editorContent, final String newPath) {
+    if (StringUtils.isEmpty(editorContent)) {
+      return editorContent;
+    }
+
     final List<String> imageUrls = Constants.getImageNameFromHtml(editorContent);
     String result = editorContent;
     for (String tempImageUrl : imageUrls) {
@@ -168,7 +172,11 @@ public class PostService {
   private void updatePostFields(Post post, PostUpdateRequest request) {
     if (request.getName() != null) post.setName(request.getName());
     if (request.getIsEnabled() != null) post.setIsEnabled(request.getIsEnabled());
-    if (request.getContentDetail() != null) post.setContentDetail(request.getContentDetail());
+    if (request.getContentDetail() != null) {
+      String fileFolderPath = String.format("%s/%d", FilePathType.POST.getPath(), post.getId());
+      String processedContent = moveEditorContent(request.getContentDetail(), fileFolderPath);
+      post.setContentDetail(processedContent);
+    }
     if (request.getThumbnailUrls() != null) updateThumbnailUrls(post, request.getThumbnailUrls());
     if (request.getNoteImage() != null) updateNoteImage(post, request.getNoteImage());
     if (request.getAdditionalInfo() != null)
