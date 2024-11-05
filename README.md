@@ -32,14 +32,11 @@
 헤레디움 [멤버십 만료 안내]
 
 안녕하세요 #{accountName}님
-헤레디움 멤버십#{membershipName}이 만료되었습니다.
+헤레디움 멤버십 #{membershipName}이 만료되었습니다.
 
-[#{멤버십등급}] 멤버십 적용 : #{startDate} ~ #{endDate}
+[#{membershipName}] 멤버십 적용: #{startDate} ~ #{endDate}
 
-[멤버십 재가입 방법]
-
-- 헤레디움 웹 또는 앱 [멤버십] 에서 결제
-- 헤레디움 웹 접속링크 : https://heredium.art/
+이 메시지는 고객님의 헤레디움 멤버십 기한 만료 안내를 위해 발송되었습니다.
 
 ### COUPON_HAS_BEEN_DELIVERED
 
