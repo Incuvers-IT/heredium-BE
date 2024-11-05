@@ -43,7 +43,7 @@ public class MembershipPaymentService {
   private final HerediumAlimTalk alimTalk;
   private final HerediumProperties herediumProperties;
   private final DateTimeFormatter MEMBERSHIP_DATE_FORMAT =
-      DateTimeFormatter.ofPattern("YYYY-MM-DD");
+      DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
   @Transactional(rollbackFor = Exception.class)
   public MembershipConfirmPaymentResponse confirmPayment(
