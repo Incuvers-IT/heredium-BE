@@ -217,6 +217,7 @@ public class CouponUsageService {
 
   private void sendCouponDeliveredMessageToAlimTalk(
       final String toPhone, final List<CouponUsage> coupons) {
+    log.info("Start sendCouponDeliveredMessageToAlimTalk");
     List<Map<String, String>> params =
         coupons.stream()
             .map(
@@ -245,6 +246,8 @@ public class CouponUsageService {
     } catch (Exception e) {
       log.warn(
           "Sending message to AlimTalk failed: {}, message params: {}", e.getMessage(), params);
+    } finally {
+      log.info("End sendCouponDeliveredMessageToAlimTalk");
     }
   }
 
@@ -265,6 +268,7 @@ public class CouponUsageService {
 
   private void sendCouponUsedMessageToAlimTalk(
       final CouponUsage couponUsage, final List<CouponUsage> remainedCouponUsages) {
+    log.info("Start sendCouponUsedMessageToAlimTalk");
     Map<String, String> params = new HashMap<>();
     params.put("accountName", couponUsage.getAccount().getAccountInfo().getName());
     params.put("membershipName", couponUsage.getCoupon().getMembership().getName());
@@ -281,6 +285,8 @@ public class CouponUsageService {
     } catch (Exception e) {
       log.warn(
           "Sending message to AlimTalk failed: {}, message params: {}", e.getMessage(), params);
+    } finally {
+      log.info("End sendCouponUsedMessageToAlimTalk");
     }
   }
 

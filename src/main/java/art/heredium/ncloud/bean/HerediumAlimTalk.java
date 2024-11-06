@@ -57,11 +57,16 @@ public class HerediumAlimTalk {
         final String requestStr = this.objectMapper.writeValueAsString(request);
         log.info("SNT sendAlimTalk {}", requestStr);
       } catch (JsonProcessingException e) {
-        log.error("Error deserialize NCloudBizAlimTalkBuilder ", e);
+        log.error("Error deserialize NCloudBizAlimTalkRequest ", e);
       }
 
+      final List<NCloudBizAlimTalkResponse> nCloudBizAlimTalkResponses =
+          bizAlimTalkService.send(request);
+      log.info(
+          "RCV nCloudBizAlimTalkResponses {}"
+              + this.objectMapper.writeValueAsString(nCloudBizAlimTalkResponses));
       final List<String> results =
-          bizAlimTalkService.send(request).stream()
+          nCloudBizAlimTalkResponses.stream()
               .map(NCloudBizAlimTalkResponse::getRequestId)
               .collect(Collectors.toList());
       log.info("RCV sendAlimTalk {}", results);
