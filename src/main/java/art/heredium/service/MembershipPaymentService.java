@@ -103,6 +103,7 @@ public class MembershipPaymentService {
 
   private void sendMembershipRegistrationMessageToAlimTalk(
       final MembershipRegistration membershipRegistration, List<CouponUsage> coupons) {
+    log.info("Start sendMembershipRegistrationMessageToAlimTalk");
     final Map<String, String> params = new HashMap<>();
     params.put("accountName", membershipRegistration.getAccount().getAccountInfo().getName());
     params.put("멤버십등급", membershipRegistration.getMembership().getName());
@@ -123,6 +124,7 @@ public class MembershipPaymentService {
       log.warn(
           "Sending message to AlimTalk failed: {}, message params: {}", e.getMessage(), params);
     }
+    log.info("End sendMembershipRegistrationMessageToAlimTalk");
   }
 
   private String buildCouponDetails(List<CouponUsage> coupons) {
