@@ -89,10 +89,6 @@ dependencies {
     // Swagger
     implementation 'org.springdoc:springdoc-openapi-ui:1.6.15'
 
-    // Logstash and APM
-    implementation 'net.logstash.logback:logstash-logback-encoder:7.2'
-    implementation 'co.elastic.apm:apm-agent-attach:1.34.1'
-
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
     runtimeOnly 'mysql:mysql-connector-java:8.0.28'
     runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.2'
