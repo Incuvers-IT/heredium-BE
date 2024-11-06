@@ -242,7 +242,8 @@ public class CouponUsageService {
                 })
             .collect(Collectors.toList());
     try {
-      this.alimTalk.sendAlimTalk(toPhone, params, AlimTalkTemplate.COUPON_HAS_BEEN_DELIVERED);
+      this.alimTalk.sendAlimTalkWithoutTitle(
+          toPhone, params, AlimTalkTemplate.COUPON_HAS_BEEN_DELIVERED);
     } catch (Exception e) {
       log.warn(
           "Sending message to AlimTalk failed: {}, message params: {}", e.getMessage(), params);
@@ -278,7 +279,7 @@ public class CouponUsageService {
     params.put("CSTel", herediumProperties.getTel());
     params.put("CSEmail", herediumProperties.getEmail());
     try {
-      this.alimTalk.sendAlimTalk(
+      this.alimTalk.sendAlimTalkWithoutTitle(
           couponUsage.getAccount().getAccountInfo().getPhone(),
           params,
           AlimTalkTemplate.COUPON_HAS_BEEN_USED);
