@@ -116,7 +116,7 @@ public class MembershipPaymentService {
     params.put("CSTel", herediumProperties.getTel());
     params.put("CSEmail", herediumProperties.getEmail());
     try {
-      this.alimTalk.sendAlimTalk(
+      this.alimTalk.sendAlimTalkWithoutTitle(
           membershipRegistration.getAccount().getAccountInfo().getPhone(),
           params,
           AlimTalkTemplate.USER_REGISTER_MEMBERSHIP_PACKAGE);
