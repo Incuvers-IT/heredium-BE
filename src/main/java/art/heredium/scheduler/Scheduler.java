@@ -144,7 +144,8 @@ public class Scheduler {
     log.info("Start sendMembershipExpiredMessageToAlimTalk");
     Map<String, String> params = createMembershipExpiredParams(membership);
     try {
-      this.alimTalk.sendAlimTalk(toPhone, params, AlimTalkTemplate.MEMBERSHIP_PACKAGE_HAS_EXPIRED);
+      this.alimTalk.sendAlimTalkWithoutTitle(
+          toPhone, params, AlimTalkTemplate.MEMBERSHIP_PACKAGE_HAS_EXPIRED);
     } catch (Exception e) {
       log.warn(
           "Sending message to AlimTalk failed: {}, message params: {}", e.getMessage(), params);

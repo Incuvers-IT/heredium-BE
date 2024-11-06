@@ -53,7 +53,7 @@ public class AlimTalkTestService {
     log.info("Start sendMockedMembershipExpiredMessageToAlimTalk");
     Map<String, String> params = createMockedMembershipExpiredParams();
     try {
-      this.herediumAlimTalk.sendAlimTalk(
+      this.herediumAlimTalk.sendAlimTalkWithoutTitle(
           toPhone, params, AlimTalkTemplate.MEMBERSHIP_PACKAGE_HAS_EXPIRED);
     } catch (Exception e) {
       log.warn(
@@ -93,7 +93,7 @@ public class AlimTalkTestService {
 
     List<Map<String, String>> params = Arrays.asList(variables);
     try {
-      this.herediumAlimTalk.sendAlimTalk(
+      this.herediumAlimTalk.sendAlimTalkWithoutTitle(
           toPhone, params, AlimTalkTemplate.COUPON_HAS_BEEN_DELIVERED);
     } catch (Exception e) {
       log.warn(
@@ -118,7 +118,8 @@ public class AlimTalkTestService {
     params.put("remainedDetailCoupons", remainedDetailCoupons);
 
     try {
-      this.herediumAlimTalk.sendAlimTalk(phone, params, AlimTalkTemplate.COUPON_HAS_BEEN_USED);
+      this.herediumAlimTalk.sendAlimTalkWithoutTitle(
+          phone, params, AlimTalkTemplate.COUPON_HAS_BEEN_USED);
     } catch (Exception e) {
       log.warn(
           "Sending message to AlimTalk failed: {}, message params: {}", e.getMessage(), params);
@@ -142,7 +143,7 @@ public class AlimTalkTestService {
     params.put("endDate", endDate);
     params.put("detailCoupons", detailCoupons);
     try {
-      this.herediumAlimTalk.sendAlimTalk(
+      this.herediumAlimTalk.sendAlimTalkWithoutTitle(
           phone, params, AlimTalkTemplate.USER_REGISTER_MEMBERSHIP_PACKAGE);
     } catch (Exception e) {
       log.warn(
