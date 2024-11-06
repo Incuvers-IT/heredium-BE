@@ -115,4 +115,21 @@ public class FileController {
                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
         .body(resource);
   }
+
+  @GetMapping("/template/coupon-issuance/download")
+  public ResponseEntity<Resource> couponIssuanceTemplate() throws IOException {
+    Resource resource = new ClassPathResource("coupon_issuance_template.xlsx");
+
+    HttpHeaders headers = new HttpHeaders();
+    headers.add(
+        HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=coupon_issuance_template.xlsx");
+
+    return ResponseEntity.ok()
+        .headers(headers)
+        .contentLength(resource.contentLength())
+        .contentType(
+            MediaType.parseMediaType(
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+        .body(resource);
+  }
 }
