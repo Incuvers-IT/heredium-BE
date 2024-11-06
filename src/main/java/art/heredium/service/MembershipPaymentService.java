@@ -106,6 +106,7 @@ public class MembershipPaymentService {
     final Map<String, String> params = new HashMap<>();
     params.put("accountName", membershipRegistration.getAccount().getAccountInfo().getName());
     params.put("멤버십등급", membershipRegistration.getMembership().getName());
+    params.put("멤버십 등급", membershipRegistration.getMembership().getName());
     params.put(
         "startDate", membershipRegistration.getRegistrationDate().format(MEMBERSHIP_DATE_FORMAT));
     params.put(
