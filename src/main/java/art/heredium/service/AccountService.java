@@ -341,9 +341,9 @@ public class AccountService {
   }
 
   @Transactional(rollbackFor = Exception.class)
-  public List<AccountWithMembershipInfoResponse> uploadCouponIssuance(MultipartFile file)
+  public List<CouponIssuanceUploadResponse> uploadCouponIssuance(MultipartFile file)
       throws IOException {
-    List<AccountWithMembershipInfoResponse> accounts = new ArrayList<>();
+    List<CouponIssuanceUploadResponse> accounts = new ArrayList<>();
     Set<String> processedIdentifiers = new HashSet<>();
 
     Workbook workbook = WorkbookFactory.create(file.getInputStream());
@@ -401,8 +401,8 @@ public class AccountService {
     return accounts;
   }
 
-  private void addAccountToList(Account account, List<AccountWithMembershipInfoResponse> accounts) {
-    AccountWithMembershipInfoResponse accountInfo =
+  private void addAccountToList(Account account, List<CouponIssuanceUploadResponse> accounts) {
+    CouponIssuanceUploadResponse accountInfo =
         accountRepository.findAccountWithMembershipInfo(account);
     accounts.add(accountInfo);
   }

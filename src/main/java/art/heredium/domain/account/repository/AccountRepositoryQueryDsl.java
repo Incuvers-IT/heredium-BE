@@ -34,5 +34,5 @@ public interface AccountRepositoryQueryDsl {
   List<AccountWithMembershipInfoResponse> listWithMembershipInfo(
       GetAccountWithMembershipInfoRequest dto);
 
-  AccountWithMembershipInfoResponse findAccountWithMembershipInfo(Account account);
+  CouponIssuanceUploadResponse findAccountWithMembershipInfo(Account account);
 }

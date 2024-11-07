@@ -698,12 +698,10 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
   }
 
   @Override
-  public AccountWithMembershipInfoResponse findAccountWithMembershipInfo(Account account) {
+  public CouponIssuanceUploadResponse findAccountWithMembershipInfo(Account account) {
     QAccount qAccount = QAccount.account;
     QAccountInfo qAccountInfo = QAccountInfo.accountInfo;
     QTicket qTicket = QTicket.ticket;
-    QCouponUsage qCouponUsage = QCouponUsage.couponUsage;
-    QCoupon qCoupon = QCoupon.coupon;
     QMembershipRegistration qMembershipRegistration =
         QMembershipRegistration.membershipRegistration;
     QMembership qMembership = QMembership.membership;
@@ -712,31 +710,12 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
     return queryFactory
         .select(
             Projections.constructor(
-                AccountWithMembershipInfoResponse.class,
+                CouponIssuanceUploadResponse.class,
                 qAccount.id,
-                qAccount.email,
                 qAccountInfo.name,
                 qAccountInfo.phone,
                 qAccount.createdDate,
                 qAccountInfo.lastLoginDate,
-                JPAExpressions.selectOne()
-                    .from(qTicket)
-                    .where(
-                        qTicket
-                            .account
-                            .eq(account)
-                            .and(
-                                qTicket.kind.in(TicketKindType.PROGRAM, TicketKindType.EXHIBITION)))
-                    .exists(),
-                JPAExpressions.selectOne()
-                    .from(qCouponUsage)
-                    .join(qCouponUsage.coupon, qCoupon)
-                    .where(
-                        qCouponUsage
-                            .account
-                            .eq(account)
-                            .and(qCoupon.fromSource.eq(CouponSource.ADMIN_SITE)))
-                    .exists(),
                 Expressions.cases()
                     .when(qMembership.isNotNull())
                     .then(qMembership.name)
@@ -748,12 +727,7 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
                     .where(
                         qTicket.account.eq(account),
                         qTicket.kind.in(TicketKindType.EXHIBITION, TicketKindType.PROGRAM),
-                        qTicket.state.eq(TicketStateType.USED)),
-                Projections.constructor(
-                    AccountMembershipRegistrationInfo.class,
-                    qMembershipRegistration.id,
-                    qMembershipRegistration.registrationDate,
-                    qMembershipRegistration.expirationDate)))
+                        qTicket.state.eq(TicketStateType.USED))))
         .from(qAccount)
         .innerJoin(qAccount.accountInfo, qAccountInfo)
         .leftJoin(qMembershipRegistration)
