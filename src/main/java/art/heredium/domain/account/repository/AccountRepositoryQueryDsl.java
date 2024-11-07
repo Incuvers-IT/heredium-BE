@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import art.heredium.domain.account.entity.Account;
 import art.heredium.domain.account.model.dto.request.*;
 import art.heredium.domain.account.model.dto.response.*;
 
@@ -32,4 +33,6 @@ public interface AccountRepositoryQueryDsl {
 
   List<AccountWithMembershipInfoResponse> listWithMembershipInfo(
       GetAccountWithMembershipInfoRequest dto);
+
+  AccountWithMembershipInfoResponse findAccountWithMembershipInfo(Account account);
 }

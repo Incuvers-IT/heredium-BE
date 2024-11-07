@@ -26,6 +26,7 @@ import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import org.apache.tika.utils.StringUtils;
 
+import art.heredium.domain.account.entity.Account;
 import art.heredium.domain.account.entity.QAccount;
 import art.heredium.domain.account.entity.QAccountInfo;
 import art.heredium.domain.account.entity.QSleeperInfo;
@@ -694,5 +695,77 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
         .contains(text)
         .or(accountInfo.phone.contains(text))
         .or(membershipRegistration.membership.name.contains(text));
+  }
+
+  @Override
+  public AccountWithMembershipInfoResponse findAccountWithMembershipInfo(Account account) {
+    QAccount qAccount = QAccount.account;
+    QAccountInfo qAccountInfo = QAccountInfo.accountInfo;
+    QTicket qTicket = QTicket.ticket;
+    QCouponUsage qCouponUsage = QCouponUsage.couponUsage;
+    QCoupon qCoupon = QCoupon.coupon;
+    QMembershipRegistration qMembershipRegistration =
+        QMembershipRegistration.membershipRegistration;
+    QMembership qMembership = QMembership.membership;
+    QCompany qCompany = QCompany.company;
+
+    return queryFactory
+        .select(
+            Projections.constructor(
+                AccountWithMembershipInfoResponse.class,
+                qAccount.id,
+                qAccount.email,
+                qAccountInfo.name,
+                qAccountInfo.phone,
+                qAccount.createdDate,
+                qAccountInfo.lastLoginDate,
+                JPAExpressions.selectOne()
+                    .from(qTicket)
+                    .where(
+                        qTicket
+                            .account
+                            .eq(account)
+                            .and(
+                                qTicket.kind.in(TicketKindType.PROGRAM, TicketKindType.EXHIBITION)))
+                    .exists(),
+                JPAExpressions.selectOne()
+                    .from(qCouponUsage)
+                    .join(qCouponUsage.coupon, qCoupon)
+                    .where(
+                        qCouponUsage
+                            .account
+                            .eq(account)
+                            .and(qCoupon.fromSource.eq(CouponSource.ADMIN_SITE)))
+                    .exists(),
+                Expressions.cases()
+                    .when(qMembership.isNotNull())
+                    .then(qMembership.name)
+                    .when(qCompany.isNotNull())
+                    .then(qCompany.name.prepend(COMPANY_PREFIX))
+                    .otherwise((String) null),
+                JPAExpressions.select(Wildcard.count)
+                    .from(qTicket)
+                    .where(
+                        qTicket.account.eq(account),
+                        qTicket.kind.in(TicketKindType.EXHIBITION, TicketKindType.PROGRAM),
+                        qTicket.state.eq(TicketStateType.USED)),
+                Projections.constructor(
+                    AccountMembershipRegistrationInfo.class,
+                    qMembershipRegistration.id,
+                    qMembershipRegistration.registrationDate,
+                    qMembershipRegistration.expirationDate)))
+        .from(qAccount)
+        .innerJoin(qAccount.accountInfo, qAccountInfo)
+        .leftJoin(qMembershipRegistration)
+        .on(
+            qMembershipRegistration
+                .account
+                .eq(account)
+                .and(qMembershipRegistration.expirationDate.goe(LocalDate.now()))
+                .and(qMembershipRegistration.paymentStatus.eq(PaymentStatus.COMPLETED)))
+        .leftJoin(qMembershipRegistration.membership, qMembership)
+        .leftJoin(qMembershipRegistration.company, qCompany)
+        .where(qAccount.eq(account))
+        .fetchOne();
   }
 }
