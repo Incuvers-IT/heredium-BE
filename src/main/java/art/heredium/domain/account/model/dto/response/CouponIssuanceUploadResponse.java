@@ -11,6 +11,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class CouponIssuanceUploadResponse {
   private Long id;
+  private String email;
   private String name;
   private String phone;
   private LocalDateTime createdDate;
