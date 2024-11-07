@@ -109,16 +109,15 @@ public class HerediumAlimTalk {
     return sendAlimTalk(Arrays.asList(message), template, null);
   }
 
-  public List<String> sendAlimTalk(
-      String to, List<Map<String, String>> params, AlimTalkTemplate template) {
+  public List<String> sendAlimTalkWithoutTitle(
+      Map<String, Map<String, String>> phonesAndMessagesToSendAlimTalk, AlimTalkTemplate template) {
     List<NCloudBizAlimTalkMessage> messages =
-        params.stream()
+        phonesAndMessagesToSendAlimTalk.entrySet().stream()
             .map(
-                variables ->
+                entry ->
                     new NCloudBizAlimTalkMessageBuilder()
-                        .variables(variables)
-                        .to(to)
-                        .title(template.getTitle())
+                        .variables(entry.getValue())
+                        .to(entry.getKey())
                         .failOver(new NCloudBizAlimTalkFailOverConfig())
                         .build())
             .collect(Collectors.toList());
