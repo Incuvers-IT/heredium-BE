@@ -341,11 +341,9 @@ public class AccountService {
   }
 
   @Transactional(rollbackFor = Exception.class)
-  public UploadCouponIssuanceTemplateResponse uploadCouponIssuance(MultipartFile file)
+  public List<AccountWithMembershipInfoResponse> uploadCouponIssuance(MultipartFile file)
       throws IOException {
-    UploadCouponIssuanceTemplateResponse response = new UploadCouponIssuanceTemplateResponse();
-    response.setCouponIssuanceAccounts(new ArrayList<>());
-
+    List<AccountWithMembershipInfoResponse> accounts = new ArrayList<>();
     Set<String> processedIdentifiers = new HashSet<>();
 
     Workbook workbook = WorkbookFactory.create(file.getInputStream());
@@ -369,19 +367,17 @@ public class AccountService {
         continue;
       }
 
-      Account selectedAccount = null;
-
       // Always try email first if present
       if (StringUtils.isNotBlank(email)) {
         Optional<Account> accountByEmail = accountRepository.findLatestLoginAccountByEmail(email);
         if (accountByEmail.isPresent()) {
-          selectedAccount = accountByEmail.get();
+          Account selectedAccount = accountByEmail.get();
           processedIdentifiers.add(email);
           String associatedPhone = selectedAccount.getAccountInfo().getPhone();
           if (StringUtils.isNotBlank(associatedPhone)) {
             processedIdentifiers.add(associatedPhone);
           }
-          addAccountToResponse(selectedAccount, response);
+          addAccountToList(selectedAccount, accounts);
           continue;
         }
       }
@@ -390,26 +386,25 @@ public class AccountService {
       if (StringUtils.isNotBlank(phone) && !processedIdentifiers.contains(phone)) {
         Optional<Account> accountByPhone = accountRepository.findLatestLoginAccountByPhone(phone);
         if (accountByPhone.isPresent()) {
-          selectedAccount = accountByPhone.get();
+          Account selectedAccount = accountByPhone.get();
           processedIdentifiers.add(phone);
           String associatedEmail = selectedAccount.getEmail();
           if (StringUtils.isNotBlank(associatedEmail)) {
             processedIdentifiers.add(associatedEmail);
           }
-          addAccountToResponse(selectedAccount, response);
+          addAccountToList(selectedAccount, accounts);
         }
       }
     }
 
     workbook.close();
-    return response;
+    return accounts;
   }
 
-  private void addAccountToResponse(
-      Account account, UploadCouponIssuanceTemplateResponse response) {
+  private void addAccountToList(Account account, List<AccountWithMembershipInfoResponse> accounts) {
     AccountWithMembershipInfoResponse accountInfo =
         accountRepository.findAccountWithMembershipInfo(account);
-    response.getCouponIssuanceAccounts().add(accountInfo);
+    accounts.add(accountInfo);
   }
 
   private void validateHeaderRow(Row headerRow) {
