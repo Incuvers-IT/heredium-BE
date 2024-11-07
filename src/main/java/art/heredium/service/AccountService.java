@@ -1,5 +1,7 @@
 package art.heredium.service;
 
+import java.io.IOException;
+import java.math.BigDecimal;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.time.temporal.ChronoUnit;
@@ -20,6 +22,14 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.usermodel.WorkbookFactory;
 
 import art.heredium.core.config.error.entity.ApiException;
 import art.heredium.core.config.error.entity.ErrorCode;
@@ -39,6 +49,7 @@ import art.heredium.domain.membership.entity.MembershipRegistration;
 import art.heredium.domain.membership.repository.MembershipRegistrationRepository;
 import art.heredium.domain.ticket.repository.TicketRepository;
 import art.heredium.domain.ticket.type.TicketKindType;
+import art.heredium.excel.constants.CouponIssuanceTemplateColumns;
 import art.heredium.ncloud.bean.CloudMail;
 import art.heredium.ncloud.bean.HerediumAlimTalk;
 import art.heredium.ncloud.type.AlimTalkTemplate;
@@ -327,5 +338,104 @@ public class AccountService {
   public Page<AccountWithMembershipInfoIncludingTitleResponse> listWithMembershipInfoIncludingTitle(
       GetAccountWithMembershipInfoIncludingTitleRequest dto, Pageable pageable) {
     return accountRepository.searchWithMembershipInfoIncludingTitle(dto, pageable);
+  }
+
+  @Transactional(rollbackFor = Exception.class)
+  public List<CouponIssuanceUploadResponse> uploadCouponIssuance(MultipartFile file)
+      throws IOException {
+    List<CouponIssuanceUploadResponse> accounts = new ArrayList<>();
+    Set<String> processedIdentifiers = new HashSet<>();
+
+    Workbook workbook = WorkbookFactory.create(file.getInputStream());
+    Sheet sheet = workbook.getSheetAt(0);
+
+    // Skip header row and process each record
+    for (Row row : sheet) {
+      if (row.getRowNum() == 0) {
+        validateHeaderRow(row);
+        continue;
+      }
+      if (isRowEmpty(row)) continue;
+
+      String email = getCellValueAsString(row.getCell(0));
+      String phone = getCellValueAsString(row.getCell(1));
+
+      // Only check email for duplicates initially
+      boolean isDuplicateEmail =
+          StringUtils.isNotBlank(email) && processedIdentifiers.contains(email);
+      if (isDuplicateEmail) {
+        continue;
+      }
+
+      // Always try email first if present
+      if (StringUtils.isNotBlank(email)) {
+        Optional<Account> accountByEmail = accountRepository.findLatestLoginAccountByEmail(email);
+        if (accountByEmail.isPresent()) {
+          Account selectedAccount = accountByEmail.get();
+          processedIdentifiers.add(email);
+          String associatedPhone = selectedAccount.getAccountInfo().getPhone();
+          if (StringUtils.isNotBlank(associatedPhone)) {
+            processedIdentifiers.add(associatedPhone);
+          }
+          addAccountToList(selectedAccount, accounts);
+          continue;
+        }
+      }
+
+      // If no account found by email, try phone if not processed
+      if (StringUtils.isNotBlank(phone) && !processedIdentifiers.contains(phone)) {
+        Optional<Account> accountByPhone = accountRepository.findLatestLoginAccountByPhone(phone);
+        if (accountByPhone.isPresent()) {
+          Account selectedAccount = accountByPhone.get();
+          processedIdentifiers.add(phone);
+          String associatedEmail = selectedAccount.getEmail();
+          if (StringUtils.isNotBlank(associatedEmail)) {
+            processedIdentifiers.add(associatedEmail);
+          }
+          addAccountToList(selectedAccount, accounts);
+        }
+      }
+    }
+
+    workbook.close();
+    return accounts;
+  }
+
+  private void addAccountToList(Account account, List<CouponIssuanceUploadResponse> accounts) {
+    CouponIssuanceUploadResponse accountInfo =
+        accountRepository.findAccountWithMembershipInfo(account);
+    accounts.add(accountInfo);
+  }
+
+  private void validateHeaderRow(Row headerRow) {
+    for (int i = 0; i <= 2; i++) {
+      final String columnName = getCellValueAsString(headerRow.getCell(i));
+      final String expectedColumnName = CouponIssuanceTemplateColumns.getColumnNameByIndex(i);
+      if (!expectedColumnName.equalsIgnoreCase(StringUtils.trim(columnName))) {
+        throw new ApiException(
+            ErrorCode.INVALID_EXCEL_COLUMNS, "Column names should be ['이메일', '핸드폰', '이름']");
+      }
+    }
+  }
+
+  private boolean isRowEmpty(Row row) {
+    if (row == null) return true;
+
+    String email = getCellValueAsString(row.getCell(0));
+    String phone = getCellValueAsString(row.getCell(1));
+
+    return StringUtils.isBlank(email) && StringUtils.isBlank(phone);
+  }
+
+  private String getCellValueAsString(Cell cell) {
+    if (cell == null) return null;
+    switch (cell.getCellType()) {
+      case STRING:
+        return StringUtils.trim(cell.getStringCellValue());
+      case NUMERIC:
+        return BigDecimal.valueOf(cell.getNumericCellValue()).toPlainString();
+      default:
+        return "";
+    }
   }
 }
