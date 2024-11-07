@@ -712,6 +712,7 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
             Projections.constructor(
                 CouponIssuanceUploadResponse.class,
                 qAccount.id,
+                qAccount.email,
                 qAccountInfo.name,
                 qAccountInfo.phone,
                 qAccount.createdDate,
