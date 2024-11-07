@@ -19,9 +19,9 @@ public enum AlimTalkTemplate {
   ACCOUNT_TERMINATE("회원탈퇴 안내", "@heredium", "HEREDIUM012", "@spadecompany", "HEREDIUM012"),
   COFFEE_COMPLETE("커피제작 완료", "@heredium", "HEREDIUM013", "@spadecompany", "HEREDIUM013"),
   USER_REGISTER_MEMBERSHIP_PACKAGE(
-      "사용자 등록 멤버십 패키지",
+      "템플릿 이름",
       "@heredium",
-      "HEREDIUM017",
+      "HEREDIUM021",
       "@spadecompany",
       ""), // dev templateCode has not been created
   COUPON_HAS_BEEN_USED(
@@ -37,9 +37,9 @@ public enum AlimTalkTemplate {
       "@spadecompany",
       ""), // dev templateCode has not been created
   COUPON_HAS_BEEN_DELIVERED(
-      "쿠폰이 발급되었습니다",
+      "쿠폰발행",
       "@heredium",
-      "HEREDIUM019",
+      "HEREDIUM022",
       "@spadecompany",
       ""), // dev templateCode has not been created
   ;
