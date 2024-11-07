@@ -23,7 +23,7 @@ public class AlimTalkTestService {
 
   public void sendMessageToAlimTalk(String templateCode, String phone) {
     switch (templateCode) {
-      case "HEREDIUM017":
+      case "HEREDIUM021":
         {
           this.sendMockedMembershipRegistrationMessageToAlimTalk(phone);
           break;
@@ -33,7 +33,7 @@ public class AlimTalkTestService {
           this.sendMockedCouponUsedMessageToAlimTalk(phone);
           break;
         }
-      case "HEREDIUM019":
+      case "HEREDIUM022":
         {
           this.sendMockedCouponDeliveredMessageToAlimTalk(phone);
           break;
