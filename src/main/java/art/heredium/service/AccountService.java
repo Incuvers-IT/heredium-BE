@@ -26,7 +26,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
@@ -50,6 +49,7 @@ import art.heredium.domain.membership.entity.MembershipRegistration;
 import art.heredium.domain.membership.repository.MembershipRegistrationRepository;
 import art.heredium.domain.ticket.repository.TicketRepository;
 import art.heredium.domain.ticket.type.TicketKindType;
+import art.heredium.excel.constants.CouponIssuanceTemplateColumns;
 import art.heredium.ncloud.bean.CloudMail;
 import art.heredium.ncloud.bean.HerediumAlimTalk;
 import art.heredium.ncloud.type.AlimTalkTemplate;
@@ -381,13 +381,13 @@ public class AccountService {
           if (StringUtils.isNotBlank(associatedPhone)) {
             processedIdentifiers.add(associatedPhone);
           }
+          addAccountToResponse(selectedAccount, response);
+          continue;
         }
       }
 
       // If no account found by email, try phone if not processed
-      if (selectedAccount == null
-          && StringUtils.isNotBlank(phone)
-          && !processedIdentifiers.contains(phone)) {
+      if (StringUtils.isNotBlank(phone) && !processedIdentifiers.contains(phone)) {
         Optional<Account> accountByPhone = accountRepository.findLatestLoginAccountByPhone(phone);
         if (accountByPhone.isPresent()) {
           selectedAccount = accountByPhone.get();
@@ -396,13 +396,8 @@ public class AccountService {
           if (StringUtils.isNotBlank(associatedEmail)) {
             processedIdentifiers.add(associatedEmail);
           }
+          addAccountToResponse(selectedAccount, response);
         }
-      }
-
-      if (selectedAccount != null) {
-        AccountWithMembershipInfoResponse accountInfo =
-            accountRepository.findAccountWithMembershipInfo(selectedAccount);
-        response.getCouponIssuanceAccounts().add(accountInfo);
       }
     }
 
@@ -410,27 +405,31 @@ public class AccountService {
     return response;
   }
 
-  private void validateHeaderRow(Row headerRow) {
-    String emailHeader = getCellValueAsString(headerRow.getCell(0));
-    String phoneHeader = getCellValueAsString(headerRow.getCell(1));
-    String nameHeader = getCellValueAsString(headerRow.getCell(2));
+  private void addAccountToResponse(
+      Account account, UploadCouponIssuanceTemplateResponse response) {
+    AccountWithMembershipInfoResponse accountInfo =
+        accountRepository.findAccountWithMembershipInfo(account);
+    response.getCouponIssuanceAccounts().add(accountInfo);
+  }
 
-    if (!"이메일".equalsIgnoreCase(emailHeader)
-        || !"핸드폰".equalsIgnoreCase(phoneHeader)
-        || !"이름".equalsIgnoreCase(nameHeader)) {
-      throw new ApiException(
-          ErrorCode.INVALID_EXCEL_COLUMNS, "Column names should be ['이메일', '핸드폰', '이름']");
+  private void validateHeaderRow(Row headerRow) {
+    for (int i = 0; i <= 2; i++) {
+      final String columnName = getCellValueAsString(headerRow.getCell(i));
+      final String expectedColumnName = CouponIssuanceTemplateColumns.getColumnNameByIndex(i);
+      if (!expectedColumnName.equalsIgnoreCase(StringUtils.trim(columnName))) {
+        throw new ApiException(
+            ErrorCode.INVALID_EXCEL_COLUMNS, "Column names should be ['이메일', '핸드폰', '이름']");
+      }
     }
   }
 
   private boolean isRowEmpty(Row row) {
     if (row == null) return true;
-    for (Cell cell : row) {
-      if (cell != null && cell.getCellType() != CellType.BLANK) {
-        return false;
-      }
-    }
-    return true;
+
+    String email = getCellValueAsString(row.getCell(0));
+    String phone = getCellValueAsString(row.getCell(1));
+
+    return StringUtils.isBlank(email) && StringUtils.isBlank(phone);
   }
 
   private String getCellValueAsString(Cell cell) {
