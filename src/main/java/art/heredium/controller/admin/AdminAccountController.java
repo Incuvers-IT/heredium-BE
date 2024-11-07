@@ -1,5 +1,6 @@
 package art.heredium.controller.admin;
 
+import java.io.IOException;
 import java.util.Map;
 
 import javax.validation.Valid;
@@ -10,11 +11,14 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.ModelAndView;
 
 import art.heredium.core.annotation.SupervisorPermission;
+import art.heredium.core.util.ValidationUtil;
 import art.heredium.domain.account.model.dto.request.*;
 import art.heredium.domain.account.model.dto.response.AccountWithMembershipInfoIncludingTitleResponse;
+import art.heredium.domain.account.model.dto.response.UploadCouponIssuanceTemplateResponse;
 import art.heredium.excel.service.ExcelService;
 import art.heredium.service.AccountService;
 
@@ -128,5 +132,12 @@ public class AdminAccountController {
       @RequestParam("fileName") String fileName) {
     Map<String, Object> data = excelService.accountWithMembershipInfoDownload(request, fileName);
     return new ModelAndView("xlsxView", data);
+  }
+
+  @PostMapping("/coupon-issuance/upload")
+  public ResponseEntity<UploadCouponIssuanceTemplateResponse> uploadCouponIssuance(
+      @RequestParam("file") MultipartFile file) throws IOException {
+    ValidationUtil.validateExcelExtension(file);
+    return ResponseEntity.ok(accountService.uploadCouponIssuance(file));
   }
 }
