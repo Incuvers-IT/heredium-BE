@@ -102,7 +102,6 @@ public class CouponUsageService {
                   Stream.of(account.getId()).collect(Collectors.toList()),
                   coupon.getFromSource()));
         });
-    this.sendCouponDeliveredMessageToAlimTalk(account.getAccountInfo().getPhone(), couponUsages);
     return this.couponUsageRepository.saveAll(couponUsages);
   }
 
@@ -165,6 +164,7 @@ public class CouponUsageService {
     }
 
     LocalDateTime now = LocalDateTime.now();
+    Map<Account, List<CouponUsage>> accountsToSendAlimTalk = new HashMap<>();
 
     accountMap.forEach(
         (accountId, account) -> {
@@ -210,20 +210,24 @@ public class CouponUsageService {
               couponUsages.add(couponUsage);
             }
           }
+          accountsToSendAlimTalk.put(account, couponUsages);
         });
+    this.sendCouponDeliveredMessageToAlimTalk(accountsToSendAlimTalk);
 
     return this.couponUsageRepository.saveAll(couponUsages);
   }
 
   private void sendCouponDeliveredMessageToAlimTalk(
-      final String toPhone, final List<CouponUsage> coupons) {
+      final Map<Account, List<CouponUsage>> accountsToSendAlimTalk) {
     log.info("Start sendCouponDeliveredMessageToAlimTalk");
-    List<Map<String, String>> params =
-        coupons.stream()
-            .map(
+    Map<String, Map<String, String>> phonesAndMessagesToSendAlimTalk = new HashMap<>();
+    try {
+      accountsToSendAlimTalk.forEach(
+          (account, coupons) -> {
+            final Map<String, String> variables = new HashMap<>();
+            coupons.forEach(
                 coupon -> {
-                  Map<String, String> variables = new HashMap<>();
-                  variables.put("accountName", coupon.getAccount().getAccountInfo().getName());
+                  variables.put("accountName", account.getAccountInfo().getName());
                   variables.put("couponName", coupon.getCoupon().getName());
                   variables.put(
                       "discountPercent", String.valueOf(coupon.getCoupon().getDiscountPercent()));
@@ -238,15 +242,16 @@ public class CouponUsageService {
                           : String.valueOf(coupon.getCoupon().getNumberOfUses()));
                   variables.put("CSTel", herediumProperties.getTel());
                   variables.put("CSEmail", herediumProperties.getEmail());
-                  return variables;
-                })
-            .collect(Collectors.toList());
-    try {
+                });
+            phonesAndMessagesToSendAlimTalk.put(account.getAccountInfo().getPhone(), variables);
+          });
       this.alimTalk.sendAlimTalkWithoutTitle(
-          toPhone, params, AlimTalkTemplate.COUPON_HAS_BEEN_DELIVERED);
+          phonesAndMessagesToSendAlimTalk, AlimTalkTemplate.COUPON_HAS_BEEN_DELIVERED);
     } catch (Exception e) {
       log.warn(
-          "Sending message to AlimTalk failed: {}, message params: {}", e.getMessage(), params);
+          "Sending message to AlimTalk failed: {}, message params: {}",
+          e.getMessage(),
+          phonesAndMessagesToSendAlimTalk);
     } finally {
       log.info("End sendCouponDeliveredMessageToAlimTalk");
     }
