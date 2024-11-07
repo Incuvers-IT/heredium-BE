@@ -19,7 +19,7 @@ import art.heredium.core.annotation.SupervisorPermission;
 import art.heredium.core.util.ValidationUtil;
 import art.heredium.domain.account.model.dto.request.*;
 import art.heredium.domain.account.model.dto.response.AccountWithMembershipInfoIncludingTitleResponse;
-import art.heredium.domain.account.model.dto.response.AccountWithMembershipInfoResponse;
+import art.heredium.domain.account.model.dto.response.CouponIssuanceUploadResponse;
 import art.heredium.excel.service.ExcelService;
 import art.heredium.service.AccountService;
 
@@ -136,7 +136,7 @@ public class AdminAccountController {
   }
 
   @PostMapping("/coupon-issuance/upload")
-  public ResponseEntity<List<AccountWithMembershipInfoResponse>> uploadCouponIssuance(
+  public ResponseEntity<List<CouponIssuanceUploadResponse>> uploadCouponIssuance(
       @RequestParam("file") MultipartFile file) throws IOException {
     ValidationUtil.validateExcelExtension(file);
     return ResponseEntity.ok(accountService.uploadCouponIssuance(file));
