@@ -645,7 +645,28 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
   private BooleanExpression alreadyLoginedBefore(Boolean alreadyLogined) {
     if (Boolean.TRUE.equals(alreadyLogined)) {
       QAccountInfo accountInfo = QAccountInfo.accountInfo;
-      return accountInfo.lastLoginDate.isNotNull();
+      QAccount account = QAccount.account;
+
+      // Subquery to find the latest login date for each email/phone combination
+      JPQLQuery<LocalDateTime> latestLoginSubquery =
+          JPAExpressions.select(accountInfo.lastLoginDate.max())
+              .from(account)
+              .innerJoin(account.accountInfo, accountInfo)
+              .where(
+                  account
+                      .email
+                      .isNotNull()
+                      .and(account.email.eq(account.email))
+                      .or(
+                          accountInfo
+                              .phone
+                              .isNotNull()
+                              .and(accountInfo.phone.eq(accountInfo.phone))));
+
+      return accountInfo
+          .lastLoginDate
+          .isNotNull()
+          .and(accountInfo.lastLoginDate.eq(latestLoginSubquery));
     }
     return null;
   }
@@ -688,12 +709,14 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
     if (StringUtils.isEmpty(text)) return null;
 
     QAccountInfo accountInfo = QAccountInfo.accountInfo;
+    QAccount account = QAccount.account;
     QMembershipRegistration membershipRegistration = QMembershipRegistration.membershipRegistration;
 
     return accountInfo
         .name
         .contains(text)
         .or(accountInfo.phone.contains(text))
+        .or(account.email.contains(text))
         .or(membershipRegistration.membership.name.contains(text));
   }
 
