@@ -341,9 +341,10 @@ public class AccountService {
   }
 
   @Transactional(rollbackFor = Exception.class)
-  public List<CouponIssuanceUploadResponse> uploadCouponIssuance(MultipartFile file)
+  public UploadCouponIssuanceTemplateResponse uploadCouponIssuance(MultipartFile file)
       throws IOException {
-    List<CouponIssuanceUploadResponse> accounts = new ArrayList<>();
+    List<CouponIssuanceUploadResponse> successCases = new ArrayList<>();
+    List<String> failedCases = new ArrayList<>();
     Set<String> processedIdentifiers = new HashSet<>();
 
     Workbook workbook = WorkbookFactory.create(file.getInputStream());
@@ -359,14 +360,18 @@ public class AccountService {
 
       String email = getCellValueAsString(row.getCell(0));
       String phone = getCellValueAsString(row.getCell(1));
+      String name = getCellValueAsString(row.getCell(2));
 
       // Only check email for duplicates initially
       boolean isDuplicateEmail =
           StringUtils.isNotBlank(email) && processedIdentifiers.contains(email);
       if (isDuplicateEmail) {
+        failedCases.add(
+            String.format("Duplicate entry - Email: %s, Phone: %s, Name: %s", email, phone, name));
         continue;
       }
 
+      boolean found = false;
       // Always try email first if present
       if (StringUtils.isNotBlank(email)) {
         Optional<Account> accountByEmail = accountRepository.findLatestLoginAccountByEmail(email);
@@ -377,13 +382,20 @@ public class AccountService {
           if (StringUtils.isNotBlank(associatedPhone)) {
             processedIdentifiers.add(associatedPhone);
           }
-          addAccountToList(selectedAccount, accounts);
+          addAccountToList(selectedAccount, successCases);
           continue;
         }
       }
 
       // If no account found by email, try phone if not processed
-      if (StringUtils.isNotBlank(phone) && !processedIdentifiers.contains(phone)) {
+      if (StringUtils.isNotBlank(phone)) {
+        if (processedIdentifiers.contains(phone)) {
+          failedCases.add(
+              String.format(
+                  "Duplicate entry - Email: %s, Phone: %s, Name: %s", email, phone, name));
+          continue;
+        }
+
         Optional<Account> accountByPhone = accountRepository.findLatestLoginAccountByPhone(phone);
         if (accountByPhone.isPresent()) {
           Account selectedAccount = accountByPhone.get();
@@ -392,13 +404,19 @@ public class AccountService {
           if (StringUtils.isNotBlank(associatedEmail)) {
             processedIdentifiers.add(associatedEmail);
           }
-          addAccountToList(selectedAccount, accounts);
+          addAccountToList(selectedAccount, successCases);
+          found = true;
         }
+      }
+
+      if (!found) {
+        failedCases.add(
+            String.format("No account found - Email: %s, Phone: %s, Name: %s", email, phone, name));
       }
     }
 
     workbook.close();
-    return accounts;
+    return new UploadCouponIssuanceTemplateResponse(successCases, failedCases);
   }
 
   private void addAccountToList(Account account, List<CouponIssuanceUploadResponse> accounts) {
