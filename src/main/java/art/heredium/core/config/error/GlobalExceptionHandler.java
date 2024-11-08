@@ -142,7 +142,7 @@ public class GlobalExceptionHandler {
   protected ResponseEntity handleDeletedMembershipException(DeletedMembershipException e) {
     log.error("DeletedMembershipException", e);
     Map<String, Object> errorResponse = new HashMap<>();
-    errorResponse.put("MESSAGE", e.getMessage());
-    return ErrorEntity.status(ErrorCode.MEMBERSHIP_NOT_FOUND).body(errorResponse);
+    errorResponse.put("MESSAGE", e.getBody());
+    return ResponseEntity.status(ErrorCode.MEMBERSHIP_NOT_FOUND.getStatus()).body(errorResponse);
   }
 }
