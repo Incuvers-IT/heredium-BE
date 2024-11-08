@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 
 import org.apache.commons.lang3.NotImplementedException;
 
+import art.heredium.domain.coupon.entity.CouponType;
 import art.heredium.ncloud.bean.HerediumAlimTalk;
 import art.heredium.ncloud.type.AlimTalkTemplate;
 
@@ -139,8 +140,7 @@ public class AlimTalkTestService {
     final String endDate = "2025-11-05";
     final String detailCoupons = this.buildMockedCouponDetails();
     params.put("accountName", accountName);
-    params.put("멤버십등급", membershipName);
-    params.put("멤버십 등급", membershipName);
+    params.put("membershipName", membershipName);
     params.put("startDate", startDate);
     params.put("endDate", endDate);
     params.put("detailCoupons", detailCoupons);
@@ -155,6 +155,21 @@ public class AlimTalkTestService {
   }
 
   private String buildMockedCouponDetails() {
-    return String.format(" - %s, %s%% : %s", "coupon01", "100", 2);
+    return String.format(
+        "- %s : %s%n- %s : %s, %s%n- %s : %s%n- %s : %s%n- %s : %s, %s%n- %s : %s",
+        "쿠폰명",
+        "coupon 1",
+        "할인혜택",
+        CouponType.COFFEE.getDesc(),
+        "무료",
+        "사용횟수",
+        "상시할인",
+        "쿠폰명",
+        "coupon 2",
+        "할인혜택",
+        CouponType.ARTSHOP.getDesc(),
+        "50%",
+        "사용횟수",
+        "3회");
   }
 }
