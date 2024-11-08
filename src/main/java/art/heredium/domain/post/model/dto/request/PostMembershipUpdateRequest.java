@@ -29,5 +29,8 @@ public class PostMembershipUpdateRequest {
   @JsonProperty("is_register_membership_button_shown")
   private Boolean isRegisterMembershipButtonShown;
 
+  @JsonProperty("is_deleted")
+  private Boolean isDeleted;
+
   @Valid private List<MembershipCouponUpdateRequest> coupons;
 }

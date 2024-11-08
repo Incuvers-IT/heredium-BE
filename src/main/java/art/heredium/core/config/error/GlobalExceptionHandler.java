@@ -1,5 +1,8 @@
 package art.heredium.core.config.error;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.dao.DataIntegrityViolationException;
@@ -20,6 +23,7 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 import art.heredium.core.config.error.entity.ApiException;
+import art.heredium.core.config.error.entity.DeletedMembershipException;
 import art.heredium.core.config.error.entity.ErrorCode;
 import art.heredium.core.config.error.entity.ErrorEntity;
 
@@ -132,5 +136,13 @@ public class GlobalExceptionHandler {
   protected ResponseEntity handleApiException(ApiException e) {
     log.error("ApiException", e);
     return ErrorEntity.status(e.getErrorCode()).state(e.getState()).body(e.getBody());
+  }
+
+  @ExceptionHandler(DeletedMembershipException.class)
+  protected ResponseEntity handleDeletedMembershipException(DeletedMembershipException e) {
+    log.error("DeletedMembershipException", e);
+    Map<String, Object> errorResponse = new HashMap<>();
+    errorResponse.put("MESSAGE", e.getMessage());
+    return ErrorEntity.status(ErrorCode.MEMBERSHIP_NOT_FOUND).body(errorResponse);
   }
 }

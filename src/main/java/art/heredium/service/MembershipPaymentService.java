@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import art.heredium.core.config.error.entity.ApiException;
+import art.heredium.core.config.error.entity.DeletedMembershipException;
 import art.heredium.core.config.error.entity.ErrorCode;
 import art.heredium.core.config.properties.HerediumProperties;
 import art.heredium.domain.account.entity.Account;
@@ -54,6 +55,11 @@ public class MembershipPaymentService {
         this.membershipRegistrationRepository
             .findByPaymentOrderId(orderId)
             .orElseThrow(() -> new ApiException(ErrorCode.PAYMENT_ORDER_ID_NOT_FOUND));
+
+    if (Boolean.TRUE.equals(membershipRegistration.getMembership().getIsDeleted())) {
+      throw new DeletedMembershipException(
+          "선택하신 멤버십은 더 이상 유효하지 않은 멤버십입니다. 추가 문의 사항이 있으시면 고객센터로 연락해 주십시오.");
+    }
 
     this.updateMembershipRegistrationToSuccess(membershipRegistration);
     this.updatePendingMembershipRegistrationsToIgnore(membershipRegistration.getAccount().getId());

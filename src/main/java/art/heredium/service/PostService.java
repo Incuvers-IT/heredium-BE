@@ -272,6 +272,14 @@ public class PostService {
   }
 
   private void updateMembership(Membership membership, PostMembershipUpdateRequest request) {
+    if (Boolean.TRUE.equals(request.getIsDeleted())) {
+      membership.setIsDeleted(true);
+      membership.setIsEnabled(false);
+      membership.setIsRegisterMembershipButtonShown(false);
+      membershipRepository.save(membership);
+      return;
+    }
+
     if (request.getName() != null) membership.setName(request.getName());
     if (request.getPrice() != null) membership.setPrice(request.getPrice());
     if (request.getImageUrl() != null) {

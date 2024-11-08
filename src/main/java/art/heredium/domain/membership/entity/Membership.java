@@ -83,6 +83,10 @@ public class Membership extends BaseEntity implements Serializable {
   @Column(name = "is_register_membership_button_shown", nullable = false)
   private Boolean isRegisterMembershipButtonShown;
 
+  @Comment("삭제 여부")
+  @Column(name = "is_deleted", nullable = false)
+  private Boolean isDeleted;
+
   public void updateIsEnabled(boolean isEnabled) {
     this.isEnabled = isEnabled;
   }
@@ -107,5 +111,6 @@ public class Membership extends BaseEntity implements Serializable {
     this.imageUrl = imageUrl;
     this.post = post;
     this.isRegisterMembershipButtonShown = isRegisterMembershipButtonShown;
+    this.isDeleted = false;
   }
 }
