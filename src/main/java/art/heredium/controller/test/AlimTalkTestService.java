@@ -81,11 +81,13 @@ public class AlimTalkTestService {
     log.info("Start sendMockedCouponDeliveredMessageToAlimTalk");
     Map<String, String> variables = new HashMap<>();
     final String accountName = "TestAccountName";
+    final String couponType = CouponType.COFFEE.getDesc();
     final String couponStartDate = "2024-11-06 15:30";
     final String couponEndDate = "2025-11-06 17:00";
     final String issuedCouponName = "TestCouponName";
     final String discountPercent = "100";
     variables.put("accountName", accountName);
+    variables.put("couponType", couponType);
     variables.put("couponName", issuedCouponName);
     variables.put("discountPercent", discountPercent + "%");
     variables.put("couponStartDate", couponStartDate);

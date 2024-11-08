@@ -228,18 +228,20 @@ public class CouponUsageService {
             coupons.forEach(
                 coupon -> {
                   variables.put("accountName", account.getAccountInfo().getName());
+                  variables.put("couponType", coupon.getCoupon().getCouponType().getDesc());
                   variables.put("couponName", coupon.getCoupon().getName());
                   variables.put(
-                      "discountPercent", String.valueOf(coupon.getCoupon().getDiscountPercent()));
+                      "discountPercent",
+                      coupon.getCoupon().getDiscountPercent() != 100
+                          ? coupon.getCoupon().getDiscountPercent() + "%"
+                          : "무료");
                   variables.put(
                       "couponStartDate", coupon.getDeliveredDate().format(COUPON_DATETIME_FORMAT));
                   variables.put(
                       "couponEndDate", coupon.getExpirationDate().format(COUPON_DATETIME_FORMAT));
                   variables.put(
                       "numberOfUses",
-                      coupon.isPermanent()
-                          ? "상시할인"
-                          : String.valueOf(coupon.getCoupon().getNumberOfUses()));
+                      coupon.isPermanent() ? "상시할인" : coupon.getCoupon().getNumberOfUses() + "회");
                   variables.put("CSTel", herediumProperties.getTel());
                   variables.put("CSEmail", herediumProperties.getEmail());
                 });
