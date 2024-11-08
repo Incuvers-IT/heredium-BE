@@ -168,6 +168,6 @@ public class AlimTalkTestService {
         CouponType.ARTSHOP.getDesc(),
         "50%",
         "사용횟수",
-        "3");
+        "3회");
   }
 }

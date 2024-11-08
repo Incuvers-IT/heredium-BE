@@ -142,7 +142,7 @@ public class MembershipPaymentService {
                     "사용횟수",
                     Boolean.TRUE.equals(coupon.getCoupon().getIsPermanent())
                         ? "상시할인"
-                        : coupon.getCoupon().getNumberOfUses()))
+                        : coupon.getCoupon().getNumberOfUses() + "회"))
         .collect(Collectors.joining("\n"));
   }
 }
