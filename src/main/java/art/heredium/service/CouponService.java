@@ -23,6 +23,7 @@ import art.heredium.domain.coupon.model.dto.request.CompanyCouponCreateRequest;
 import art.heredium.domain.coupon.model.dto.request.CouponCreateRequest;
 import art.heredium.domain.coupon.model.dto.request.MembershipCouponCreateRequest;
 import art.heredium.domain.coupon.model.dto.request.NonMembershipCouponCreateRequest;
+import art.heredium.domain.coupon.model.dto.response.CouponResponse;
 import art.heredium.domain.coupon.repository.CouponRepository;
 import art.heredium.domain.membership.entity.Membership;
 import art.heredium.ncloud.bean.CloudStorage;
@@ -117,5 +118,16 @@ public class CouponService {
     }
 
     return savedCoupon.getId();
+  }
+
+  @NonNull
+  public CouponResponse getCouponDetail(final long couponId) {
+    final Coupon coupon =
+        this.couponRepository
+            .findById(couponId)
+            .orElseThrow(
+                () ->
+                    new ApiException(ErrorCode.COUPON_NOT_FOUND, "CouponId not found " + couponId));
+    return new CouponResponse(coupon);
   }
 }
