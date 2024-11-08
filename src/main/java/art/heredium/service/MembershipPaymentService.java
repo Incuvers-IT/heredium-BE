@@ -106,8 +106,7 @@ public class MembershipPaymentService {
     log.info("Start sendMembershipRegistrationMessageToAlimTalk");
     final Map<String, String> params = new HashMap<>();
     params.put("accountName", membershipRegistration.getAccount().getAccountInfo().getName());
-    params.put("멤버십등급", membershipRegistration.getMembership().getName());
-    params.put("멤버십 등급", membershipRegistration.getMembership().getName());
+    params.put("membershipName", membershipRegistration.getMembership().getName());
     params.put(
         "startDate", membershipRegistration.getRegistrationDate().format(MEMBERSHIP_DATE_FORMAT));
     params.put(
@@ -132,9 +131,15 @@ public class MembershipPaymentService {
         .map(
             coupon ->
                 String.format(
-                    " - %s, %s%% : %s",
+                    "- %s : %s%n- %s : %s, %s%n- %s : %s",
+                    "쿠폰명",
                     coupon.getCoupon().getName(),
-                    coupon.getCoupon().getDiscountPercent(),
+                    "할인혜택",
+                    coupon.getCoupon().getCouponType().getDesc(),
+                    coupon.getCoupon().getDiscountPercent() != 100
+                        ? coupon.getCoupon().getDiscountPercent() + "%"
+                        : "무료",
+                    "사용횟수",
                     Boolean.TRUE.equals(coupon.getCoupon().getIsPermanent())
                         ? "상시할인"
                         : coupon.getCoupon().getNumberOfUses()))
