@@ -63,7 +63,10 @@ public class AdminPostDetailsResponse {
     this.isEnabled = post.getIsEnabled();
     this.contentDetail = post.getContentDetail();
     this.memberships =
-        post.getMemberships().stream().map(MembershipResponse::new).collect(Collectors.toList());
+        post.getMemberships().stream()
+            .filter(membership -> !Boolean.TRUE.equals(membership.getIsDeleted()))
+            .map(MembershipResponse::new)
+            .collect(Collectors.toList());
     this.additionalInfo =
         AdditionalInfoResponse.builder()
             .futureExhibitionCount(post.getFutureExhibitionCount())

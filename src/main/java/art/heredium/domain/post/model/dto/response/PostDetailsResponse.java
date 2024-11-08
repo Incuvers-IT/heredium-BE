@@ -15,7 +15,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import art.heredium.domain.common.model.Storage;
 import art.heredium.domain.exhibition.entity.Exhibition;
-import art.heredium.domain.membership.entity.Membership;
 import art.heredium.domain.membership.model.dto.response.MembershipResponse;
 import art.heredium.domain.post.entity.Post;
 import art.heredium.domain.program.entity.Program;
@@ -79,7 +78,9 @@ public class PostDetailsResponse {
     this.contentDetail = post.getContentDetail();
     this.memberships =
         post.getMemberships().stream()
-            .filter(Membership::getIsEnabled)
+            .filter(
+                membership ->
+                    membership.getIsEnabled() && !Boolean.TRUE.equals(membership.getIsDeleted()))
             .map(MembershipResponse::new)
             .collect(Collectors.toList());
     this.additionalInfo =
