@@ -34,6 +34,9 @@ public class AdminPostDetailsResponse {
   @JsonProperty("content_detail")
   private String contentDetail;
 
+  @JsonProperty("sub_title")
+  private String subTitle;
+
   @JsonProperty("additional_info")
   private AdditionalInfoResponse additionalInfo;
 
@@ -44,6 +47,9 @@ public class AdminPostDetailsResponse {
 
   @JsonProperty("end_date")
   private LocalDate endDate;
+
+  @JsonProperty(value = "open_date")
+  private LocalDate openDate;
 
   public AdminPostDetailsResponse(@NonNull final Post post) {
     this.id = post.getId();

@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 import javax.validation.Valid;
+import javax.validation.constraints.Size;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -21,6 +22,10 @@ public class PostUpdateRequest {
   @JsonProperty("content_detail")
   private String contentDetail;
 
+  @Size(max = 5000)
+  @JsonProperty("sub_title")
+  private String subTitle;
+
   @JsonProperty("thumbnail_urls")
   private ThumbnailUrl thumbnailUrls;
 
@@ -37,6 +42,9 @@ public class PostUpdateRequest {
 
   @JsonProperty("end_date")
   private LocalDate endDate;
+
+  @JsonProperty(value = "open_date")
+  private LocalDate openDate;
 
   @Getter
   @Setter
