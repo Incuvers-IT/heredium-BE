@@ -60,6 +60,7 @@ public class PostService {
             .imageOriginalFileName(request.getNoteImage().getOriginalFileName())
             .isEnabled(request.getIsEnabled())
             .contentDetail(request.getContentDetail())
+            .subTitle(request.getSubTitle())
             .admin(admin)
             .futureExhibitionCount(
                 Optional.ofNullable(additionalInfo)
@@ -87,6 +88,7 @@ public class PostService {
                     .orElse(null))
             .startDate(request.getStartDate())
             .endDate(request.getEndDate())
+            .openDate(request.getOpenDate())
             .build();
     final Post savedPost = postRepository.saveAndFlush(post);
     final long postId = savedPost.getId();
@@ -177,12 +179,14 @@ public class PostService {
       String processedContent = moveEditorContent(request.getContentDetail(), fileFolderPath);
       post.setContentDetail(processedContent);
     }
+    if (request.getSubTitle() != null) post.setSubTitle(request.getSubTitle());
     if (request.getThumbnailUrls() != null) updateThumbnailUrls(post, request.getThumbnailUrls());
     if (request.getNoteImage() != null) updateNoteImage(post, request.getNoteImage());
     if (request.getAdditionalInfo() != null)
       updateAdditionalInfo(post, request.getAdditionalInfo());
     if (request.getStartDate() != null) post.setStartDate(request.getStartDate());
     if (request.getEndDate() != null) post.setEndDate(request.getEndDate());
+    if (request.getOpenDate() != null) post.setOpenDate(request.getOpenDate());
   }
 
   private void updateThumbnailUrls(Post post, PostUpdateRequest.ThumbnailUrl thumbnailUrls) {

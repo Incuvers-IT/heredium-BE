@@ -63,6 +63,9 @@ public class Post extends BaseEntity {
   @Column(name = "content_detail", columnDefinition = "TEXT")
   private String contentDetail;
 
+  @Column(name = "sub_title", columnDefinition = "TEXT")
+  private String subTitle;
+
   @Column(name = "future_exhibition_count")
   private Integer futureExhibitionCount;
 
@@ -86,6 +89,9 @@ public class Post extends BaseEntity {
 
   @Column(name = "end_date", nullable = false)
   private LocalDate endDate;
+
+  @Column(name = "open_date")
+  private LocalDate openDate;
 
   @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
   @OrderBy("id ASC")
@@ -119,6 +125,7 @@ public class Post extends BaseEntity {
       String thumbnailUrls,
       Boolean isEnabled,
       String contentDetail,
+      String subTitle,
       Admin admin,
       Integer futureExhibitionCount,
       Integer ongoingExhibitionCount,
@@ -127,13 +134,15 @@ public class Post extends BaseEntity {
       Integer ongoingProgramCount,
       Integer completedProgramCount,
       LocalDate startDate,
-      LocalDate endDate) {
+      LocalDate endDate,
+      LocalDate openDate) {
     this.name = name;
     this.imageUrl = imageUrl;
     this.imageOriginalFileName = imageOriginalFileName;
     this.thumbnailUrls = thumbnailUrls;
     this.isEnabled = isEnabled;
     this.contentDetail = contentDetail;
+    this.subTitle = subTitle;
     this.admin = admin;
     this.futureExhibitionCount = futureExhibitionCount;
     this.ongoingExhibitionCount = ongoingExhibitionCount;
@@ -143,5 +152,6 @@ public class Post extends BaseEntity {
     this.completedProgramCount = completedProgramCount;
     this.startDate = startDate;
     this.endDate = endDate;
+    this.openDate = openDate;
   }
 }
