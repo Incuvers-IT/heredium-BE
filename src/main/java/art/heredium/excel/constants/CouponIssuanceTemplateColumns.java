@@ -8,9 +8,9 @@ import lombok.Getter;
 @AllArgsConstructor
 @Getter
 public enum CouponIssuanceTemplateColumns {
-  EMAIL(0, "이메일"),
-  PHONE(1, "핸드폰"),
-  NAME(2, "이름");
+  EMAIL(0, "계정"),
+  NAME(1, "이름"),
+  PHONE(2, "연락처");
 
   private final int columnIndex;
   private final String columnName;
