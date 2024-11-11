@@ -1,5 +1,6 @@
 package art.heredium.service;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -25,6 +26,7 @@ import art.heredium.domain.membership.model.dto.response.MembershipRegistrationR
 import art.heredium.domain.membership.model.dto.response.RegisterMembershipResponse;
 import art.heredium.domain.membership.repository.MembershipRegistrationRepository;
 import art.heredium.domain.membership.repository.MembershipRepository;
+import art.heredium.domain.post.entity.Post;
 import art.heredium.domain.post.repository.PostRepository;
 
 import static art.heredium.core.config.error.entity.ErrorCode.ANONYMOUS_USER;
@@ -67,9 +69,13 @@ public class MembershipRegistrationService {
         this.membershipRepository
             .findByIdAndIsEnabledTrue(membershipId)
             .orElseThrow(() -> new ApiException(ErrorCode.MEMBERSHIP_NOT_FOUND));
-    this.postRepository
-        .findByMembershipIdAndIsEnabledTrue(membershipId)
-        .orElseThrow(() -> new ApiException(ErrorCode.POST_NOT_FOUND));
+    final Post post =
+        this.postRepository
+            .findByMembershipIdAndIsEnabledTrue(membershipId)
+            .orElseThrow(() -> new ApiException(ErrorCode.POST_NOT_FOUND));
+    if (post.getOpenDate() != null && post.getOpenDate().isAfter(LocalDate.now())) {
+      throw new ApiException(ErrorCode.REGISTERING_MEMBERSHIP_IS_NOT_AVAILABLE);
+    }
     final Account account =
         this.accountRepository
             .findById(accountId)
