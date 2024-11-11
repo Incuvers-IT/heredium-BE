@@ -28,6 +28,7 @@ import art.heredium.domain.membership.entity.PaymentStatus;
 import art.heredium.domain.membership.model.dto.request.MembershipConfirmPaymentRequest;
 import art.heredium.domain.membership.model.dto.response.MembershipConfirmPaymentResponse;
 import art.heredium.domain.membership.repository.MembershipRegistrationRepository;
+import art.heredium.domain.post.entity.Post;
 import art.heredium.ncloud.bean.HerediumAlimTalk;
 import art.heredium.ncloud.type.AlimTalkTemplate;
 import art.heredium.payment.dto.PaymentsPayRequest;
@@ -59,6 +60,13 @@ public class MembershipPaymentService {
     if (Boolean.TRUE.equals(membershipRegistration.getMembership().getIsDeleted())) {
       throw new DeletedMembershipException(
           "선택하신 멤버십은 더 이상 유효하지 않은 멤버십입니다. 추가 문의 사항이 있으시면 고객센터로 연락해 주십시오.");
+    }
+    final Membership membership = membershipRegistration.getMembership();
+    if (membership != null) {
+      final Post post = membership.getPost();
+      if (post.getOpenDate() != null && post.getOpenDate().isAfter(LocalDate.now())) {
+        throw new ApiException(ErrorCode.REGISTERING_MEMBERSHIP_IS_NOT_AVAILABLE);
+      }
     }
 
     this.updateMembershipRegistrationToSuccess(membershipRegistration);
