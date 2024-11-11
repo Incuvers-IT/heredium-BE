@@ -35,23 +35,24 @@ public class CouponService {
   private final CloudStorage cloudStorage;
 
   @Transactional(rollbackFor = Exception.class)
-  public Long createNonMembershipCoupon(@NonNull final NonMembershipCouponCreateRequest request) {
-    return createCoupon(request, null, null);
+  public CouponResponse createNonMembershipCoupon(
+      @NonNull final NonMembershipCouponCreateRequest request) {
+    return new CouponResponse(createCoupon(request, null, null));
   }
 
   @Transactional(rollbackFor = Exception.class)
   public Long createMembershipCoupon(
       @NonNull final MembershipCouponCreateRequest request, @NonNull final Membership membership) {
-    return createCoupon(request, membership, null);
+    return createCoupon(request, membership, null).getId();
   }
 
   @Transactional(rollbackFor = Exception.class)
   public Long createCompanyCoupon(
       @NonNull final CompanyCouponCreateRequest request, @NonNull final Company company) {
-    return createCoupon(request, null, company);
+    return createCoupon(request, null, company).getId();
   }
 
-  private Long createCoupon(
+  private Coupon createCoupon(
       @NonNull final CouponCreateRequest request,
       @Nullable final Membership membership,
       @Nullable final Company company) {
@@ -117,7 +118,7 @@ public class CouponService {
       couponRepository.save(savedCoupon);
     }
 
-    return savedCoupon.getId();
+    return savedCoupon;
   }
 
   @NonNull
