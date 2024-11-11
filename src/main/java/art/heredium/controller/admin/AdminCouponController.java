@@ -34,7 +34,7 @@ public class AdminCouponController {
   }
 
   @PostMapping("/non-membership")
-  public ResponseEntity<Long> createNonMembershipCoupon(
+  public ResponseEntity<CouponResponse> createNonMembershipCoupon(
       @RequestBody final NonMembershipCouponCreateRequest request) {
     return ResponseEntity.ok(this.couponService.createNonMembershipCoupon(request));
   }
