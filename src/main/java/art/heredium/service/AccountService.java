@@ -431,7 +431,7 @@ public class AccountService {
       final String expectedColumnName = CouponIssuanceTemplateColumns.getColumnNameByIndex(i);
       if (!expectedColumnName.equalsIgnoreCase(StringUtils.trim(columnName))) {
         throw new ApiException(
-            ErrorCode.INVALID_EXCEL_COLUMNS, "Column names should be ['이메일', '핸드폰', '이름']");
+            ErrorCode.INVALID_EXCEL_COLUMNS, "Column names should be ['계정', '이름', '연락처']");
       }
     }
   }
