@@ -56,6 +56,7 @@ public class AdminPostDetailsResponse {
     this.name = post.getName();
     this.startDate = post.getStartDate();
     this.endDate = post.getEndDate();
+    this.openDate = post.getOpenDate();
     this.noteImage =
         NoteImageResponse.builder()
             .noteImageUrl(post.getImageUrl())
@@ -68,6 +69,7 @@ public class AdminPostDetailsResponse {
     }
     this.isEnabled = post.getIsEnabled();
     this.contentDetail = post.getContentDetail();
+    this.subTitle = post.getSubTitle();
     this.memberships =
         post.getMemberships().stream()
             .filter(membership -> !Boolean.TRUE.equals(membership.getIsDeleted()))
