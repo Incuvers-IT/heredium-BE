@@ -28,6 +28,10 @@ public class PostCreateRequest {
   @JsonProperty("content_detail")
   private String contentDetail;
 
+  @Size(max = 5000)
+  @JsonProperty("sub_title")
+  private String subTitle;
+
   @JsonProperty("thumbnail_urls")
   private ThumbnailUrl thumbnailUrls;
 
@@ -44,6 +48,9 @@ public class PostCreateRequest {
 
   @JsonProperty(value = "end_date", required = true)
   private LocalDate endDate;
+
+  @JsonProperty(value = "open_date")
+  private LocalDate openDate;
 
   @Getter
   @Setter

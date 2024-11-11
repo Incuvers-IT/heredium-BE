@@ -41,6 +41,9 @@ public class PostDetailsResponse {
   @JsonProperty("content_detail")
   private String contentDetail;
 
+  @JsonProperty("sub_title")
+  private String subTitle;
+
   @JsonProperty("additional_info")
   private AdditionalInfoResponse additionalInfo;
 
@@ -51,6 +54,9 @@ public class PostDetailsResponse {
 
   @JsonProperty("end_date")
   private LocalDate endDate;
+
+  @JsonProperty(value = "open_date")
+  private LocalDate openDate;
 
   public PostDetailsResponse(
       @NonNull final Post post,
@@ -64,6 +70,7 @@ public class PostDetailsResponse {
     this.name = post.getName();
     this.startDate = post.getStartDate();
     this.endDate = post.getEndDate();
+    this.openDate = post.getOpenDate();
     this.noteImage =
         NoteImageResponse.builder()
             .noteImageUrl(post.getImageUrl())
@@ -76,6 +83,7 @@ public class PostDetailsResponse {
     }
     this.isEnabled = post.getIsEnabled();
     this.contentDetail = post.getContentDetail();
+    this.subTitle = post.getSubTitle();
     this.memberships =
         post.getMemberships().stream()
             .filter(
