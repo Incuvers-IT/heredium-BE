@@ -359,8 +359,8 @@ public class AccountService {
       if (isRowEmpty(row)) continue;
 
       String email = getCellValueAsString(row.getCell(0));
-      String phone = getCellValueAsString(row.getCell(1));
-      String name = getCellValueAsString(row.getCell(2));
+      String name = getCellValueAsString(row.getCell(1));
+      String phone = getCellValueAsString(row.getCell(2));
 
       // Only check email for duplicates initially
       boolean isDuplicateEmail =
