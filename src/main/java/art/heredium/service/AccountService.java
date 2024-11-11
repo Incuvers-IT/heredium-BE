@@ -359,8 +359,8 @@ public class AccountService {
       if (isRowEmpty(row)) continue;
 
       String email = getCellValueAsString(row.getCell(0));
-      String phone = getCellValueAsString(row.getCell(1));
-      String name = getCellValueAsString(row.getCell(2));
+      String name = getCellValueAsString(row.getCell(1));
+      String phone = getCellValueAsString(row.getCell(2));
 
       // Only check email for duplicates initially
       boolean isDuplicateEmail =
@@ -431,7 +431,7 @@ public class AccountService {
       final String expectedColumnName = CouponIssuanceTemplateColumns.getColumnNameByIndex(i);
       if (!expectedColumnName.equalsIgnoreCase(StringUtils.trim(columnName))) {
         throw new ApiException(
-            ErrorCode.INVALID_EXCEL_COLUMNS, "Column names should be ['이메일', '핸드폰', '이름']");
+            ErrorCode.INVALID_EXCEL_COLUMNS, "Column names should be ['계정', '이름', '연락처']");
       }
     }
   }
