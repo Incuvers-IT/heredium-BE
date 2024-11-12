@@ -171,7 +171,8 @@ public class CompanyService {
         membershipRegistrationRepository.save(registration);
 
         List<Coupon> companyCoupons = couponRepository.findByCompany(company);
-        couponUsageService.distributeMembershipAndCompanyCoupons(selectedAccount, companyCoupons);
+        couponUsageService.distributeMembershipAndCompanyCoupons(
+            selectedAccount, companyCoupons, true);
 
         companyMembershipRegistrationResponse
             .getSuccessCases()
