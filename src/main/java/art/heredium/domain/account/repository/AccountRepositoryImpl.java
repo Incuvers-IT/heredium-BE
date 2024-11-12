@@ -655,13 +655,8 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
               .where(
                   account
                       .email
-                      .isNotNull()
-                      .and(account.email.eq(account.email))
-                      .or(
-                          accountInfo
-                              .phone
-                              .isNotNull()
-                              .and(accountInfo.phone.eq(accountInfo.phone))));
+                      .eq(QAccount.account.email)
+                      .or(accountInfo.phone.eq(QAccountInfo.accountInfo.phone)));
 
       return accountInfo
           .lastLoginDate
