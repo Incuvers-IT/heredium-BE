@@ -80,12 +80,12 @@ public class CouponUsageService {
               "Error while assigning coupon: %s: This coupon is membership coupon",
               coupon.getName()));
     }
-    this.assignCouponToAccounts(coupon, accountIds, CouponSource.ADMIN_SITE);
+    this.assignCouponToAccounts(coupon, accountIds, CouponSource.ADMIN_SITE, true);
   }
 
   @Transactional(rollbackFor = Exception.class)
   public List<CouponUsage> distributeMembershipAndCompanyCoupons(
-      @NonNull Account account, @NonNull List<Coupon> coupons) {
+      @NonNull Account account, @NonNull List<Coupon> coupons, boolean sendAlimtalk) {
     List<CouponUsage> couponUsages = new ArrayList<>();
     coupons.forEach(
         coupon -> {
@@ -100,7 +100,8 @@ public class CouponUsageService {
               this.assignCouponToAccounts(
                   coupon,
                   Stream.of(account.getId()).collect(Collectors.toList()),
-                  coupon.getFromSource()));
+                  coupon.getFromSource(),
+                  sendAlimtalk));
         });
     return this.couponUsageRepository.saveAll(couponUsages);
   }
@@ -151,7 +152,8 @@ public class CouponUsageService {
   private List<CouponUsage> assignCouponToAccounts(
       final Coupon coupon,
       @NonNull final List<Long> accountIds,
-      @NonNull final CouponSource source) {
+      @NonNull final CouponSource source,
+      final boolean sendAlimtalk) {
     long numberOfUses = Optional.ofNullable(coupon.getNumberOfUses()).orElse(1L);
     boolean isPermanentCoupon = Boolean.TRUE.equals(coupon.getIsPermanent());
     List<CouponUsage> couponUsages = new ArrayList<>();
@@ -212,7 +214,9 @@ public class CouponUsageService {
           }
           accountsToSendAlimTalk.put(account, couponUsages);
         });
-    this.sendCouponDeliveredMessageToAlimTalk(accountsToSendAlimTalk);
+    if (sendAlimtalk) {
+      this.sendCouponDeliveredMessageToAlimTalk(accountsToSendAlimTalk);
+    }
 
     return this.couponUsageRepository.saveAll(couponUsages);
   }
