@@ -97,7 +97,6 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
           final GetAccountWithMembershipInfoIncludingTitleRequest dto, final Pageable pageable) {
     QAccount account = QAccount.account;
     QAccountInfo accountInfo = QAccountInfo.accountInfo;
-    QCouponUsage couponUsage = QCouponUsage.couponUsage;
     QMembershipRegistration membershipRegistration = QMembershipRegistration.membershipRegistration;
     QMembership membership = QMembership.membership;
 
@@ -110,7 +109,7 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
             .select(account.count())
             .from(account)
             .innerJoin(account.accountInfo, accountInfo)
-            .leftJoin(membershipRegistration)
+            .innerJoin(membershipRegistration)
             .on(membershipRegistration.account.eq(account))
             .leftJoin(membershipRegistration.membership, membership)
             .where(
@@ -171,7 +170,7 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
                     .where(ticket.account.eq(account))))
         .from(account)
         .innerJoin(account.accountInfo, accountInfo)
-        .leftJoin(membershipRegistration)
+        .innerJoin(membershipRegistration)
         .on(membershipRegistration.account.eq(account))
         .leftJoin(membershipRegistration.membership, membership)
         .leftJoin(membershipRegistration.company, company)
