@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import art.heredium.core.config.error.entity.ApiException;
 import art.heredium.core.config.error.entity.ErrorCode;
 import art.heredium.core.util.AuthUtil;
+import art.heredium.core.util.ValidationUtil;
 import art.heredium.domain.account.entity.Account;
 import art.heredium.domain.account.repository.AccountRepository;
 import art.heredium.domain.coupon.entity.CouponSource;
@@ -73,9 +74,7 @@ public class MembershipRegistrationService {
         this.postRepository
             .findByMembershipIdAndIsEnabledTrue(membershipId)
             .orElseThrow(() -> new ApiException(ErrorCode.POST_NOT_FOUND));
-    if (post.getOpenDate() != null && post.getOpenDate().isAfter(LocalDate.now())) {
-      throw new ApiException(ErrorCode.REGISTERING_MEMBERSHIP_IS_NOT_AVAILABLE);
-    }
+    ValidationUtil.validateRegistrationDate(LocalDate.now(), post);
     final Account account =
         this.accountRepository
             .findById(accountId)
