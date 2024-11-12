@@ -87,7 +87,8 @@ public enum ErrorCode {
   PAYMENT_ORDER_ID_NOT_FOUND(HttpStatus.NOT_FOUND),
   INVALID_EXCEL_FILE(HttpStatus.BAD_REQUEST),
   INVALID_EXCEL_COLUMNS(HttpStatus.BAD_REQUEST),
-  POST_ALREADY_EXISTED(HttpStatus.BAD_REQUEST);
+  POST_ALREADY_EXISTED(HttpStatus.BAD_REQUEST),
+  INVALID_REGISTRATION_DATE(HttpStatus.BAD_REQUEST);
   private HttpStatus status;
 
   ErrorCode(final HttpStatus status) {
