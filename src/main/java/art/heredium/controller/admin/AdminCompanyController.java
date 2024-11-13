@@ -43,10 +43,10 @@ public class AdminCompanyController {
   }
 
   @PostMapping("/membership-registrations/validate")
-  public ResponseEntity<?> validateMembershipRegistrations(@RequestParam("file") MultipartFile file)
-      throws IOException {
+  public ResponseEntity<?> validateMembershipRegistrations(
+      @RequestParam("file") MultipartFile file) {
     ValidationUtil.validateExcelExtension(file);
-    List<String> existingMemberships = companyService.validateMembershipRegistration(file);
+    List<String> existingMemberships = companyService.getExistingMembershipRegistration(file);
     if (existingMemberships.isEmpty()) {
       return ResponseEntity.ok().build();
     }
