@@ -359,4 +359,61 @@ public class CompanyService {
         RegistrationType.COMPANY,
         request.getPrice());
   }
+
+  public List<String> validateMembershipRegistration(MultipartFile file) throws IOException {
+    List<String> existingMemberships = new ArrayList<>();
+
+    // Parse Excel file
+    Workbook workbook = WorkbookFactory.create(file.getInputStream());
+    Sheet sheet = workbook.getSheetAt(0);
+
+    // Skip header row and validate columns
+    Row headerRow = sheet.getRow(0);
+    if (headerRow != null) {
+      validateUploadedMembershipRegistrationExcelColumns(headerRow);
+    }
+
+    // Process each row
+    for (Row row : sheet) {
+      if (row.getRowNum() == 0 || isRowEmpty(row)) continue;
+
+      String email = getCellValueAsString(row.getCell(1));
+      String phone = getCellValueAsString(row.getCell(2));
+
+      Account selectedAccount = null;
+
+      // Check by email
+      if (StringUtils.isNotBlank(email)) {
+        Optional<Account> accountByEmail = accountRepository.findLatestLoginAccountByEmail(email);
+        selectedAccount = accountByEmail.orElse(null);
+      }
+
+      // Check by phone if email search failed
+      if (selectedAccount == null && StringUtils.isNotBlank(phone)) {
+        Optional<Account> accountByPhone = accountRepository.findLatestLoginAccountByPhone(phone);
+        selectedAccount = accountByPhone.orElse(null);
+      }
+
+      // If account found, check for active membership
+      if (selectedAccount != null) {
+        Optional<MembershipRegistration> activeMembership =
+            membershipRegistrationRepository.findByAccountAndExpirationDateAfter(
+                selectedAccount, LocalDate.now());
+
+        if (activeMembership.isPresent()) {
+          String identifier = email != null ? email : phone;
+          MembershipRegistration membership = activeMembership.get();
+          existingMemberships.add(
+              String.format(
+                  "Account %s has active membership until %s (Type: %s)",
+                  identifier,
+                  membership.getExpirationDate(),
+                  membership.getMembershipOrCompanyName()));
+        }
+      }
+    }
+
+    workbook.close();
+    return existingMemberships;
+  }
 }
