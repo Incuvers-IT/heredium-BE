@@ -360,11 +360,15 @@ public class CompanyService {
         request.getPrice());
   }
 
-  public List<String> validateMembershipRegistration(MultipartFile file) throws IOException {
+  public List<String> getExistingMembershipRegistration(MultipartFile file) {
     List<String> existingMemberships = new ArrayList<>();
 
-    // Parse Excel file
-    Workbook workbook = WorkbookFactory.create(file.getInputStream());
+    Workbook workbook;
+    try {
+      workbook = WorkbookFactory.create(file.getInputStream());
+    } catch (IOException e) {
+      throw new RuntimeException("Failed to read Excel file", e);
+    }
     Sheet sheet = workbook.getSheetAt(0);
 
     // Skip header row and validate columns
@@ -413,7 +417,11 @@ public class CompanyService {
       }
     }
 
-    workbook.close();
+    try {
+      workbook.close();
+    } catch (IOException e) {
+      throw new RuntimeException("Failed to close workbook", e);
+    }
     return existingMemberships;
   }
 }
