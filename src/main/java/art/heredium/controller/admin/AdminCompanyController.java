@@ -41,4 +41,15 @@ public class AdminCompanyController {
         companyService.uploadMembershipRegistration(companyId, file);
     return ResponseEntity.ok(response);
   }
+
+  @PostMapping("/membership-registrations/validate")
+  public ResponseEntity<?> validateMembershipRegistrations(
+      @RequestParam("file") MultipartFile file) {
+    ValidationUtil.validateExcelExtension(file);
+    List<String> existingMemberships = companyService.getExistingMembershipRegistration(file);
+    if (existingMemberships.isEmpty()) {
+      return ResponseEntity.ok().build();
+    }
+    return ResponseEntity.badRequest().body(existingMemberships);
+  }
 }
