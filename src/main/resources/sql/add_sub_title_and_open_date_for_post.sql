@@ -1,0 +1,2 @@
+ALTER TABLE post ADD COLUMN sub_title TEXT;
+ALTER TABLE post ADD COLUMN open_date DATE;
