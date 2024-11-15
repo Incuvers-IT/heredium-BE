@@ -1,15 +1,19 @@
 package art.heredium.scheduler;
 
+import java.io.File;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -44,6 +48,9 @@ import art.heredium.ncloud.type.MailTemplate;
 @Component
 @RequiredArgsConstructor
 public class Scheduler {
+
+  @Value("${log.config.path}")
+  private String logsPath;
 
   private final CloudMail cloudMail;
   private final HerediumAlimTalk alimTalk;
@@ -119,6 +126,40 @@ public class Scheduler {
     } catch (Exception e) {
       log.error("Error updating expired memberships", e);
     }
+  }
+
+  @Async
+  @Scheduled(cron = "0 0 2 * * ?") // Every day at 2am
+  @Transactional(rollbackFor = Exception.class)
+  public void deleteOldLogs() {
+    File logsDir = new File(logsPath);
+    File[] logs =
+        logsDir.listFiles(
+            (dir, name) -> name.matches("logback.\\d{4}-\\d{2}-\\d{2}.\\d.log((.gz)?)"));
+    if (logs == null || logs.length == 0) {
+      log.info("No log file found");
+      return;
+    }
+    final LocalDate deleteThreshold = LocalDate.now().minusDays(30);
+    List<File> filesToDelete =
+        Arrays.stream(logs)
+            .filter(file -> this.extractDateFromFileName(file.getName()).isBefore(deleteThreshold))
+            .collect(Collectors.toList());
+    log.info(
+        "Deleting log files before {}, log files found: {}", deleteThreshold, filesToDelete.size());
+    try {
+      filesToDelete.forEach(File::delete);
+    } catch (Exception e) {
+      log.error("Failed to delete log files: {}", e.getMessage());
+    }
+  }
+
+  private LocalDate extractDateFromFileName(String fileName) {
+    Matcher m = Pattern.compile("\\d{4}-\\d{2}-\\d{2}").matcher(fileName);
+    if (!m.find()) {
+      return null;
+    }
+    return LocalDate.parse(m.group(0));
   }
 
   @Async
