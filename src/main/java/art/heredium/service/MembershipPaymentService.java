@@ -70,7 +70,7 @@ public class MembershipPaymentService {
     }
 
     this.updateMembershipRegistrationToSuccess(membershipRegistration);
-    this.updatePendingMembershipRegistrationsToIgnore(membershipRegistration.getAccount().getId());
+    this.removePendingMembershipRegistrations(membershipRegistration.getAccount().getId());
     List<CouponUsage> deliveredCoupons = this.deliverCouponsToUser(membershipRegistration);
 
     PaymentTicketResponse pay =
@@ -105,14 +105,11 @@ public class MembershipPaymentService {
     this.membershipRegistrationRepository.save(membershipRegistration);
   }
 
-  private void updatePendingMembershipRegistrationsToIgnore(final long accountId) {
-    List<MembershipRegistration> pendingMembershipRegistrations =
+  private void removePendingMembershipRegistrations(final long accountId) {
+    List<Long> pendingMembershipRegistrationIds =
         this.membershipRegistrationRepository.findByAccountIdAndPaymentStatus(
-            accountId, PaymentStatus.PENDING);
-    pendingMembershipRegistrations.forEach(
-        membershipRegistration ->
-            membershipRegistration.updatePaymentStatus(PaymentStatus.IGNORED));
-    this.membershipRegistrationRepository.saveAll(pendingMembershipRegistrations);
+            accountId, PaymentStatus.PENDING).stream().map(MembershipRegistration::getId).collect(Collectors.toList());
+    this.membershipRegistrationRepository.deleteAllById(pendingMembershipRegistrationIds);
   }
 
   private void sendMembershipRegistrationMessageToAlimTalk(
