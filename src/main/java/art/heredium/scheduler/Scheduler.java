@@ -90,7 +90,7 @@ public class Scheduler {
     final List<Long> redundantMembershipRegistrationIds =
         this.membershipRegistrationRepository
             .findByPaymentStatusInAndCreatedDateBefore(
-                Arrays.asList(PaymentStatus.PENDING, PaymentStatus.IGNORED),
+                    Collections.singletonList(PaymentStatus.PENDING),
                 LocalDateTime.now().minusDays(1))
             .stream()
             .map(MembershipRegistration::getId)
