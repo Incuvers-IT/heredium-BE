@@ -2,10 +2,7 @@ package art.heredium.service;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import lombok.NonNull;
@@ -22,17 +19,21 @@ import art.heredium.core.config.properties.HerediumProperties;
 import art.heredium.domain.account.entity.Account;
 import art.heredium.domain.coupon.entity.Coupon;
 import art.heredium.domain.coupon.entity.CouponUsage;
+import art.heredium.domain.coupon.model.dto.response.CouponUsageResponse;
 import art.heredium.domain.membership.entity.Membership;
 import art.heredium.domain.membership.entity.MembershipRegistration;
 import art.heredium.domain.membership.entity.PaymentStatus;
+import art.heredium.domain.membership.entity.RegistrationType;
 import art.heredium.domain.membership.model.dto.request.MembershipConfirmPaymentRequest;
 import art.heredium.domain.membership.model.dto.response.MembershipConfirmPaymentResponse;
+import art.heredium.domain.membership.model.dto.response.MembershipRefundResponse;
 import art.heredium.domain.membership.repository.MembershipRegistrationRepository;
 import art.heredium.domain.post.entity.Post;
 import art.heredium.ncloud.bean.HerediumAlimTalk;
 import art.heredium.ncloud.type.AlimTalkTemplate;
 import art.heredium.payment.dto.PaymentsPayRequest;
 import art.heredium.payment.inf.PaymentTicketResponse;
+import art.heredium.payment.type.PaymentType;
 
 @Service
 @RequiredArgsConstructor
@@ -69,7 +70,8 @@ public class MembershipPaymentService {
       }
     }
 
-    this.updateMembershipRegistrationToSuccess(membershipRegistration);
+    this.updateMembershipRegistrationToSuccess(
+        membershipRegistration, payRequest.getPaymentKey(), payRequest.getType());
     this.removePendingMembershipRegistrations(membershipRegistration.getAccount().getId());
     List<CouponUsage> deliveredCoupons = this.deliverCouponsToUser(membershipRegistration);
 
@@ -79,6 +81,52 @@ public class MembershipPaymentService {
     this.sendMembershipRegistrationMessageToAlimTalk(membershipRegistration, deliveredCoupons);
 
     return new MembershipConfirmPaymentResponse(pay.getPaymentAmount());
+  }
+
+  @Transactional(rollbackFor = Exception.class)
+  public MembershipRefundResponse refundMembership(final long accountId) {
+    this.validateCouponUsagesForRefund(accountId);
+    final MembershipRegistration membershipRegistration =
+        this.membershipRegistrationRepository
+            .findByAccountIdAndRegistrationTypeAndPaymentStatusAndExpirationDateAfter(
+                accountId,
+                RegistrationType.MEMBERSHIP_PACKAGE,
+                PaymentStatus.COMPLETED,
+                LocalDate.now())
+            .orElseThrow(
+                () ->
+                    new ApiException(
+                        ErrorCode.MEMBERSHIP_REGISTRATION_NOT_FOUND,
+                        String.format(
+                            "Active membership registration of accountId %s not found",
+                            accountId)));
+    String paymentKey = membershipRegistration.getPaymentKey();
+    String paymentOrderId = membershipRegistration.getPaymentOrderId();
+    List<CouponUsageResponse> rolledBackCouponUsageResponses = new ArrayList<>();
+    List<CouponUsage> rolledBackCoupons =
+        this.couponUsageService.rollbackCouponDistribution(membershipRegistration.getId());
+    if (!rolledBackCoupons.isEmpty()) {
+      rolledBackCouponUsageResponses =
+          rolledBackCoupons.stream().map(CouponUsageResponse::new).collect(Collectors.toList());
+    }
+    membershipRegistration.getPaymentType().refund(paymentKey, paymentOrderId);
+    return MembershipRefundResponse.builder()
+        .paymentKey(paymentKey)
+        .paymentOrderId(paymentOrderId)
+        .paymentType(membershipRegistration.getPaymentType())
+        .rolledBackCoupons(rolledBackCouponUsageResponses)
+        .build();
+  }
+
+  private void validateCouponUsagesForRefund(final long membershipRegistrationId) {
+    final List<CouponUsage> usedCoupons =
+        this.couponUsageService.findByMembershipRegistrationIdAndIsUsedTrue(
+            membershipRegistrationId);
+    if (!usedCoupons.isEmpty()) {
+      throw new ApiException(
+          ErrorCode.INVALID_MEMBERSHIP_REGISTRATION_FOR_REFUND,
+          "Cannot refund membership registration when user already used coupons");
+    }
   }
 
   private List<CouponUsage> deliverCouponsToUser(
@@ -92,7 +140,9 @@ public class MembershipPaymentService {
   }
 
   private void updateMembershipRegistrationToSuccess(
-      @NonNull MembershipRegistration membershipRegistration) {
+      @NonNull MembershipRegistration membershipRegistration,
+      @NonNull String paymentKey,
+      @NonNull PaymentType paymentType) {
     final LocalDate now = LocalDate.now();
     membershipRegistration.updateRegistrationDate(now);
     membershipRegistration.updateExpirationDate(
@@ -102,6 +152,8 @@ public class MembershipPaymentService {
                 .orElse(DEFAULT_MEMBERSHIP_PERIOD)));
     membershipRegistration.updatePaymentDate(now);
     membershipRegistration.updatePaymentStatus(PaymentStatus.COMPLETED);
+    membershipRegistration.updatePaymentKey(paymentKey);
+    membershipRegistration.updatePaymentType(paymentType);
     this.membershipRegistrationRepository.save(membershipRegistration);
   }
 
