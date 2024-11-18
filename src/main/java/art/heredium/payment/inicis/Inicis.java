@@ -39,6 +39,7 @@ import art.heredium.payment.inf.PaymentTicketResponse;
 import art.heredium.payment.inicis.dto.request.InicisPaymentRequest;
 import art.heredium.payment.inicis.dto.response.InicisPayMobileResponse;
 import art.heredium.payment.inicis.dto.response.InicisPayResponse;
+import art.heredium.payment.type.PaymentType;
 
 @Slf4j
 @Service
@@ -295,7 +296,15 @@ public class Inicis implements PaymentService<InicisPaymentRequest> {
 
   @Override
   public void refund(Ticket ticket) {
+    this.handleRefund(ticket.getPgId());
+  }
 
+  @Override
+  public void refund(String paymentKey, String paymentOrderId, PaymentType paymentType) {
+    this.handleRefund(paymentKey);
+  }
+
+  private void handleRefund(String paymentKey) {
     Date date_now = new Date(System.currentTimeMillis());
     SimpleDateFormat fourteen_format = new SimpleDateFormat("yyyyMMddHHmmss");
 
@@ -306,7 +315,7 @@ public class Inicis implements PaymentService<InicisPaymentRequest> {
     String timestamp = fourteen_format.format(date_now);
     String clientIp = Constants.getIP();
     String mid = MID;
-    String tid = ticket.getPgId();
+    String tid = paymentKey;
     String msg = "취소요청";
 
     // Hash Encryption

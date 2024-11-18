@@ -19,6 +19,7 @@ import org.hibernate.annotations.TypeDef;
 import art.heredium.domain.account.entity.Account;
 import art.heredium.domain.common.entity.BaseEntity;
 import art.heredium.domain.company.entity.Company;
+import art.heredium.payment.type.PaymentType;
 
 @Entity
 @Getter
@@ -70,6 +71,13 @@ public class MembershipRegistration extends BaseEntity {
 
   @Column(name = "payment_order_id", length = 36, unique = true, updatable = false)
   private String paymentOrderId;
+
+  @Column(name = "payment_key", unique = true)
+  private String paymentKey;
+
+  @Column(name = "payment_type")
+  @Convert(converter = PaymentType.Converter.class)
+  private PaymentType paymentType;
 
   @Comment("등록 유형")
   @Column(name = "registration_type", nullable = false)
@@ -165,6 +173,14 @@ public class MembershipRegistration extends BaseEntity {
 
   public void updatePaymentDate(LocalDate paymentDate) {
     this.paymentDate = paymentDate;
+  }
+
+  public void updatePaymentKey(String paymentKey) {
+    this.paymentKey = paymentKey;
+  }
+
+  public void updatePaymentType(PaymentType paymentType) {
+    this.paymentType = paymentType;
   }
 
   public String getMembershipOrCompanyName() {
