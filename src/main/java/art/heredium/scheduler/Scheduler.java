@@ -1,13 +1,14 @@
 package art.heredium.scheduler;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import lombok.RequiredArgsConstructor;
@@ -68,6 +69,7 @@ public class Scheduler {
   private final int nonUserTerminateDay = 365 * 2;
   private static final DateTimeFormatter MEMBERSHIP_REGISTER_DATETIME_FORMAT =
       DateTimeFormatter.ofPattern("yyyy-MM-dd");
+  private static final Long LOG_RETENTION_PERIOD = 30L; // Days
 
   @Async
   @Scheduled(cron = "0 0 1 * * ?") // every  day at 1am
@@ -132,18 +134,28 @@ public class Scheduler {
   @Scheduled(cron = "0 0 2 * * ?") // Every day at 2am
   @Transactional(rollbackFor = Exception.class)
   public void deleteOldLogs() {
-    File logsDir = new File(logsPath);
-    File[] logs =
-        logsDir.listFiles(
-            (dir, name) -> name.matches("logback.\\d{4}-\\d{2}-\\d{2}.\\d.log((.gz)?)"));
+    File[] logs = new File(logsPath).listFiles();
     if (logs == null || logs.length == 0) {
       log.info("No log file found");
       return;
     }
-    final LocalDate deleteThreshold = LocalDate.now().minusDays(30);
+    final LocalDate deleteThreshold = LocalDate.now().minusDays(LOG_RETENTION_PERIOD);
     List<File> filesToDelete =
         Arrays.stream(logs)
-            .filter(file -> this.extractDateFromFileName(file.getName()).isBefore(deleteThreshold))
+            .filter(
+                file -> {
+                  try {
+                    LocalDate creationDate =
+                        LocalDate.from(
+                            Files.readAttributes(file.toPath(), BasicFileAttributes.class)
+                                .creationTime()
+                                .toInstant());
+                    return creationDate.isBefore(deleteThreshold);
+                  } catch (IOException e) {
+                    log.warn("Failed to read creation date of file: {}", file.getName());
+                  }
+                  return false;
+                })
             .collect(Collectors.toList());
     log.info(
         "Deleting log files before {}, log files found: {}", deleteThreshold, filesToDelete.size());
@@ -152,14 +164,6 @@ public class Scheduler {
     } catch (Exception e) {
       log.error("Failed to delete log files: {}", e.getMessage());
     }
-  }
-
-  private LocalDate extractDateFromFileName(String fileName) {
-    Matcher m = Pattern.compile("\\d{4}-\\d{2}-\\d{2}").matcher(fileName);
-    if (!m.find()) {
-      return null;
-    }
-    return LocalDate.parse(m.group(0));
   }
 
   @Async
