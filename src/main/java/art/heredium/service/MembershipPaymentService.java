@@ -107,8 +107,11 @@ public class MembershipPaymentService {
 
   private void removePendingMembershipRegistrations(final long accountId) {
     List<Long> pendingMembershipRegistrationIds =
-        this.membershipRegistrationRepository.findByAccountIdAndPaymentStatus(
-            accountId, PaymentStatus.PENDING).stream().map(MembershipRegistration::getId).collect(Collectors.toList());
+        this.membershipRegistrationRepository
+            .findByAccountIdAndPaymentStatus(accountId, PaymentStatus.PENDING)
+            .stream()
+            .map(MembershipRegistration::getId)
+            .collect(Collectors.toList());
     this.membershipRegistrationRepository.deleteAllById(pendingMembershipRegistrationIds);
   }
 

@@ -16,10 +16,7 @@ import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.ExpressionUtils;
 import com.querydsl.core.types.Predicate;
 import com.querydsl.core.types.Projections;
-import com.querydsl.core.types.dsl.BooleanExpression;
-import com.querydsl.core.types.dsl.Expressions;
-import com.querydsl.core.types.dsl.NumberPath;
-import com.querydsl.core.types.dsl.Wildcard;
+import com.querydsl.core.types.dsl.*;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.JPQLQuery;
 import com.querydsl.jpa.impl.JPAQuery;
@@ -37,6 +34,7 @@ import art.heredium.domain.account.model.dto.response.*;
 import art.heredium.domain.account.model.dto.response.AccountWithMembershipInfoResponse;
 import art.heredium.domain.company.entity.QCompany;
 import art.heredium.domain.coupon.entity.CouponSource;
+import art.heredium.domain.coupon.entity.CouponType;
 import art.heredium.domain.coupon.entity.QCoupon;
 import art.heredium.domain.coupon.entity.QCouponUsage;
 import art.heredium.domain.membership.entity.PaymentStatus;
@@ -127,9 +125,9 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
   }
 
   @Override
-  public List<AccountWithMembershipInfoIncludingTitleResponse> listWithMembershipInfoIncludingTitle(
+  public List<AccountWithMembershipInfoExcelDownloadResponse> listWithMembershipInfoIncludingTitle(
       final GetAccountWithMembershipInfoIncludingTitleRequest dto) {
-    return this.listWithMembershipInfo(dto).fetch();
+    return this.listWithMembershipInfoForExcel(dto).fetch();
   }
 
   private JPAQuery<AccountWithMembershipInfoIncludingTitleResponse> listWithMembershipInfo(
@@ -759,5 +757,119 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
         .leftJoin(qMembershipRegistration.company, qCompany)
         .where(qAccount.eq(account))
         .fetchOne();
+  }
+
+  private JPAQuery<AccountWithMembershipInfoExcelDownloadResponse> listWithMembershipInfoForExcel(
+      final GetAccountWithMembershipInfoIncludingTitleRequest dto) {
+    QAccount account = QAccount.account;
+    QAccountInfo accountInfo = QAccountInfo.accountInfo;
+    QCouponUsage couponUsage = QCouponUsage.couponUsage;
+    QCompany company = QCompany.company;
+    QMembershipRegistration membershipRegistration = QMembershipRegistration.membershipRegistration;
+    QMembership membership = QMembership.membership;
+    QTicket ticket = QTicket.ticket;
+
+    // Subqueries for usage counts
+    JPQLQuery<Long> membershipCount =
+        JPAExpressions.select(membershipRegistration.count())
+            .from(membershipRegistration)
+            .where(
+                membershipRegistration
+                    .account
+                    .eq(account)
+                    .and(membershipRegistration.paymentStatus.eq(PaymentStatus.COMPLETED)));
+
+    JPQLQuery<Integer> exhibitionCount =
+        getTicketCountByKind(account, ticket, TicketKindType.EXHIBITION);
+    JPQLQuery<Integer> programCount = getTicketCountByKind(account, ticket, TicketKindType.PROGRAM);
+    JPQLQuery<Integer> coffeeCount = getTicketCountByKind(account, ticket, TicketKindType.COFFEE);
+
+    // Combine counts into usage count string
+    StringTemplate usageCount =
+        Expressions.stringTemplate(
+            "CONCAT('회원자격: ', {0}, ', "
+                + CouponType.EXHIBITION.getDesc()
+                + ": ', {1}, ', "
+                + CouponType.PROGRAM.getDesc()
+                + ": ', {2}, ', "
+                + CouponType.COFFEE.getDesc()
+                + ": ', {3})",
+            membershipCount,
+            exhibitionCount,
+            programCount,
+            coffeeCount);
+
+    return queryFactory
+        .select(
+            Projections.constructor(
+                AccountWithMembershipInfoExcelDownloadResponse.class,
+                Expressions.cases()
+                    .when(
+                        membershipRegistration.registrationType.eq(
+                            RegistrationType.MEMBERSHIP_PACKAGE))
+                    .then(membership.name)
+                    .when(membershipRegistration.registrationType.eq(RegistrationType.COMPANY))
+                    .then(company.name.prepend(COMPANY_PREFIX))
+                    .otherwise((String) null),
+                membershipRegistration.title,
+                membershipRegistration.paymentStatus,
+                membershipRegistration.paymentDate,
+                membershipRegistration.registrationDate,
+                membershipRegistration.expirationDate,
+                JPAExpressions.select(couponUsage.count())
+                    .from(couponUsage)
+                    .where(couponUsage.account.eq(account).and(couponUsage.isUsed.isTrue())),
+                account.email,
+                accountInfo.name,
+                accountInfo.phone,
+                Expressions.numberTemplate(
+                    Long.class,
+                    "COALESCE({0}, 0) + COALESCE({1}, 0)",
+                    JPAExpressions.select(ticket.price.sum())
+                        .from(ticket)
+                        .where(
+                            ticket
+                                .account
+                                .eq(account)
+                                .and(
+                                    ticket.state.notIn(
+                                        TicketStateType.USER_REFUND,
+                                        TicketStateType.ADMIN_REFUND))),
+                    JPAExpressions.select(membershipRegistration.price.sum())
+                        .from(membershipRegistration)
+                        .where(
+                            membershipRegistration
+                                .account
+                                .eq(account)
+                                .and(
+                                    membershipRegistration.paymentStatus.eq(
+                                        PaymentStatus.COMPLETED)))),
+                account.createdDate,
+                accountInfo.lastLoginDate,
+                usageCount,
+                accountInfo.isMarketingReceive))
+        .from(account)
+        .innerJoin(account.accountInfo, accountInfo)
+        .innerJoin(membershipRegistration)
+        .on(membershipRegistration.account.eq(account))
+        .leftJoin(membershipRegistration.membership, membership)
+        .leftJoin(membershipRegistration.company, company)
+        .where(
+            paymentDateBetween(dto.getPaymentDateFrom(), dto.getPaymentDateTo()),
+            paymentStatusIn(dto.getPaymentStatus()),
+            textContains(dto.getText()));
+  }
+
+  private JPQLQuery<Integer> getTicketCountByKind(
+      QAccount account, QTicket ticket, TicketKindType kindType) {
+    return JPAExpressions.select(ticket.number.sum())
+        .from(ticket)
+        .where(
+            ticket
+                .account
+                .eq(account)
+                .and(ticket.kind.eq(kindType))
+                .and(
+                    ticket.state.notIn(TicketStateType.USER_REFUND, TicketStateType.ADMIN_REFUND)));
   }
 }
