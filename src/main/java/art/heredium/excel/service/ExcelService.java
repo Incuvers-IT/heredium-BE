@@ -27,10 +27,7 @@ import art.heredium.domain.account.model.dto.request.GetAccountWithMembershipInf
 import art.heredium.domain.account.model.dto.request.GetAccountWithMembershipInfoRequest;
 import art.heredium.domain.account.model.dto.request.GetAdminAccountRequest;
 import art.heredium.domain.account.model.dto.request.GetAdminSleeperRequest;
-import art.heredium.domain.account.model.dto.response.AccountWithMembershipInfoIncludingTitleResponse;
-import art.heredium.domain.account.model.dto.response.AccountWithMembershipInfoResponse;
-import art.heredium.domain.account.model.dto.response.GetAdminAccountResponse;
-import art.heredium.domain.account.model.dto.response.GetAdminSleeperResponse;
+import art.heredium.domain.account.model.dto.response.*;
 import art.heredium.domain.account.repository.AccountRepositoryImpl;
 import art.heredium.domain.membership.entity.MembershipRegistration;
 import art.heredium.domain.membership.model.dto.request.GetAllActiveMembershipsRequest;
@@ -83,7 +80,7 @@ public class ExcelService {
 
   public Map<String, Object> accountInfoDownload(
       GetAccountWithMembershipInfoIncludingTitleRequest dto, String fileName) {
-    List<AccountWithMembershipInfoIncludingTitleResponse> accountInfos =
+    List<AccountWithMembershipInfoExcelDownloadResponse> accountInfos =
         this.accountRepository.listWithMembershipInfoIncludingTitle(dto);
     ExcelModelManager enm = new ExcelModelManager();
     enm.setFileName(fileName);
