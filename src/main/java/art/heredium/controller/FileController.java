@@ -101,7 +101,7 @@ public class FileController {
 
   @GetMapping("/template/company-membership/download")
   public ResponseEntity<Resource> downloadCompanyTemplate() throws IOException {
-    Resource resource = new ClassPathResource("company_upload_membership_template.xlsx");
+    Resource resource = new ClassPathResource("법인 회원 업로드.xlsx");
 
     HttpHeaders headers = new HttpHeaders();
     headers.add(
@@ -118,11 +118,11 @@ public class FileController {
 
   @GetMapping("/template/coupon-issuance/download")
   public ResponseEntity<Resource> couponIssuanceTemplate() throws IOException {
-    Resource resource = new ClassPathResource("coupon_issuance_template.xlsx");
+    Resource resource = new ClassPathResource("쿠폰 발급.xlsx");
 
     HttpHeaders headers = new HttpHeaders();
     headers.add(
-        HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=coupon_issuance_template.xlsx");
+        HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=쿠폰 발급.xlsx");
 
     return ResponseEntity.ok()
         .headers(headers)
