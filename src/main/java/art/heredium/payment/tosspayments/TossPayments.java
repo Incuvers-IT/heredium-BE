@@ -62,13 +62,20 @@ public class TossPayments implements PaymentService<PaymentsPayRequest> {
 
   @Override
   public void refund(Ticket ticket) {
+    this.handleRefund(ticket.getPgId(), ticket.getPayment());
+  }
+
+  @Override
+  public void refund(String paymentKey, String paymentOrderId, PaymentType paymentType) {
+    this.handleRefund(paymentKey, paymentType);
+  }
+
+  private void handleRefund(String paymentKey, PaymentType paymentType) {
     TossPaymentsRefundRequest payloadMap = new TossPaymentsRefundRequest();
     payloadMap.setCancelReason("환불");
-
     try {
-      client.refund(getAuthorization(ticket.getPayment()), ticket.getPgId(), payloadMap);
+      client.refund(getAuthorization(paymentType), paymentKey, payloadMap);
     } catch (FeignException e) {
-      e.printStackTrace();
       throw new ApiException(ErrorCode.BAD_REQUEST, e.responseBody());
     }
   }

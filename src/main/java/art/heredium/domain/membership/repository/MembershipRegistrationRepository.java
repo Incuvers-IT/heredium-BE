@@ -13,6 +13,7 @@ import org.springframework.stereotype.Repository;
 import art.heredium.domain.account.entity.Account;
 import art.heredium.domain.membership.entity.MembershipRegistration;
 import art.heredium.domain.membership.entity.PaymentStatus;
+import art.heredium.domain.membership.entity.RegistrationType;
 
 @Repository
 public interface MembershipRegistrationRepository
@@ -48,4 +49,11 @@ public interface MembershipRegistrationRepository
 
   List<MembershipRegistration> findByExpirationDateBeforeAndPaymentStatusNot(
       LocalDate date, PaymentStatus status);
+
+  Optional<MembershipRegistration>
+      findByAccountIdAndRegistrationTypeAndPaymentStatusAndExpirationDateAfter(
+          Long accountId,
+          RegistrationType registrationType,
+          PaymentStatus paymentStatus,
+          LocalDate date);
 }

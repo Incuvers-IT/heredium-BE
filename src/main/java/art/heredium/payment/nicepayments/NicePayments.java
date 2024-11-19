@@ -69,12 +69,21 @@ public class NicePayments implements PaymentService<PaymentsPayRequest> {
 
   @Override
   public void refund(Ticket ticket) {
+    this.handleRefund(ticket.getPgId(), ticket.getUuid());
+  }
+
+  @Override
+  public void refund(String paymentKey, String paymentOrderId, PaymentType paymentType) {
+    this.handleRefund(paymentKey, paymentOrderId);
+  }
+
+  private void handleRefund(String paymentKey, String paymentOrderId) {
     String authorization = getAuthorization();
 
     try {
       NicePaymentsRefundResponse refundResponse =
           nicePaymentsClient.refund(
-              authorization, ticket.getPgId(), NicePaymentsRefundRequest.from(ticket.getUuid()));
+              authorization, paymentKey, NicePaymentsRefundRequest.from(paymentOrderId));
       if (!NICE_PAYMENT_SUCCESS_CODE.equals(refundResponse.getResultCode())) {
         log.error(
             "An error occurred while refunding with NICE Payment: ErrorCode: {}, ErrorMessage: {}",
