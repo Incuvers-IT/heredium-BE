@@ -121,8 +121,7 @@ public class FileController {
     Resource resource = new ClassPathResource("쿠폰 발급.xlsx");
 
     HttpHeaders headers = new HttpHeaders();
-    headers.add(
-        HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=쿠폰 발급.xlsx");
+    headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=쿠폰 발급.xlsx");
 
     return ResponseEntity.ok()
         .headers(headers)
