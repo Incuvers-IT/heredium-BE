@@ -88,6 +88,12 @@ public enum PaymentType implements PersistableEnum<Integer> {
     service.refund(ticket);
   }
 
+  public void refund(final String paymentKey, final String paymentOrderId) {
+    validatePaymentMethod();
+    PaymentService service = (PaymentService) ApplicationBeanUtil.getBean(this.getSimpleName());
+    service.refund(paymentKey, paymentOrderId, this);
+  }
+
   public static class Converter extends GenericTypeConverter<PaymentType, Integer> {
     public Converter() {
       super(PaymentType.class);

@@ -67,6 +67,10 @@ public class CouponUsageService {
     return responseDtos;
   }
 
+  public List<CouponUsage> findByMembershipRegistrationIdAndIsUsedTrue(final long accountId) {
+    return this.couponUsageRepository.findByMembershipRegistrationIdAndIsUsedTrue(accountId);
+  }
+
   @Transactional(rollbackFor = Exception.class)
   public void assignCoupons(final long couponId, @NonNull List<Long> accountIds) {
     final Coupon coupon =
@@ -172,6 +176,7 @@ public class CouponUsageService {
         (accountId, account) -> {
           LocalDateTime couponStartedDate;
           LocalDateTime couponEndedDate;
+          MembershipRegistration membershipRegistration = null;
 
           if (source == CouponSource.MEMBERSHIP_PACKAGE) {
             couponStartedDate = now;
@@ -180,7 +185,7 @@ public class CouponUsageService {
             couponStartedDate = coupon.getStartedDate();
             couponEndedDate = coupon.getEndedDate();
           } else if (source == CouponSource.COMPANY) {
-            MembershipRegistration membershipRegistration =
+            membershipRegistration =
                 membershipRegistrationRepository
                     .findTopByAccountOrderByRegistrationDateDesc(account)
                     .orElse(null);
@@ -203,12 +208,26 @@ public class CouponUsageService {
 
           if (isPermanentCoupon) {
             CouponUsage couponUsage =
-                new CouponUsage(coupon, account, couponStartedDate, couponEndedDate, true, 0L);
+                new CouponUsage(
+                    coupon,
+                    account,
+                    membershipRegistration,
+                    couponStartedDate,
+                    couponEndedDate,
+                    true,
+                    0L);
             couponUsages.add(couponUsage);
           } else {
             for (int i = 0; i < numberOfUses; i++) {
               CouponUsage couponUsage =
-                  new CouponUsage(coupon, account, couponStartedDate, couponEndedDate, false, 0L);
+                  new CouponUsage(
+                      coupon,
+                      account,
+                      membershipRegistration,
+                      couponStartedDate,
+                      couponEndedDate,
+                      false,
+                      0L);
               couponUsages.add(couponUsage);
             }
           }
@@ -276,6 +295,11 @@ public class CouponUsageService {
       couponUsage.setUsedDate(null);
     }
     couponUsageRepository.save(couponUsage);
+  }
+
+  @Transactional(rollbackFor = Exception.class)
+  public List<CouponUsage> rollbackCouponDistribution(Long membershipRegistrationId) {
+    return this.couponUsageRepository.deleteByMembershipRegistrationId(membershipRegistrationId);
   }
 
   private void sendCouponUsedMessageToAlimTalk(

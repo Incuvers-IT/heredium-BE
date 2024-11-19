@@ -13,11 +13,14 @@ import lombok.NonNull;
 import lombok.Setter;
 import lombok.ToString;
 
+import org.springframework.lang.Nullable;
+
 import org.hibernate.annotations.Comment;
 import org.hibernate.annotations.DynamicInsert;
 
 import art.heredium.domain.account.entity.Account;
 import art.heredium.domain.common.entity.BaseEntity;
+import art.heredium.domain.membership.entity.MembershipRegistration;
 
 @Entity
 @Getter
@@ -40,6 +43,10 @@ public class CouponUsage extends BaseEntity {
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "account_id", nullable = false)
   private Account account;
+
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "membership_registration_id")
+  private MembershipRegistration membershipRegistration;
 
   @Comment("사용 여부")
   @Column(name = "is_used", nullable = false)
@@ -72,12 +79,14 @@ public class CouponUsage extends BaseEntity {
   public CouponUsage(
       @NonNull Coupon coupon,
       @NonNull Account account,
+      @Nullable MembershipRegistration membershipRegistration,
       @NonNull LocalDateTime deliveredDate,
       @NonNull LocalDateTime expirationDate,
       boolean isPermanent,
       long usedCount) {
     this.coupon = coupon;
     this.account = account;
+    this.membershipRegistration = membershipRegistration;
     this.deliveredDate = deliveredDate;
     this.expirationDate = expirationDate;
     this.uuid = UUID.randomUUID().toString();
