@@ -45,6 +45,7 @@ public class AccountInfoImpl implements CreateBody {
   public List<List<String>> body() {
     List<List<String>> bodyList1 = new ArrayList<>();
     DateTimeFormatter dtfd = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+    DateTimeFormatter dtfdWithTime = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     int cnt = 0;
     for (AccountWithMembershipInfoExcelDownloadResponse entity : list) {
       List<String> asList =
@@ -67,7 +68,7 @@ public class AccountInfoImpl implements CreateBody {
                   entity.getCreatedDate() != null ? entity.getCreatedDate().format(dtfd) : null),
               createString(
                   entity.getLastLoginDate() != null
-                      ? entity.getLastLoginDate().format(dtfd)
+                      ? entity.getLastLoginDate().format(dtfdWithTime)
                       : null),
               createString(entity.getUsageCount()),
               createString(entity.getMarketingConsent()));
