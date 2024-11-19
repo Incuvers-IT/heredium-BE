@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.*;
 import art.heredium.domain.coupon.model.dto.request.CouponAssignRequest;
 import art.heredium.domain.coupon.model.dto.request.NonMembershipCouponCreateRequest;
 import art.heredium.domain.coupon.model.dto.response.CouponResponse;
+import art.heredium.domain.coupon.model.dto.response.CouponUsageCheckResponse;
 import art.heredium.domain.coupon.model.dto.response.CouponUsageResponse;
 import art.heredium.service.CouponService;
 import art.heredium.service.CouponUsageService;
@@ -50,5 +51,11 @@ public class AdminCouponController {
       @RequestBody final CouponAssignRequest request) {
     this.couponUsageService.assignCoupons(request.getCouponId(), request.getAccountIds());
     return ResponseEntity.ok().build();
+  }
+
+  @GetMapping("/check-usage/account/{accountId}")
+  public ResponseEntity<CouponUsageCheckResponse> checkAccountCouponUsage(
+      @PathVariable("accountId") final long accountId) {
+    return ResponseEntity.ok(this.couponUsageService.checkActiveMembershipCouponUsage(accountId));
   }
 }
