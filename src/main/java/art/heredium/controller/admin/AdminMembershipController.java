@@ -17,7 +17,9 @@ import art.heredium.core.annotation.SupervisorPermission;
 import art.heredium.domain.membership.model.dto.request.GetAllActiveMembershipsRequest;
 import art.heredium.domain.membership.model.dto.request.MembershipUpdateRequest;
 import art.heredium.domain.membership.model.dto.response.ActiveMembershipRegistrationsResponse;
+import art.heredium.domain.membership.model.dto.response.MembershipRefundResponse;
 import art.heredium.excel.service.ExcelService;
+import art.heredium.service.MembershipPaymentService;
 import art.heredium.service.MembershipService;
 
 @RestController
@@ -27,6 +29,7 @@ import art.heredium.service.MembershipService;
 public class AdminMembershipController {
 
   private final MembershipService membershipService;
+  private final MembershipPaymentService membershipPaymentService;
   private final ExcelService excelService;
 
   @PutMapping("/{membership-id}/update-is-enabled")
@@ -50,5 +53,11 @@ public class AdminMembershipController {
       @Valid GetAllActiveMembershipsRequest request, @RequestParam("fileName") String fileName) {
     Map<String, Object> data = this.excelService.activeMembershipDownload(request, fileName);
     return new ModelAndView("xlsxView", data);
+  }
+
+  @PostMapping(value = "/{accountId}/refund")
+  public ResponseEntity<MembershipRefundResponse> refundMembership(
+      @PathVariable(value = "accountId") Long accountId) {
+    return ResponseEntity.ok(this.membershipPaymentService.refundMembership(accountId));
   }
 }
