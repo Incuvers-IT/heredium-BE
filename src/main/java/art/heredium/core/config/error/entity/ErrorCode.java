@@ -89,6 +89,7 @@ public enum ErrorCode {
   INVALID_EXCEL_COLUMNS(HttpStatus.BAD_REQUEST),
   POST_ALREADY_EXISTED(HttpStatus.BAD_REQUEST),
   INVALID_REGISTRATION_DATE(HttpStatus.BAD_REQUEST),
+  INVALID_MEMBERSHIP_TO_REFUND(HttpStatus.BAD_REQUEST),
   ;
   private HttpStatus status;
 
