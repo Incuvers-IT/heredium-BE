@@ -53,9 +53,9 @@ public class AdminCouponController {
     return ResponseEntity.ok().build();
   }
 
-  @GetMapping("/check-usage/account/{account-id}")
+  @GetMapping("/check-usage/account/{accountId}")
   public ResponseEntity<CouponUsageCheckResponse> checkAccountCouponUsage(
-      @PathVariable("account-id") final long accountId) {
+      @PathVariable("accountId") final long accountId) {
     return ResponseEntity.ok(this.couponUsageService.checkActiveMembershipCouponUsage(accountId));
   }
 }
