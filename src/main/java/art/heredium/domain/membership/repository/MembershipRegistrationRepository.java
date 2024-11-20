@@ -56,4 +56,7 @@ public interface MembershipRegistrationRepository
           RegistrationType registrationType,
           PaymentStatus paymentStatus,
           LocalDate date);
+
+  Optional<MembershipRegistration> findByAccountIdAndPaymentStatusAndExpirationDateAfter(
+      Long accountId, PaymentStatus paymentStatus, LocalDate date);
 }

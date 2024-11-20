@@ -24,10 +24,12 @@ import art.heredium.domain.coupon.entity.Coupon;
 import art.heredium.domain.coupon.entity.CouponSource;
 import art.heredium.domain.coupon.entity.CouponUsage;
 import art.heredium.domain.coupon.model.dto.response.CouponResponseDto;
+import art.heredium.domain.coupon.model.dto.response.CouponUsageCheckResponse;
 import art.heredium.domain.coupon.model.dto.response.CouponUsageResponse;
 import art.heredium.domain.coupon.repository.CouponRepository;
 import art.heredium.domain.coupon.repository.CouponUsageRepository;
 import art.heredium.domain.membership.entity.MembershipRegistration;
+import art.heredium.domain.membership.entity.PaymentStatus;
 import art.heredium.domain.membership.repository.MembershipRegistrationRepository;
 import art.heredium.ncloud.bean.HerediumAlimTalk;
 import art.heredium.ncloud.type.AlimTalkTemplate;
@@ -338,5 +340,24 @@ public class CouponUsageService {
                         ? "상시할인"
                         : coupon.getCoupon().getNumberOfUses()))
         .collect(Collectors.joining("\n"));
+  }
+
+  public CouponUsageCheckResponse checkActiveMembershipCouponUsage(final long accountId) {
+    // Find active membership registration for the account
+    MembershipRegistration activeMembership =
+        membershipRegistrationRepository
+            .findByAccountIdAndPaymentStatusAndExpirationDateAfter(
+                accountId, PaymentStatus.COMPLETED, LocalDate.now())
+            .orElse(null);
+
+    if (activeMembership == null) {
+      return new CouponUsageCheckResponse(false);
+    }
+
+    // Use existing method to check for used coupons
+    List<CouponUsage> usedCoupons =
+        findByMembershipRegistrationIdAndIsUsedTrue(activeMembership.getId());
+
+    return new CouponUsageCheckResponse(!usedCoupons.isEmpty());
   }
 }
