@@ -99,6 +99,7 @@ public class MembershipPaymentService {
                         String.format(
                             "Active membership registration of accountId %s not found",
                             accountId)));
+    this.validateMembershipRegistrationForRefund(membershipRegistration);
     String paymentKey = membershipRegistration.getPaymentKey();
     String paymentOrderId = membershipRegistration.getPaymentOrderId();
     List<CouponUsageResponse> rolledBackCouponUsageResponses = new ArrayList<>();
@@ -115,6 +116,39 @@ public class MembershipPaymentService {
         .paymentType(membershipRegistration.getPaymentType())
         .rolledBackCoupons(rolledBackCouponUsageResponses)
         .build();
+  }
+
+  private void validateMembershipRegistrationForRefund(
+      @NonNull final MembershipRegistration membershipRegistration) {
+    final PaymentType paymentType = membershipRegistration.getPaymentType();
+    if (paymentType == null) {
+      throw new ApiException(
+          ErrorCode.INVALID_MEMBERSHIP_TO_REFUND,
+          String.format(
+              "Failed to refund membership: paymentType is null, membershipId: %s",
+              membershipRegistration.getId()));
+    }
+    final String paymentKey = membershipRegistration.getPaymentKey();
+    final String paymentOrderId = membershipRegistration.getPaymentOrderId();
+
+    // INICIS and TOSSPAYMENTS require paymentKey
+    if ((paymentType == PaymentType.INICIS || paymentType == PaymentType.TOSSPAYMENTS)
+        && paymentKey == null) {
+      throw new ApiException(
+          ErrorCode.INVALID_MEMBERSHIP_TO_REFUND,
+          String.format(
+              "Failed to refund membership: If paymentType is %s, paymentKey must not be null, membershipId: %s",
+              paymentType, membershipRegistration.getId()));
+    }
+
+    // NICEPAYMENTS requires both paymentKey and paymentOrderId
+    if (paymentType == PaymentType.NICEPAYMENTS && (paymentOrderId == null || paymentKey == null)) {
+      throw new ApiException(
+          ErrorCode.INVALID_MEMBERSHIP_TO_REFUND,
+          String.format(
+              "Failed to refund membership: If paymentType is %s, paymentKey and paymentOrderId must not be null, membershipId: %s",
+              paymentType, membershipRegistration.getId()));
+    }
   }
 
   private List<CouponUsage> deliverCouponsToUser(
