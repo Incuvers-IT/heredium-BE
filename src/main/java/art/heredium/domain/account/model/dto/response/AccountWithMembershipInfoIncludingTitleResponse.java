@@ -46,6 +46,9 @@ public class AccountWithMembershipInfoIncludingTitleResponse {
   @JsonProperty("amount")
   private Long amount;
 
+  @JsonProperty("account_id")
+  private Long accountId;
+
   public AccountWithMembershipInfoIncludingTitleResponse(
       final String membershipName,
       final String title,
@@ -57,7 +60,8 @@ public class AccountWithMembershipInfoIncludingTitleResponse {
       final String email,
       final String name,
       final String phone,
-      final Long amount) {
+      final Long amount,
+      final Long accountId) {
     this.membershipName = membershipName;
     this.title = title;
     this.paymentStatus = paymentStatus != null ? paymentStatus.getDesc() : null;
@@ -69,5 +73,6 @@ public class AccountWithMembershipInfoIncludingTitleResponse {
     this.name = name;
     this.phone = phone;
     this.amount = amount;
+    this.accountId = accountId;
   }
 }
