@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import art.heredium.domain.membership.entity.PaymentStatus;
+import art.heredium.domain.membership.entity.RegistrationType;
 
 @Getter
 @NoArgsConstructor
@@ -49,6 +50,9 @@ public class AccountWithMembershipInfoIncludingTitleResponse {
   @JsonProperty("account_id")
   private Long accountId;
 
+  @JsonProperty("registration_type")
+  private RegistrationType registrationType;
+
   public AccountWithMembershipInfoIncludingTitleResponse(
       final String membershipName,
       final String title,
@@ -61,7 +65,8 @@ public class AccountWithMembershipInfoIncludingTitleResponse {
       final String name,
       final String phone,
       final Long amount,
-      final Long accountId) {
+      final Long accountId,
+      final RegistrationType registrationType) {
     this.membershipName = membershipName;
     this.title = title;
     this.paymentStatus = paymentStatus != null ? paymentStatus.getDesc() : null;
@@ -74,5 +79,6 @@ public class AccountWithMembershipInfoIncludingTitleResponse {
     this.phone = phone;
     this.amount = amount;
     this.accountId = accountId;
+    this.registrationType = registrationType;
   }
 }
