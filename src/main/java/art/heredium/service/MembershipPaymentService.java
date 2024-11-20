@@ -85,7 +85,6 @@ public class MembershipPaymentService {
 
   @Transactional(rollbackFor = Exception.class)
   public MembershipRefundResponse refundMembership(final long accountId) {
-    this.validateCouponUsagesForRefund(accountId);
     final MembershipRegistration membershipRegistration =
         this.membershipRegistrationRepository
             .findByAccountIdAndRegistrationTypeAndPaymentStatusAndExpirationDateAfter(
@@ -116,17 +115,6 @@ public class MembershipPaymentService {
         .paymentType(membershipRegistration.getPaymentType())
         .rolledBackCoupons(rolledBackCouponUsageResponses)
         .build();
-  }
-
-  private void validateCouponUsagesForRefund(final long membershipRegistrationId) {
-    final List<CouponUsage> usedCoupons =
-        this.couponUsageService.findByMembershipRegistrationIdAndIsUsedTrue(
-            membershipRegistrationId);
-    if (!usedCoupons.isEmpty()) {
-      throw new ApiException(
-          ErrorCode.INVALID_MEMBERSHIP_REGISTRATION_FOR_REFUND,
-          "Cannot refund membership registration when user already used coupons");
-    }
   }
 
   private List<CouponUsage> deliverCouponsToUser(
