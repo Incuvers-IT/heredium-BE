@@ -166,7 +166,8 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
                 JPAExpressions.select(ticket.price.sum())
                     .from(ticket)
                     .where(ticket.account.eq(account)),
-                account.id))
+                account.id,
+                membershipRegistration.registrationType))
         .from(account)
         .innerJoin(account.accountInfo, accountInfo)
         .innerJoin(membershipRegistration)
