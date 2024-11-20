@@ -20,7 +20,7 @@ public class AccountWithMembershipInfoImpl implements CreateBody {
 
   @Override
   public List<String> head() {
-    List<String> headList = Arrays.asList("NO", "멤버십", "아이디", "이름", "연락처", "최근로그인", "입장횟수", "생성일시");
+    List<String> headList = Arrays.asList("NO", "멤버십", "계정", "이름", "연락처", "최근로그인", "입장횟수", "생성일시");
     return new ArrayList<>(headList);
   }
 
@@ -34,7 +34,7 @@ public class AccountWithMembershipInfoImpl implements CreateBody {
           Arrays.asList(
               createString(list.size() - (cnt++)),
               createString(entity.getMembershipName()),
-              createString(entity.getId()),
+              createString(entity.getEmail()),
               createString(entity.getName()),
               createString(entity.getPhone()),
               createString(
