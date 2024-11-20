@@ -109,6 +109,8 @@ public class MembershipPaymentService {
       rolledBackCouponUsageResponses =
           rolledBackCoupons.stream().map(CouponUsageResponse::new).collect(Collectors.toList());
     }
+    membershipRegistration.updatePaymentStatus(PaymentStatus.REFUND);
+    this.membershipRegistrationRepository.save(membershipRegistration);
     membershipRegistration.getPaymentType().refund(paymentKey, paymentOrderId);
     return MembershipRefundResponse.builder()
         .paymentKey(paymentKey)
