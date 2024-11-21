@@ -1,6 +1,5 @@
 package art.heredium.domain.membership.repository;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -140,7 +139,8 @@ public class MembershipRegistrationRepositoryImpl
 
   private BooleanExpression isNotExpired() {
     QMembershipRegistration membershipRegistration = QMembershipRegistration.membershipRegistration;
-    DateTimeExpression<LocalDate> now = DateTimeExpression.currentTimestamp(LocalDate.class);
+    DateTimeExpression<LocalDateTime> now =
+        DateTimeExpression.currentTimestamp(LocalDateTime.class);
     return now.before(membershipRegistration.expirationDate);
   }
 
@@ -155,12 +155,11 @@ public class MembershipRegistrationRepositoryImpl
   private BooleanExpression signedUpDateBetween(LocalDateTime from, LocalDateTime to) {
     QMembershipRegistration membershipRegistration = QMembershipRegistration.membershipRegistration;
     if (from != null && to != null) {
-      return membershipRegistration.registrationDate.between(
-          LocalDate.from(from), LocalDate.from(to));
+      return membershipRegistration.registrationDate.between(from, to);
     } else if (from != null) {
-      return membershipRegistration.registrationDate.goe(LocalDate.from(from));
+      return membershipRegistration.registrationDate.goe(from);
     } else if (to != null) {
-      return membershipRegistration.registrationDate.loe(LocalDate.from(to));
+      return membershipRegistration.registrationDate.loe(to);
     }
     return null;
   }

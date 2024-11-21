@@ -505,7 +505,7 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
     QMembership membership = QMembership.membership;
     QCompany company = QCompany.company;
 
-    LocalDate currentDate = LocalDate.now();
+    LocalDateTime currentDate = LocalDateTime.now();
 
     return queryFactory
         .select(
@@ -611,11 +611,11 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
   private BooleanExpression paymentDateBetween(LocalDateTime from, LocalDateTime to) {
     QMembershipRegistration membershipRegistration = QMembershipRegistration.membershipRegistration;
     if (from != null && to != null) {
-      return membershipRegistration.paymentDate.between(LocalDate.from(from), LocalDate.from(to));
+      return membershipRegistration.paymentDate.between(from, to);
     } else if (from != null) {
-      return membershipRegistration.paymentDate.goe(LocalDate.from(from));
+      return membershipRegistration.paymentDate.goe(from);
     } else if (to != null) {
-      return membershipRegistration.paymentDate.loe(LocalDate.from(to));
+      return membershipRegistration.paymentDate.loe(to);
     }
     return null;
   }
@@ -701,7 +701,7 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
       QAccount account = QAccount.account;
       QMembershipRegistration membershipRegistration =
           QMembershipRegistration.membershipRegistration;
-      LocalDate currentDate = LocalDate.now();
+      LocalDateTime currentDate = LocalDateTime.now();
 
       return JPAExpressions.selectOne()
           .from(membershipRegistration)
@@ -770,7 +770,7 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
             qMembershipRegistration
                 .account
                 .eq(account)
-                .and(qMembershipRegistration.expirationDate.goe(LocalDate.now()))
+                .and(qMembershipRegistration.expirationDate.goe(LocalDateTime.now()))
                 .and(qMembershipRegistration.paymentStatus.eq(PaymentStatus.COMPLETED)))
         .leftJoin(qMembershipRegistration.membership, qMembership)
         .leftJoin(qMembershipRegistration.company, qCompany)

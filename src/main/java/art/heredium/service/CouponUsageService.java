@@ -2,6 +2,7 @@ package art.heredium.service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -199,7 +200,9 @@ public class CouponUsageService {
 
             couponStartedDate =
                 registrationDate != null
-                    ? registrationDate.isAfter(now) ? registrationDate.atStartOfDay() : now
+                    ? registrationDate.isAfter(now)
+                        ? registrationDate
+                        : now
                     : now;
             couponEndedDate = couponStartedDate.plusDays(coupon.getPeriodInDays());
           } else {

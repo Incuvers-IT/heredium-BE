@@ -352,10 +352,10 @@ public class CompanyService {
         request.getTitle(),
         account,
         company,
-        request.getStartDate(),
-        request.getStartDate().plusDays(DEFAULT_MEMBERSHIP_PERIOD),
+        request.getStartDate().atStartOfDay(),
+        request.getStartDate().plusDays(DEFAULT_MEMBERSHIP_PERIOD).atTime(23, 59, 59),
         PaymentStatus.COMPLETED,
-        request.getPaymentDate(),
+        request.getPaymentDate().atStartOfDay(),
         RegistrationType.COMPANY,
         request.getPrice());
   }
