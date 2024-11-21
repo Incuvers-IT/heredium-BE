@@ -192,16 +192,14 @@ public class CouponUsageService {
                     .findTopByAccountOrderByRegistrationDateDesc(account)
                     .orElse(null);
 
-            LocalDate registrationDate =
+            LocalDateTime registrationDate =
                 membershipRegistration != null
                     ? membershipRegistration.getRegistrationDate()
                     : null;
 
             couponStartedDate =
                 registrationDate != null
-                    ? registrationDate.isAfter(now.toLocalDate())
-                        ? registrationDate.atStartOfDay()
-                        : now
+                    ? registrationDate.isAfter(now) ? registrationDate.atStartOfDay() : now
                     : now;
             couponEndedDate = couponStartedDate.plusDays(coupon.getPeriodInDays());
           } else {

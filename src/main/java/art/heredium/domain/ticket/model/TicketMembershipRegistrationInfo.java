@@ -1,6 +1,6 @@
 package art.heredium.domain.ticket.model;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -14,6 +14,6 @@ import lombok.Setter;
 public class TicketMembershipRegistrationInfo {
   private Long id;
   private String name;
-  private LocalDate registrationDate;
-  private LocalDate expirationDate;
+  private LocalDateTime registrationDate;
+  private LocalDateTime expirationDate;
 }
