@@ -1,6 +1,8 @@
 package art.heredium.service;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -167,13 +169,15 @@ public class MembershipPaymentService {
       @NonNull MembershipRegistration membershipRegistration,
       @NonNull String paymentKey,
       @NonNull PaymentType paymentType) {
-    final LocalDate now = LocalDate.now();
+    final LocalDateTime now = LocalDateTime.now();
     membershipRegistration.updateRegistrationDate(now);
     membershipRegistration.updateExpirationDate(
         now.plusDays(
-            Optional.ofNullable(membershipRegistration.getMembership())
-                .map(Membership::getPeriod)
-                .orElse(DEFAULT_MEMBERSHIP_PERIOD)));
+                Optional.ofNullable(membershipRegistration.getMembership())
+                    .map(Membership::getPeriod)
+                    .orElse(DEFAULT_MEMBERSHIP_PERIOD))
+            .toLocalDate()
+            .atTime(LocalTime.MAX));
     membershipRegistration.updatePaymentDate(now);
     membershipRegistration.updatePaymentStatus(PaymentStatus.COMPLETED);
     membershipRegistration.updatePaymentKey(paymentKey);

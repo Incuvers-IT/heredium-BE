@@ -1,6 +1,6 @@
 package art.heredium.domain.membership.model.dto.response;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -32,10 +32,10 @@ public class MembershipRegistrationResponse {
   private String companyName;
 
   @JsonProperty("registration_date")
-  private LocalDate registrationDate;
+  private LocalDateTime registrationDate;
 
   @JsonProperty("expiration_date")
-  private LocalDate expirationDate;
+  private LocalDateTime expirationDate;
 
   @JsonProperty("coupons")
   private List<CouponCountByTypeResponse> coupons = new ArrayList<>();

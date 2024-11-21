@@ -1,8 +1,9 @@
 package art.heredium.domain.coupon.model.dto.response;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 @Getter
 @AllArgsConstructor
