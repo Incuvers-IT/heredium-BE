@@ -23,17 +23,16 @@ public class AccountInfoImpl implements CreateBody {
     List<String> headList =
         Arrays.asList(
             "NO",
-            "멤버십 이름",
-            "제목",
-            "지불 상태",
-            "지불 날짜",
-            "시작 날짜",
-            "종 료일",
+            "멤버십",
+            "상태",
+            "결제일시",
+            "시작일시",
+            "종료일시",
             "쿠폰 수",
-            "이메일",
-            "이름",
-            "전화 번호",
             "금액",
+            "계정",
+            "이름",
+            "연락처",
             "생성 날짜",
             "마지막 로그인 날짜",
             "사용 횟수",
@@ -44,7 +43,7 @@ public class AccountInfoImpl implements CreateBody {
   @Override
   public List<List<String>> body() {
     List<List<String>> bodyList1 = new ArrayList<>();
-    DateTimeFormatter dtfd = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+    DateTimeFormatter dtfd = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
     DateTimeFormatter dtfdWithTime = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     int cnt = 0;
     for (AccountWithMembershipInfoExcelDownloadResponse entity : list) {
@@ -52,7 +51,6 @@ public class AccountInfoImpl implements CreateBody {
           Arrays.asList(
               createString(list.size() - (cnt++)),
               createString(entity.getMembershipName()),
-              createString(entity.getTitle()),
               createString(entity.getPaymentStatus()),
               createString(
                   entity.getPaymentDate() != null ? entity.getPaymentDate().format(dtfd) : null),
@@ -60,10 +58,10 @@ public class AccountInfoImpl implements CreateBody {
                   entity.getStartDate() != null ? entity.getStartDate().format(dtfd) : null),
               createString(entity.getEndDate() != null ? entity.getEndDate().format(dtfd) : null),
               createString(entity.getNumberOfUsedCoupons()),
+              createString(entity.getAmount()),
               createString(entity.getEmail()),
               createString(entity.getName()),
               createString(entity.getPhone()),
-              createString(entity.getAmount()),
               createString(
                   entity.getCreatedDate() != null ? entity.getCreatedDate().format(dtfd) : null),
               createString(
