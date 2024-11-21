@@ -29,9 +29,7 @@ import art.heredium.domain.account.entity.QAccountInfo;
 import art.heredium.domain.account.entity.QSleeperInfo;
 import art.heredium.domain.account.model.dto.AccountMembershipRegistrationInfo;
 import art.heredium.domain.account.model.dto.request.*;
-import art.heredium.domain.account.model.dto.request.GetAccountWithMembershipInfoRequest;
 import art.heredium.domain.account.model.dto.response.*;
-import art.heredium.domain.account.model.dto.response.AccountWithMembershipInfoResponse;
 import art.heredium.domain.company.entity.QCompany;
 import art.heredium.domain.coupon.entity.CouponSource;
 import art.heredium.domain.coupon.entity.CouponType;
@@ -163,9 +161,28 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
                 account.email,
                 accountInfo.name,
                 accountInfo.phone,
-                JPAExpressions.select(ticket.price.sum())
-                    .from(ticket)
-                    .where(ticket.account.eq(account)),
+                Expressions.numberTemplate(
+                    Long.class,
+                    "COALESCE({0}, 0) + COALESCE({1}, 0)",
+                    JPAExpressions.select(ticket.price.sum())
+                        .from(ticket)
+                        .where(
+                            ticket
+                                .account
+                                .eq(account)
+                                .and(
+                                    ticket.state.notIn(
+                                        TicketStateType.USER_REFUND,
+                                        TicketStateType.ADMIN_REFUND))),
+                    JPAExpressions.select(membershipRegistration.price.sum())
+                        .from(membershipRegistration)
+                        .where(
+                            membershipRegistration
+                                .account
+                                .eq(account)
+                                .and(
+                                    membershipRegistration.paymentStatus.eq(
+                                        PaymentStatus.COMPLETED)))),
                 account.id,
                 membershipRegistration.registrationType))
         .from(account)
