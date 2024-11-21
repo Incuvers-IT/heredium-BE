@@ -1,6 +1,6 @@
 package art.heredium.domain.membership.entity;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 import javax.persistence.*;
@@ -55,11 +55,11 @@ public class MembershipRegistration extends BaseEntity {
 
   @Comment("가입일시")
   @Column(name = "registration_date")
-  private LocalDate registrationDate;
+  private LocalDateTime registrationDate;
 
   @Comment("만료일시")
   @Column(name = "expiration_date")
-  private LocalDate expirationDate;
+  private LocalDateTime expirationDate;
 
   @Comment("결제 상태")
   @Column(name = "payment_status")
@@ -67,7 +67,7 @@ public class MembershipRegistration extends BaseEntity {
   private PaymentStatus paymentStatus;
 
   @Column(name = "payment_date")
-  private LocalDate paymentDate;
+  private LocalDateTime paymentDate;
 
   @Column(name = "payment_order_id", length = 36, unique = true, updatable = false)
   private String paymentOrderId;
@@ -92,10 +92,10 @@ public class MembershipRegistration extends BaseEntity {
       String title,
       @NonNull Account account,
       @NonNull Company company,
-      @NonNull LocalDate registrationDate,
-      @NonNull LocalDate expirationDate,
+      @NonNull LocalDateTime registrationDate,
+      @NonNull LocalDateTime expirationDate,
       @NonNull PaymentStatus paymentStatus,
-      @NonNull LocalDate paymentDate,
+      @NonNull LocalDateTime paymentDate,
       @NonNull RegistrationType registrationType,
       @NonNull Long price) {
     this.title = title;
@@ -127,11 +127,11 @@ public class MembershipRegistration extends BaseEntity {
   public MembershipRegistration(
       @NonNull Account account,
       @NonNull Membership membership,
-      @NonNull LocalDate registrationDate,
-      @NonNull LocalDate expirationDate,
+      @NonNull LocalDateTime registrationDate,
+      @NonNull LocalDateTime expirationDate,
       @NonNull RegistrationType registrationType,
       @NonNull PaymentStatus paymentStatus,
-      @NonNull LocalDate paymentDate,
+      @NonNull LocalDateTime paymentDate,
       @NonNull String paymentOrderId) {
     this.uuid = UUID.randomUUID().toString();
     this.account = account;
@@ -147,8 +147,8 @@ public class MembershipRegistration extends BaseEntity {
   public MembershipRegistration(
       @NonNull Account account,
       @NonNull Company company,
-      @NonNull LocalDate registrationDate,
-      @NonNull LocalDate expirationDate,
+      @NonNull LocalDateTime registrationDate,
+      @NonNull LocalDateTime expirationDate,
       @NonNull RegistrationType registrationType) {
     this.uuid = UUID.randomUUID().toString();
     this.account = account;
@@ -159,11 +159,11 @@ public class MembershipRegistration extends BaseEntity {
     // TODO: Add paymentStatus and paymentDate
   }
 
-  public void updateRegistrationDate(LocalDate registrationDate) {
+  public void updateRegistrationDate(LocalDateTime registrationDate) {
     this.registrationDate = registrationDate;
   }
 
-  public void updateExpirationDate(LocalDate expirationDate) {
+  public void updateExpirationDate(LocalDateTime expirationDate) {
     this.expirationDate = expirationDate;
   }
 
@@ -171,7 +171,7 @@ public class MembershipRegistration extends BaseEntity {
     this.paymentStatus = paymentStatus;
   }
 
-  public void updatePaymentDate(LocalDate paymentDate) {
+  public void updatePaymentDate(LocalDateTime paymentDate) {
     this.paymentDate = paymentDate;
   }
 

@@ -1,6 +1,6 @@
 package art.heredium.domain.account.model.dto;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -19,8 +19,8 @@ public class AccountMembershipRegistrationInfo {
   private Long membershipRegistrationId;
 
   @JsonProperty("registration_date")
-  private LocalDate registrationDate;
+  private LocalDateTime registrationDate;
 
   @JsonProperty("expiration_date")
-  private LocalDate expirationDate;
+  private LocalDateTime expirationDate;
 }
