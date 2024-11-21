@@ -6,7 +6,7 @@ public enum PaymentStatus {
   PENDING("보류중"),
   COMPLETED("가입 완료"),
   REFUND("환불 완료"),
-  EXPIRED("만료"),
+  EXPIRED("기간 만료"),
   ;
 
   @Getter private String desc;
