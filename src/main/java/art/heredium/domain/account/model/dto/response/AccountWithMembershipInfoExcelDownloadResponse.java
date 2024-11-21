@@ -24,13 +24,13 @@ public class AccountWithMembershipInfoExcelDownloadResponse {
   private String paymentStatus;
 
   @JsonProperty("payment_date")
-  private LocalDate paymentDate;
+  private LocalDateTime paymentDate;
 
   @JsonProperty("start_date")
-  private LocalDate startDate;
+  private LocalDateTime startDate;
 
   @JsonProperty("end_date")
-  private LocalDate endDate;
+  private LocalDateTime endDate;
 
   @JsonProperty("number_of_coupons")
   private Long numberOfUsedCoupons;
@@ -63,9 +63,9 @@ public class AccountWithMembershipInfoExcelDownloadResponse {
       final String membershipName,
       final String title,
       final PaymentStatus paymentStatus,
-      final LocalDate paymentDate,
-      final LocalDate startDate,
-      final LocalDate endDate,
+      final LocalDateTime paymentDate,
+      final LocalDateTime startDate,
+      final LocalDateTime endDate,
       final Long numberOfUsedCoupons,
       final String email,
       final String name,
