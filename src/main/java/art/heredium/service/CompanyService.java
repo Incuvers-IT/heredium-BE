@@ -154,8 +154,8 @@ public class CompanyService {
       if (selectedAccount != null && !successfulAccountIds.contains(selectedAccount.getId())) {
         // Check if the account already has an active membership
         Optional<MembershipRegistration> activeMembership =
-            membershipRegistrationRepository.findByAccountAndExpirationDateAfter(
-                selectedAccount, LocalDateTime.now());
+            membershipRegistrationRepository.findCompletedOneByAccountIdAndNotExpired(
+                selectedAccount.getId());
 
         if (activeMembership.isPresent()) {
           companyMembershipRegistrationResponse
@@ -402,8 +402,7 @@ public class CompanyService {
       // If account found, check for active membership
       if (selectedAccount != null) {
         Optional<MembershipRegistration> activeMembership =
-            membershipRegistrationRepository.findByAccountAndExpirationDateAfter(
-                selectedAccount, LocalDateTime.now());
+            membershipRegistrationRepository.findCompletedOneByAccountIdAndNotExpired(selectedAccount.getId());
 
         if (activeMembership.isPresent()) {
           String identifier = email != null ? email : phone;
