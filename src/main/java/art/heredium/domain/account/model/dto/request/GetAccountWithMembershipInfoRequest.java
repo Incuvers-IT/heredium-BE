@@ -12,7 +12,6 @@ public class GetAccountWithMembershipInfoRequest {
   private LocalDateTime signUpDateFrom;
   private LocalDateTime signUpDateTo;
   private Boolean hasNumberOfEntries;
-  private Boolean alreadyLoginedBefore;
   private Boolean alreadyDeliveredAdminSiteCoupon;
   private Boolean hasMembership;
   private String text;
