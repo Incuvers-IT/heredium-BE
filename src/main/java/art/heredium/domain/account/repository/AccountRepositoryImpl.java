@@ -183,7 +183,8 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
                                     membershipRegistration.paymentStatus.eq(
                                         PaymentStatus.COMPLETED)))),
                 account.id,
-                membershipRegistration.registrationType))
+                membershipRegistration.registrationType,
+                membershipRegistration.id))
         .from(account)
         .innerJoin(account.accountInfo, accountInfo)
         .innerJoin(membershipRegistration)
