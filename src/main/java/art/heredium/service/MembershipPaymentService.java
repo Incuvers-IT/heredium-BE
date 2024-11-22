@@ -25,7 +25,6 @@ import art.heredium.domain.coupon.model.dto.response.CouponUsageResponse;
 import art.heredium.domain.membership.entity.Membership;
 import art.heredium.domain.membership.entity.MembershipRegistration;
 import art.heredium.domain.membership.entity.PaymentStatus;
-import art.heredium.domain.membership.entity.RegistrationType;
 import art.heredium.domain.membership.model.dto.request.MembershipConfirmPaymentRequest;
 import art.heredium.domain.membership.model.dto.response.MembershipConfirmPaymentResponse;
 import art.heredium.domain.membership.model.dto.response.MembershipRefundResponse;
@@ -86,21 +85,17 @@ public class MembershipPaymentService {
   }
 
   @Transactional(rollbackFor = Exception.class)
-  public MembershipRefundResponse refundMembership(final long accountId) {
+  public MembershipRefundResponse refundMembership(final long membershipRegistrationId) {
     final MembershipRegistration membershipRegistration =
         this.membershipRegistrationRepository
-            .findByAccountIdAndRegistrationTypeAndPaymentStatusAndExpirationDateAfter(
-                accountId,
-                RegistrationType.MEMBERSHIP_PACKAGE,
-                PaymentStatus.COMPLETED,
-                LocalDateTime.now())
+            .findById(membershipRegistrationId)
             .orElseThrow(
                 () ->
                     new ApiException(
                         ErrorCode.MEMBERSHIP_REGISTRATION_NOT_FOUND,
                         String.format(
-                            "Active membership registration of accountId %s not found",
-                            accountId)));
+                            "Active membership registration of membershipRegistrationId %s not found",
+                            membershipRegistrationId)));
     this.validateMembershipRegistrationForRefund(membershipRegistration);
     String paymentKey = membershipRegistration.getPaymentKey();
     String paymentOrderId = membershipRegistration.getPaymentOrderId();
@@ -124,6 +119,16 @@ public class MembershipPaymentService {
 
   private void validateMembershipRegistrationForRefund(
       @NonNull final MembershipRegistration membershipRegistration) {
+    final PaymentStatus paymentStatus = membershipRegistration.getPaymentStatus();
+    if (paymentStatus == PaymentStatus.PENDING || paymentStatus == PaymentStatus.EXPIRED) {
+      throw new ApiException(
+          ErrorCode.INVALID_MEMBERSHIP_TO_REFUND,
+          String.format("%s 상태의 멤버십은 환불할 수 없습니다.", paymentStatus.getDesc()));
+    }
+    if (paymentStatus == PaymentStatus.REFUND) {
+      throw new ApiException(ErrorCode.INVALID_MEMBERSHIP_TO_REFUND, "이미 환불이 완료된 멤버십입니다.");
+    }
+
     final PaymentType paymentType = membershipRegistration.getPaymentType();
     if (paymentType == null) {
       throw new ApiException(
