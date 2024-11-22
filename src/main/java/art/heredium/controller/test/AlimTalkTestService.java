@@ -156,7 +156,7 @@ public class AlimTalkTestService {
 
   private String buildMockedCouponDetails() {
     return String.format(
-        "- %s : %s%n- %s : %s, %s%n- %s : %s%n- %s : %s%n- %s : %s, %s%n- %s : %s",
+        "- %s : %s%n  %s : %s, %s%n  %s : %s%n- %s : %s%n  %s : %s, %s%n  %s : %s",
         "쿠폰명",
         "coupon 1",
         "할인혜택",
