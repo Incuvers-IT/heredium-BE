@@ -48,7 +48,7 @@ public class MembershipRegistrationService {
         AuthUtil.getCurrentUserAccountId().orElseThrow(() -> new ApiException(ANONYMOUS_USER));
     final MembershipRegistration membershipRegistration =
         this.membershipRegistrationRepository
-            .findByAccountIdAndNotExpired(accountId)
+            .findCompletedOneByAccountIdAndNotExpired(accountId)
             .orElseThrow(() -> new ApiException(ErrorCode.MEMBERSHIP_REGISTRATION_NOT_FOUND));
     final List<CouponUsage> couponUsages =
         this.couponUsageRepository.findByAccountIdAndIsUsedFalseAndNotExpiredAndSource(
@@ -62,7 +62,7 @@ public class MembershipRegistrationService {
         AuthUtil.getCurrentUserAccountId()
             .orElseThrow(() -> new ApiException(ErrorCode.ANONYMOUS_USER));
     final Optional<MembershipRegistration> existingMembershipRegistration =
-        this.membershipRegistrationRepository.findByAccountIdAndNotExpired(accountId);
+        this.membershipRegistrationRepository.findCompletedOneByAccountIdAndNotExpired(accountId);
     if (existingMembershipRegistration.isPresent()) {
       throw new ApiException(ErrorCode.MEMBERSHIP_REGISTRATION_ALREADY_EXISTS);
     }
