@@ -170,7 +170,7 @@ public class CouponUsageService {
     }
 
     LocalDateTime now = LocalDateTime.now();
-    Map<Account, List<CouponUsage>> accountsToSendAlimTalk = new HashMap<>();
+    Map<Account, CouponUsage> accountsToSendAlimTalk = new HashMap<>();
 
     accountMap.forEach(
         (accountId, account) -> {
@@ -229,7 +229,10 @@ public class CouponUsageService {
               couponUsages.add(couponUsage);
             }
           }
-          accountsToSendAlimTalk.put(account, couponUsages);
+          if (!couponUsages.isEmpty()) {
+            // Each account can only be assigned one coupon type
+            accountsToSendAlimTalk.put(account, couponUsages.get(0));
+          }
         });
     if (sendAlimtalk) {
       this.sendCouponDeliveredMessageToAlimTalk(accountsToSendAlimTalk);
@@ -239,33 +242,30 @@ public class CouponUsageService {
   }
 
   private void sendCouponDeliveredMessageToAlimTalk(
-      final Map<Account, List<CouponUsage>> accountsToSendAlimTalk) {
+      final Map<Account, CouponUsage> accountsToSendAlimTalk) {
     log.info("Start sendCouponDeliveredMessageToAlimTalk");
     Map<String, Map<String, String>> phonesAndMessagesToSendAlimTalk = new HashMap<>();
     try {
       accountsToSendAlimTalk.forEach(
-          (account, coupons) -> {
+          (account, coupon) -> {
             final Map<String, String> variables = new HashMap<>();
-            coupons.forEach(
-                coupon -> {
-                  variables.put("accountName", account.getAccountInfo().getName());
-                  variables.put("couponType", coupon.getCoupon().getCouponType().getDesc());
-                  variables.put("couponName", coupon.getCoupon().getName());
-                  variables.put(
-                      "discountPercent",
-                      coupon.getCoupon().getDiscountPercent() != 100
-                          ? coupon.getCoupon().getDiscountPercent() + "%"
-                          : "무료");
-                  variables.put(
-                      "couponStartDate", coupon.getDeliveredDate().format(COUPON_DATETIME_FORMAT));
-                  variables.put(
-                      "couponEndDate", coupon.getExpirationDate().format(COUPON_DATETIME_FORMAT));
-                  variables.put(
-                      "numberOfUses",
-                      coupon.isPermanent() ? "상시할인" : coupon.getCoupon().getNumberOfUses() + "회");
-                  variables.put("CSTel", herediumProperties.getTel());
-                  variables.put("CSEmail", herediumProperties.getEmail());
-                });
+            variables.put("accountName", account.getAccountInfo().getName());
+            variables.put("couponType", coupon.getCoupon().getCouponType().getDesc());
+            variables.put("couponName", coupon.getCoupon().getName());
+            variables.put(
+                "discountPercent",
+                coupon.getCoupon().getDiscountPercent() != 100
+                    ? coupon.getCoupon().getDiscountPercent() + "%"
+                    : "무료");
+            variables.put(
+                "couponStartDate", coupon.getDeliveredDate().format(COUPON_DATETIME_FORMAT));
+            variables.put(
+                "couponEndDate", coupon.getExpirationDate().format(COUPON_DATETIME_FORMAT));
+            variables.put(
+                "numberOfUses",
+                coupon.isPermanent() ? "상시할인" : coupon.getCoupon().getNumberOfUses() + "회");
+            variables.put("CSTel", herediumProperties.getTel());
+            variables.put("CSEmail", herediumProperties.getEmail());
             phonesAndMessagesToSendAlimTalk.put(account.getAccountInfo().getPhone(), variables);
           });
       this.alimTalk.sendAlimTalkWithoutTitle(

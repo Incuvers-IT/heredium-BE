@@ -221,22 +221,29 @@ public class MembershipPaymentService {
   }
 
   private String buildCouponDetails(List<CouponUsage> coupons) {
-    return coupons.stream()
+    // Group couponUsages by couponId to remove redundancy
+    final Map<Long, List<CouponUsage>> couponUsagesGroupedByCouponId =
+        coupons.stream()
+            .collect(Collectors.groupingBy(couponUsage -> couponUsage.getCoupon().getId()));
+    return couponUsagesGroupedByCouponId.values().stream()
         .map(
-            coupon ->
-                String.format(
-                    "- %s : %s%n- %s : %s, %s%n- %s : %s",
-                    "쿠폰명",
-                    coupon.getCoupon().getName(),
-                    "할인혜택",
-                    coupon.getCoupon().getCouponType().getDesc(),
-                    coupon.getCoupon().getDiscountPercent() != 100
-                        ? coupon.getCoupon().getDiscountPercent() + "%"
-                        : "무료",
-                    "사용횟수",
-                    Boolean.TRUE.equals(coupon.getCoupon().getIsPermanent())
-                        ? "상시할인"
-                        : coupon.getCoupon().getNumberOfUses() + "회"))
+            couponGroup -> {
+              // Only get the first coupon from each group
+              final CouponUsage coupon = couponGroup.get(0);
+              return String.format(
+                  "- %s : %s%n  %s : %s, %s%n  %s : %s",
+                  "쿠폰명",
+                  coupon.getCoupon().getName(),
+                  "할인혜택",
+                  coupon.getCoupon().getCouponType().getDesc(),
+                  coupon.getCoupon().getDiscountPercent() != 100
+                      ? coupon.getCoupon().getDiscountPercent() + "%"
+                      : "무료",
+                  "사용횟수",
+                  Boolean.TRUE.equals(coupon.getCoupon().getIsPermanent())
+                      ? "상시할인"
+                      : coupon.getCoupon().getNumberOfUses() + "회");
+            })
         .collect(Collectors.joining("\n"));
   }
 }
