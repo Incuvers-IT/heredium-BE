@@ -1,6 +1,5 @@
 package art.heredium.domain.membership.repository;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -37,7 +36,7 @@ public interface MembershipRegistrationRepository
   Optional<MembershipRegistration> findTopByAccountOrderByRegistrationDateDesc(Account account);
 
   Optional<MembershipRegistration> findByAccountAndExpirationDateAfter(
-      Account account, LocalDate date);
+      Account account, LocalDateTime date);
 
   Optional<MembershipRegistration> findByPaymentOrderId(String orderId);
 
@@ -48,15 +47,15 @@ public interface MembershipRegistrationRepository
       long accountId, PaymentStatus paymentStatus);
 
   List<MembershipRegistration> findByExpirationDateBeforeAndPaymentStatusNot(
-      LocalDate date, PaymentStatus status);
+      LocalDateTime date, PaymentStatus status);
 
   Optional<MembershipRegistration>
       findByAccountIdAndRegistrationTypeAndPaymentStatusAndExpirationDateAfter(
           Long accountId,
           RegistrationType registrationType,
           PaymentStatus paymentStatus,
-          LocalDate date);
+          LocalDateTime date);
 
   Optional<MembershipRegistration> findByAccountIdAndPaymentStatusAndExpirationDateAfter(
-      Long accountId, PaymentStatus paymentStatus, LocalDate date);
+      Long accountId, PaymentStatus paymentStatus, LocalDateTime date);
 }
