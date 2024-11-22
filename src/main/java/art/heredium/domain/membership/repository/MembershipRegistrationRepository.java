@@ -20,9 +20,10 @@ public interface MembershipRegistrationRepository
 
   @Query(
       value =
-          "SELECT mr from MembershipRegistration mr WHERE mr.account.id = :accountId AND mr.expirationDate >= CURRENT_TIMESTAMP" +
-                  " AND mr.paymentStatus = art.heredium.domain.membership.entity.PaymentStatus.COMPLETED")
-  Optional<MembershipRegistration> findCompletedOneByAccountIdAndNotExpired(@Param("accountId") Long accountId);
+          "SELECT mr from MembershipRegistration mr WHERE mr.account.id = :accountId AND mr.expirationDate >= CURRENT_TIMESTAMP"
+              + " AND mr.paymentStatus = art.heredium.domain.membership.entity.PaymentStatus.COMPLETED")
+  Optional<MembershipRegistration> findCompletedOneByAccountIdAndNotExpired(
+      @Param("accountId") Long accountId);
 
   @Query(
       "SELECT mr FROM MembershipRegistration mr WHERE mr.account.id IN :accountIds "

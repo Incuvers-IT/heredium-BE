@@ -28,7 +28,6 @@ import art.heredium.domain.coupon.model.dto.response.CouponUsageResponse;
 import art.heredium.domain.coupon.repository.CouponRepository;
 import art.heredium.domain.coupon.repository.CouponUsageRepository;
 import art.heredium.domain.membership.entity.MembershipRegistration;
-import art.heredium.domain.membership.entity.PaymentStatus;
 import art.heredium.domain.membership.repository.MembershipRegistrationRepository;
 import art.heredium.ncloud.bean.HerediumAlimTalk;
 import art.heredium.ncloud.type.AlimTalkTemplate;
