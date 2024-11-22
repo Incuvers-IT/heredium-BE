@@ -112,8 +112,8 @@ public class Scheduler {
   public void updateExpiredMemberships() {
     try {
       List<MembershipRegistration> expiredMemberships =
-          membershipRegistrationRepository.findByExpirationDateBeforeAndPaymentStatusNot(
-              LocalDateTime.now(), PaymentStatus.EXPIRED);
+          membershipRegistrationRepository.findByExpirationDateBeforeAndPaymentStatusNotIn(
+              LocalDateTime.now(), Arrays.asList(PaymentStatus.EXPIRED, PaymentStatus.REFUND));
 
       expiredMemberships.forEach(
           membership -> {
