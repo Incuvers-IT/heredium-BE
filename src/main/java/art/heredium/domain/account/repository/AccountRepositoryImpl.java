@@ -564,7 +564,6 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
         .where(
             createdDateBetween(dto.getSignUpDateFrom(), dto.getSignUpDateTo()),
             hasNumberOfEntries(dto.getHasNumberOfEntries()),
-            alreadyLoginedBefore(dto.getAlreadyLoginedBefore()),
             alreadyUsedCouponBefore(dto.getAlreadyDeliveredAdminSiteCoupon()),
             hasMembership(dto.getHasMembership()),
             searchByText(dto.getText()),
@@ -653,30 +652,6 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
                   .and(ticket.kind.in(TicketKindType.PROGRAM, TicketKindType.EXHIBITION)),
               ticket.state.eq(TicketStateType.USED))
           .exists();
-    }
-    return null;
-  }
-
-  private BooleanExpression alreadyLoginedBefore(Boolean alreadyLogined) {
-    if (Boolean.TRUE.equals(alreadyLogined)) {
-      QAccountInfo accountInfo = QAccountInfo.accountInfo;
-      QAccount account = QAccount.account;
-
-      // Subquery to find the latest login date for each email/phone combination
-      JPQLQuery<LocalDateTime> latestLoginSubquery =
-          JPAExpressions.select(accountInfo.lastLoginDate.max())
-              .from(account)
-              .innerJoin(account.accountInfo, accountInfo)
-              .where(
-                  account
-                      .email
-                      .eq(QAccount.account.email)
-                      .or(accountInfo.phone.eq(QAccountInfo.accountInfo.phone)));
-
-      return accountInfo
-          .lastLoginDate
-          .isNotNull()
-          .and(accountInfo.lastLoginDate.eq(latestLoginSubquery));
     }
     return null;
   }
