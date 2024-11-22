@@ -3,6 +3,7 @@ package art.heredium.service;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -154,7 +155,7 @@ public class CompanyService {
         // Check if the account already has an active membership
         Optional<MembershipRegistration> activeMembership =
             membershipRegistrationRepository.findByAccountAndExpirationDateAfter(
-                selectedAccount, LocalDate.now());
+                selectedAccount, LocalDateTime.now());
 
         if (activeMembership.isPresent()) {
           companyMembershipRegistrationResponse
@@ -402,7 +403,7 @@ public class CompanyService {
       if (selectedAccount != null) {
         Optional<MembershipRegistration> activeMembership =
             membershipRegistrationRepository.findByAccountAndExpirationDateAfter(
-                selectedAccount, LocalDate.now());
+                selectedAccount, LocalDateTime.now());
 
         if (activeMembership.isPresent()) {
           String identifier = email != null ? email : phone;

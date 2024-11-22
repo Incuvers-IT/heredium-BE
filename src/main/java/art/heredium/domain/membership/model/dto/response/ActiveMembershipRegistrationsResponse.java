@@ -1,6 +1,6 @@
 package art.heredium.domain.membership.model.dto.response;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -29,7 +29,7 @@ public class ActiveMembershipRegistrationsResponse {
   private String paymentStatus;
 
   @JsonProperty("payment_date")
-  private LocalDate paymentDate;
+  private LocalDateTime paymentDate;
 
   @JsonProperty("number_of_memberships")
   private Long numberOfMemberships;
@@ -52,7 +52,7 @@ public class ActiveMembershipRegistrationsResponse {
       final String name,
       final String phone,
       final PaymentStatus paymentStatus,
-      final LocalDate paymentDate,
+      final LocalDateTime paymentDate,
       final Long numberOfMemberships,
       final Long numberOfExhibitionsUsed,
       final Long numberOfProgramsUsed,
