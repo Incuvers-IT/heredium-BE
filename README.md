@@ -15,8 +15,8 @@
 #{detailCoupons}
 
 [//]: # "- 쿠폰명 : #{couponName}"
-[//]: # "- 할인혜택 : #{couponType}, {#{disCountPercent}%, #{무료}}"
-[//]: # "- 사용횟수 : {#{numberOfUses}회, #{상시할인}}"
+[//]: # "  할인혜택 : #{couponType}, {#{disCountPercent}%, #{무료}}"
+[//]: # "  사용횟수 : {#{numberOfUses}회, #{상시할인}}"
 
 클래식 음악과 컨템포러리 아트가 함께하는 헤레디움, 멤버십을 통해 더욱 다양한 전시와 공연을 만나보세요!
 
