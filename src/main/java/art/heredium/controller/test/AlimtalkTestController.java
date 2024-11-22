@@ -19,7 +19,7 @@ import art.heredium.ncloud.service.sens.biz.model.ncloud.NCloudBizAlimTalkTempla
 @RequiredArgsConstructor
 public class AlimtalkTestController {
   private static final List<String> ALLOWED_TEMPLATE_CODES_FOR_TESTING =
-      Arrays.asList("HEREDIUM021", "HEREDIUM018", "HEREDIUM019", "HEREDIUM020");
+      Arrays.asList("HEREDIUM021", "HEREDIUM018", "HEREDIUM022", "HEREDIUM020");
   final NCloudBizAlimTalk nCloudBizAlimTalk;
   final AlimTalkTestService alimTalkTestService;
 
@@ -42,6 +42,6 @@ public class AlimtalkTestController {
   private void validateTemplateCode(@NonNull String templateCode) {
     if (!ALLOWED_TEMPLATE_CODES_FOR_TESTING.contains(templateCode))
       throw new RuntimeException(
-          "Invalid template code. TemplateCode must in [HEREDIUM021, HEREDIUM018, HEREDIUM019, HEREDIUM020]");
+          "Invalid template code. TemplateCode must in [HEREDIUM021, HEREDIUM018, HEREDIUM022, HEREDIUM020]");
   }
 }
