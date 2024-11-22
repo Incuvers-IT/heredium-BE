@@ -20,8 +20,9 @@ public interface MembershipRegistrationRepository
 
   @Query(
       value =
-          "SELECT mr from MembershipRegistration mr WHERE mr.account.id = :accountId AND mr.expirationDate >= CURRENT_TIMESTAMP")
-  Optional<MembershipRegistration> findByAccountIdAndNotExpired(@Param("accountId") Long accountId);
+          "SELECT mr from MembershipRegistration mr WHERE mr.account.id = :accountId AND mr.expirationDate >= CURRENT_TIMESTAMP" +
+                  " AND mr.paymentStatus = art.heredium.domain.membership.entity.PaymentStatus.COMPLETED")
+  Optional<MembershipRegistration> findCompletedOneByAccountIdAndNotExpired(@Param("accountId") Long accountId);
 
   @Query(
       "SELECT mr FROM MembershipRegistration mr WHERE mr.account.id IN :accountIds "
@@ -35,9 +36,6 @@ public interface MembershipRegistrationRepository
 
   Optional<MembershipRegistration> findTopByAccountOrderByRegistrationDateDesc(Account account);
 
-  Optional<MembershipRegistration> findByAccountAndExpirationDateAfter(
-      Account account, LocalDateTime date);
-
   Optional<MembershipRegistration> findByPaymentOrderId(String orderId);
 
   List<MembershipRegistration> findByPaymentStatusInAndCreatedDateBefore(
@@ -46,8 +44,8 @@ public interface MembershipRegistrationRepository
   List<MembershipRegistration> findByAccountIdAndPaymentStatus(
       long accountId, PaymentStatus paymentStatus);
 
-  List<MembershipRegistration> findByExpirationDateBeforeAndPaymentStatusNot(
-      LocalDateTime date, PaymentStatus status);
+  List<MembershipRegistration> findByExpirationDateBeforeAndPaymentStatusNotIn(
+      LocalDateTime date, List<PaymentStatus> statuses);
 
   Optional<MembershipRegistration>
       findByAccountIdAndRegistrationTypeAndPaymentStatusAndExpirationDateAfter(
@@ -55,7 +53,4 @@ public interface MembershipRegistrationRepository
           RegistrationType registrationType,
           PaymentStatus paymentStatus,
           LocalDateTime date);
-
-  Optional<MembershipRegistration> findByAccountIdAndPaymentStatusAndExpirationDateAfter(
-      Long accountId, PaymentStatus paymentStatus, LocalDateTime date);
 }

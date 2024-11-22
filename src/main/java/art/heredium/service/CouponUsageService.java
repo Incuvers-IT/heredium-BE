@@ -343,8 +343,7 @@ public class CouponUsageService {
     // Find active membership registration for the account
     MembershipRegistration activeMembership =
         membershipRegistrationRepository
-            .findByAccountIdAndPaymentStatusAndExpirationDateAfter(
-                accountId, PaymentStatus.COMPLETED, LocalDateTime.now())
+            .findCompletedOneByAccountIdAndNotExpired(accountId)
             .orElse(null);
 
     if (activeMembership == null) {
