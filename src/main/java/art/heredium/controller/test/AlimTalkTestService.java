@@ -34,7 +34,7 @@ public class AlimTalkTestService {
           this.sendMockedCouponUsedMessageToAlimTalk(phone);
           break;
         }
-      case "HEREDIUM022":
+      case "HEREDIUM019":
         {
           this.sendMockedCouponDeliveredMessageToAlimTalk(phone);
           break;

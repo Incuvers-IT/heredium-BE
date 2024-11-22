@@ -93,7 +93,7 @@ public class MembershipPaymentService {
                 accountId,
                 RegistrationType.MEMBERSHIP_PACKAGE,
                 PaymentStatus.COMPLETED,
-                LocalDate.now())
+                LocalDateTime.now())
             .orElseThrow(
                 () ->
                     new ApiException(
