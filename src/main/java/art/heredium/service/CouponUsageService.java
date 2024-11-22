@@ -37,7 +37,7 @@ import art.heredium.ncloud.type.AlimTalkTemplate;
 @Slf4j
 public class CouponUsageService {
   private static final DateTimeFormatter COUPON_DATETIME_FORMAT =
-      DateTimeFormatter.ofPattern("yyyy-MM-dd hh:mm");
+      DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
   private final CouponUsageRepository couponUsageRepository;
   private final CouponRepository couponRepository;
   private final AccountRepository accountRepository;
