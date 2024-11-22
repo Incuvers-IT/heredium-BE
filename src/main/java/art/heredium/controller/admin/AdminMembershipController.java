@@ -55,9 +55,10 @@ public class AdminMembershipController {
     return new ModelAndView("xlsxView", data);
   }
 
-  @PostMapping(value = "/{accountId}/refund")
+  @PostMapping(value = "/{membershipRegistrationId}/refund")
   public ResponseEntity<MembershipRefundResponse> refundMembership(
-      @PathVariable(value = "accountId") Long accountId) {
-    return ResponseEntity.ok(this.membershipPaymentService.refundMembership(accountId));
+      @PathVariable(value = "membershipRegistrationId") Long membershipRegistrationId) {
+    return ResponseEntity.ok(
+        this.membershipPaymentService.refundMembership(membershipRegistrationId));
   }
 }

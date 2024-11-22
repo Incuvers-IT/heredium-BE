@@ -53,6 +53,9 @@ public class AccountWithMembershipInfoIncludingTitleResponse {
   @JsonProperty("registration_type")
   private RegistrationType registrationType;
 
+  @JsonProperty("membership_registration_id")
+  private Long membershipRegistrationId;
+
   public AccountWithMembershipInfoIncludingTitleResponse(
       final String membershipName,
       final String title,
@@ -66,7 +69,8 @@ public class AccountWithMembershipInfoIncludingTitleResponse {
       final String phone,
       final Long amount,
       final Long accountId,
-      final RegistrationType registrationType) {
+      final RegistrationType registrationType,
+      final Long membershipRegistrationId) {
     this.membershipName = membershipName;
     this.title = title;
     this.paymentStatus = paymentStatus != null ? paymentStatus.getDesc() : null;
@@ -80,5 +84,6 @@ public class AccountWithMembershipInfoIncludingTitleResponse {
     this.amount = amount;
     this.accountId = accountId;
     this.registrationType = registrationType;
+    this.membershipRegistrationId = membershipRegistrationId;
   }
 }
