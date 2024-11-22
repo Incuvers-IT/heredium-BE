@@ -39,7 +39,7 @@ public enum AlimTalkTemplate {
   COUPON_HAS_BEEN_DELIVERED(
       "쿠폰발행",
       "@heredium",
-      "HEREDIUM019", // TODO: Will be rollbacked
+      "HEREDIUM022",
       "@spadecompany",
       ""), // dev templateCode has not been created
   ;
