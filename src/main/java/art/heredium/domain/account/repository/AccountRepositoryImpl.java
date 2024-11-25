@@ -184,7 +184,13 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
                                         PaymentStatus.COMPLETED)))),
                 account.id,
                 membershipRegistration.registrationType,
-                membershipRegistration.id))
+                membershipRegistration.id,
+                JPAExpressions.select(
+                    membershipRegistration
+                        .paymentStatus
+                        .eq(PaymentStatus.COMPLETED)
+                        .and(membershipRegistration.paymentKey.isNotNull())
+                        .and(membershipRegistration.paymentOrderId.isNotNull()))))
         .from(account)
         .innerJoin(account.accountInfo, accountInfo)
         .innerJoin(membershipRegistration)
