@@ -56,6 +56,9 @@ public class AccountWithMembershipInfoIncludingTitleResponse {
   @JsonProperty("membership_registration_id")
   private Long membershipRegistrationId;
 
+  @JsonProperty("is_refundable")
+  private Boolean isRefundable;
+
   public AccountWithMembershipInfoIncludingTitleResponse(
       final String membershipName,
       final String title,
@@ -70,7 +73,8 @@ public class AccountWithMembershipInfoIncludingTitleResponse {
       final Long amount,
       final Long accountId,
       final RegistrationType registrationType,
-      final Long membershipRegistrationId) {
+      final Long membershipRegistrationId,
+      final Boolean isRefundable) {
     this.membershipName = membershipName;
     this.title = title;
     this.paymentStatus = paymentStatus != null ? paymentStatus.getDesc() : null;
@@ -85,5 +89,6 @@ public class AccountWithMembershipInfoIncludingTitleResponse {
     this.accountId = accountId;
     this.registrationType = registrationType;
     this.membershipRegistrationId = membershipRegistrationId;
+    this.isRefundable = isRefundable;
   }
 }
