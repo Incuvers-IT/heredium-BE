@@ -23,7 +23,6 @@ public class CompanyMembershipRegistrationHistoryService {
       final CompanyMembershipRegistrationHistoryCreateRequest request) {
     return this.companyMembershipRegistrationHistoryRepository.save(
         CompanyMembershipRegistrationHistory.builder()
-            .title(request.getTitle())
             .email(request.getEmail())
             .phone(request.getPhone())
             .startDate(request.getStartDate())

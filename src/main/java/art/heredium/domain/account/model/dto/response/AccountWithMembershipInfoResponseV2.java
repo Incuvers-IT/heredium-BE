@@ -12,13 +12,10 @@ import art.heredium.domain.membership.entity.RegistrationType;
 
 @Getter
 @NoArgsConstructor
-public class AccountWithMembershipInfoIncludingTitleResponse {
+public class AccountWithMembershipInfoResponseV2 {
 
   @JsonProperty("membership_name")
   private String membershipName;
-
-  @JsonProperty("title")
-  private String title;
 
   @JsonProperty("payment_status")
   private String paymentStatus;
@@ -59,9 +56,8 @@ public class AccountWithMembershipInfoIncludingTitleResponse {
   @JsonProperty("is_refundable")
   private Boolean isRefundable;
 
-  public AccountWithMembershipInfoIncludingTitleResponse(
+  public AccountWithMembershipInfoResponseV2(
       final String membershipName,
-      final String title,
       final PaymentStatus paymentStatus,
       final LocalDateTime paymentDate,
       final LocalDateTime startDate,
@@ -76,7 +72,6 @@ public class AccountWithMembershipInfoIncludingTitleResponse {
       final Long membershipRegistrationId,
       final Boolean isRefundable) {
     this.membershipName = membershipName;
-    this.title = title;
     this.paymentStatus = paymentStatus != null ? paymentStatus.getDesc() : null;
     this.paymentDate = paymentDate;
     this.startDate = startDate;

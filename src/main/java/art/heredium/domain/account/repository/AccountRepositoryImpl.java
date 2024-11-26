@@ -86,16 +86,14 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
   }
 
   @Override
-  public Page<AccountWithMembershipInfoIncludingTitleResponse>
-      searchWithMembershipInfoIncludingTitle(
-          final GetAccountWithMembershipInfoIncludingTitleRequest dto, final Pageable pageable) {
+  public Page<AccountWithMembershipInfoResponseV2> searchWithMembershipInfoIncludingTitle(
+      final GetAccountWithMembershipInfoRequestV2 dto, final Pageable pageable) {
     QAccount account = QAccount.account;
     QAccountInfo accountInfo = QAccountInfo.accountInfo;
     QMembershipRegistration membershipRegistration = QMembershipRegistration.membershipRegistration;
     QMembership membership = QMembership.membership;
 
-    JPAQuery<AccountWithMembershipInfoIncludingTitleResponse> query =
-        this.listWithMembershipInfo(dto);
+    JPAQuery<AccountWithMembershipInfoResponseV2> query = this.listWithMembershipInfo(dto);
 
     // Create a count query
     JPAQuery<Long> countQuery =
@@ -113,7 +111,7 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
 
     final long total = Optional.ofNullable(countQuery.fetchOne()).orElse(0L);
 
-    List<AccountWithMembershipInfoIncludingTitleResponse> content = new ArrayList<>();
+    List<AccountWithMembershipInfoResponseV2> content = new ArrayList<>();
     if (total != 0) {
       content = query.offset(pageable.getOffset()).limit(pageable.getPageSize()).fetch();
     }
@@ -122,12 +120,12 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
 
   @Override
   public List<AccountWithMembershipInfoExcelDownloadResponse> listWithMembershipInfoIncludingTitle(
-      final GetAccountWithMembershipInfoIncludingTitleRequest dto) {
+      final GetAccountWithMembershipInfoRequestV2 dto) {
     return this.listWithMembershipInfoForExcel(dto).fetch();
   }
 
-  private JPAQuery<AccountWithMembershipInfoIncludingTitleResponse> listWithMembershipInfo(
-      final GetAccountWithMembershipInfoIncludingTitleRequest dto) {
+  private JPAQuery<AccountWithMembershipInfoResponseV2> listWithMembershipInfo(
+      final GetAccountWithMembershipInfoRequestV2 dto) {
     QAccount account = QAccount.account;
     QAccountInfo accountInfo = QAccountInfo.accountInfo;
     QCouponUsage couponUsage = QCouponUsage.couponUsage;
@@ -139,7 +137,7 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
     return queryFactory
         .select(
             Projections.constructor(
-                AccountWithMembershipInfoIncludingTitleResponse.class,
+                AccountWithMembershipInfoResponseV2.class,
                 Expressions.cases()
                     .when(
                         membershipRegistration.registrationType.eq(
@@ -148,7 +146,6 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
                     .when(membershipRegistration.registrationType.eq(RegistrationType.COMPANY))
                     .then(company.name.prepend(COMPANY_PREFIX))
                     .otherwise((String) null),
-                membershipRegistration.title,
                 membershipRegistration.paymentStatus,
                 membershipRegistration.paymentDate,
                 membershipRegistration.registrationDate,
@@ -769,7 +766,7 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
   }
 
   private JPAQuery<AccountWithMembershipInfoExcelDownloadResponse> listWithMembershipInfoForExcel(
-      final GetAccountWithMembershipInfoIncludingTitleRequest dto) {
+      final GetAccountWithMembershipInfoRequestV2 dto) {
     QAccount account = QAccount.account;
     QAccountInfo accountInfo = QAccountInfo.accountInfo;
     QCouponUsage couponUsage = QCouponUsage.couponUsage;
@@ -814,7 +811,6 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
                     .when(membershipRegistration.registrationType.eq(RegistrationType.COMPANY))
                     .then(company.name.prepend(COMPANY_PREFIX))
                     .otherwise((String) null),
-                membershipRegistration.title,
                 membershipRegistration.paymentStatus,
                 membershipRegistration.paymentDate,
                 membershipRegistration.registrationDate,
