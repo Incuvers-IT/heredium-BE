@@ -196,6 +196,7 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
                                     .paymentKey
                                     .isNotNull()
                                     .and(membershipRegistration.paymentOrderId.isNotNull())
+                                    .and(membershipRegistration.registrationType.eq(RegistrationType.MEMBERSHIP_PACKAGE))
                                     .and(membershipRegistration.account.eq(account))))
                     .exists()))
         .from(account)
