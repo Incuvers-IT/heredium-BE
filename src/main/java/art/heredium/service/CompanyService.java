@@ -230,25 +230,22 @@ public class CompanyService {
       }
       if (isRowEmpty(row)) continue;
 
-      final String title = getCellValueAsString(row.getCell(0));
-      final String email = getCellValueAsString(row.getCell(1));
-      final String phone = getCellValueAsString(row.getCell(2));
-      final String startDate = getCellValueAsString(row.getCell(3));
-      final String price = getCellValueAsString(row.getCell(4));
-      final String paymentDate = getCellValueAsString(row.getCell(5));
+      final String email = getCellValueAsString(row.getCell(0));
+      final String phone = getCellValueAsString(row.getCell(1));
+      final String startDate = getCellValueAsString(row.getCell(2));
+      final String price = getCellValueAsString(row.getCell(3));
+      final String paymentDate = getCellValueAsString(row.getCell(4));
       try {
         CompanyMembershipRegistrationRequest request = new CompanyMembershipRegistrationRequest();
-        request.setTitle(title);
         request.setEmail(email);
         request.setPhone(phone);
-        request.setStartDate(getCellValueAsLocalDate(row.getCell(3)));
-        request.setPrice(getCellValueAsLong(row.getCell(4)));
-        request.setPaymentDate(getCellValueAsLocalDate(row.getCell(5)));
+        request.setStartDate(getCellValueAsLocalDate(row.getCell(2)));
+        request.setPrice(getCellValueAsLong(row.getCell(3)));
+        request.setPaymentDate(getCellValueAsLocalDate(row.getCell(4)));
         final Long registrationHistoryId =
             this.companyMembershipRegistrationHistoryService
                 .createMembershipRegistrationHistory(
                     CompanyMembershipRegistrationHistoryCreateRequest.builder()
-                        .title(title)
                         .email(email)
                         .phone(phone)
                         .startDate(startDate)
@@ -258,10 +255,9 @@ public class CompanyService {
                 .getId();
         successfulRequests.put(request, registrationHistoryId);
       } catch (InvalidUploadDataException e) {
-        failedRequests.add(getCellValueAsString(row.getCell(1)) + ": " + e.getMessage());
+        failedRequests.add(getCellValueAsString(row.getCell(0)) + ": " + e.getMessage());
         this.companyMembershipRegistrationHistoryService.createMembershipRegistrationHistory(
             CompanyMembershipRegistrationHistoryCreateRequest.builder()
-                .title(title)
                 .email(email)
                 .phone(phone)
                 .startDate(startDate)
@@ -280,14 +276,14 @@ public class CompanyService {
   }
 
   private void validateUploadedMembershipRegistrationExcelColumns(final @NonNull Row headerRow) {
-    for (int i = 0; i <= 5; i++) {
+    for (int i = 0; i <= 4; i++) {
       final String columnName = getCellValueAsString(headerRow.getCell(i));
       final String expectedColumnName =
           UploadedMembershipRegistrationColumns.getColumnNameByIndex(i);
       if (!expectedColumnName.equals(StringUtils.trim(columnName))) {
         throw new ApiException(
             ErrorCode.INVALID_EXCEL_COLUMNS,
-            "Column names should be ['제목', '이메일', '핸드폰', '시작 날짜', '가격', '지불 날짜', '이름']");
+            "Column names should be ['이메일', '핸드폰', '시작 날짜', '가격', '지불 날짜', '이름']");
       }
     }
   }
@@ -349,7 +345,6 @@ public class CompanyService {
   private MembershipRegistration createMembershipRegistration(
       CompanyMembershipRegistrationRequest request, Account account, Company company) {
     return new MembershipRegistration(
-        request.getTitle(),
         account,
         company,
         request.getStartDate().atStartOfDay(),
@@ -381,8 +376,8 @@ public class CompanyService {
     for (Row row : sheet) {
       if (row.getRowNum() == 0 || isRowEmpty(row)) continue;
 
-      String email = getCellValueAsString(row.getCell(1));
-      String phone = getCellValueAsString(row.getCell(2));
+      String email = getCellValueAsString(row.getCell(0));
+      String phone = getCellValueAsString(row.getCell(1));
 
       Account selectedAccount = null;
 

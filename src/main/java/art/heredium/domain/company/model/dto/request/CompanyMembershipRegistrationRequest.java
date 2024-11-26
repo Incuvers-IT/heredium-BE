@@ -12,8 +12,6 @@ import lombok.Setter;
 @Getter
 @Setter
 public class CompanyMembershipRegistrationRequest {
-  @NotBlank private String title;
-
   @NotBlank private String email;
 
   @NotBlank private String phone;

@@ -16,9 +16,6 @@ public class AccountWithMembershipInfoExcelDownloadResponse {
   @JsonProperty("membership_name")
   private String membershipName;
 
-  @JsonProperty("title")
-  private String title;
-
   @JsonProperty("payment_status")
   private String paymentStatus;
 
@@ -60,7 +57,6 @@ public class AccountWithMembershipInfoExcelDownloadResponse {
 
   public AccountWithMembershipInfoExcelDownloadResponse(
       final String membershipName,
-      final String title,
       final PaymentStatus paymentStatus,
       final LocalDateTime paymentDate,
       final LocalDateTime startDate,
@@ -75,7 +71,6 @@ public class AccountWithMembershipInfoExcelDownloadResponse {
       final String usageCount,
       final Boolean marketingConsent) {
     this.membershipName = membershipName;
-    this.title = title;
     this.paymentStatus = paymentStatus != null ? paymentStatus.getDesc() : null;
     this.paymentDate = paymentDate;
     this.startDate = startDate;
