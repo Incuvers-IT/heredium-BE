@@ -34,9 +34,6 @@ public class MembershipRegistration extends BaseEntity {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
-  @Column(name = "title", length = 100)
-  private String title;
-
   @Comment("티켓 uuid")
   @Column(name = "uuid", nullable = false, length = 36, unique = true, updatable = false)
   private String uuid;
@@ -89,7 +86,6 @@ public class MembershipRegistration extends BaseEntity {
   private Long price;
 
   public MembershipRegistration(
-      String title,
       @NonNull Account account,
       @NonNull Company company,
       @NonNull LocalDateTime registrationDate,
@@ -98,7 +94,6 @@ public class MembershipRegistration extends BaseEntity {
       @NonNull LocalDateTime paymentDate,
       @NonNull RegistrationType registrationType,
       @NonNull Long price) {
-    this.title = title;
     this.account = account;
     this.company = company;
     this.registrationDate = registrationDate;

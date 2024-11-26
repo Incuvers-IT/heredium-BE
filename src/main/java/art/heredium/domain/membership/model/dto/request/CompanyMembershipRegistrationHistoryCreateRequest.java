@@ -10,7 +10,6 @@ import art.heredium.domain.membership.entity.RegistrationStatus;
 @Getter
 @Setter
 public class CompanyMembershipRegistrationHistoryCreateRequest {
-  private String title;
 
   private String email;
 
@@ -30,7 +29,6 @@ public class CompanyMembershipRegistrationHistoryCreateRequest {
 
   @Builder
   public CompanyMembershipRegistrationHistoryCreateRequest(
-      final String title,
       final String email,
       final String phone,
       final String startDate,
@@ -39,7 +37,6 @@ public class CompanyMembershipRegistrationHistoryCreateRequest {
       final RegistrationStatus status,
       final String failedReason,
       final Account account) {
-    this.title = title;
     this.email = email;
     this.phone = phone;
     this.startDate = startDate;

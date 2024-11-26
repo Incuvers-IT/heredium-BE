@@ -10,7 +10,7 @@ import art.heredium.domain.membership.entity.PaymentStatus;
 
 @Getter
 @Setter
-public class GetAccountWithMembershipInfoIncludingTitleRequest {
+public class GetAccountWithMembershipInfoRequestV2 {
   private LocalDateTime paymentDateFrom;
   private LocalDateTime paymentDateTo;
   private List<PaymentStatus> paymentStatus;

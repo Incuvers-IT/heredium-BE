@@ -17,7 +17,7 @@ import org.springframework.web.servlet.ModelAndView;
 import art.heredium.core.annotation.SupervisorPermission;
 import art.heredium.core.util.ValidationUtil;
 import art.heredium.domain.account.model.dto.request.*;
-import art.heredium.domain.account.model.dto.response.AccountWithMembershipInfoIncludingTitleResponse;
+import art.heredium.domain.account.model.dto.response.AccountWithMembershipInfoResponseV2;
 import art.heredium.domain.account.model.dto.response.UploadCouponIssuanceTemplateResponse;
 import art.heredium.excel.service.ExcelService;
 import art.heredium.service.AccountService;
@@ -109,9 +109,9 @@ public class AdminAccountController {
 
   @GetMapping("/with-membership-info")
   @SupervisorPermission
-  public ResponseEntity<Page<AccountWithMembershipInfoIncludingTitleResponse>>
+  public ResponseEntity<Page<AccountWithMembershipInfoResponseV2>>
       listWithMembershipInfoIncludingTitle(
-          @Valid GetAccountWithMembershipInfoIncludingTitleRequest request, Pageable pageable) {
+          @Valid GetAccountWithMembershipInfoRequestV2 request, Pageable pageable) {
     return ResponseEntity.ok(
         accountService.listWithMembershipInfoIncludingTitle(request, pageable));
   }
@@ -119,7 +119,7 @@ public class AdminAccountController {
   @GetMapping("/with-membership-info/excel")
   @SupervisorPermission
   public ModelAndView downloadExcel(
-      @Valid GetAccountWithMembershipInfoIncludingTitleRequest request,
+      @Valid GetAccountWithMembershipInfoRequestV2 request,
       @RequestParam("fileName") String fileName) {
     Map<String, Object> data = excelService.accountInfoDownload(request, fileName);
     return new ModelAndView("xlsxView", data);
