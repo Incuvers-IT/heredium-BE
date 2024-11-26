@@ -31,7 +31,6 @@ import art.heredium.domain.account.model.dto.request.*;
 import art.heredium.domain.account.model.dto.response.*;
 import art.heredium.domain.company.entity.QCompany;
 import art.heredium.domain.coupon.entity.CouponSource;
-import art.heredium.domain.coupon.entity.CouponType;
 import art.heredium.domain.coupon.entity.QCoupon;
 import art.heredium.domain.coupon.entity.QCouponUsage;
 import art.heredium.domain.membership.entity.PaymentStatus;
@@ -196,7 +195,9 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
                                     .paymentKey
                                     .isNotNull()
                                     .and(membershipRegistration.paymentOrderId.isNotNull())
-                                    .and(membershipRegistration.registrationType.eq(RegistrationType.MEMBERSHIP_PACKAGE))
+                                    .and(
+                                        membershipRegistration.registrationType.eq(
+                                            RegistrationType.MEMBERSHIP_PACKAGE))
                                     .and(membershipRegistration.account.eq(account))))
                     .exists()))
         .from(account)
@@ -795,17 +796,11 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
     // Combine counts into usage count string
     StringTemplate usageCount =
         Expressions.stringTemplate(
-            "CONCAT('회원자격: ', {0}, ', "
-                + CouponType.EXHIBITION.getDesc()
-                + ": ', {1}, ', "
-                + CouponType.PROGRAM.getDesc()
-                + ": ', {2}, ', "
-                + CouponType.COFFEE.getDesc()
-                + ": ', {3})",
-            membershipCount,
-            exhibitionCount,
-            programCount,
-            coffeeCount);
+            "CONCAT('멤버십횟수: ', {0}, ', "
+                + "전시사용횟수: ', {1}, ', "
+                + "프로그램사용횟수: ', {2}, ', "
+                + "음료사용횟수: ', {3})",
+            membershipCount, exhibitionCount, programCount, coffeeCount);
 
     return queryFactory
         .select(
