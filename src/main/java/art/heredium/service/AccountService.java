@@ -335,8 +335,8 @@ public class AccountService {
     return accountRepository.searchWithMembershipInfo(dto, pageable);
   }
 
-  public Page<AccountWithMembershipInfoIncludingTitleResponse> listWithMembershipInfoIncludingTitle(
-      GetAccountWithMembershipInfoIncludingTitleRequest dto, Pageable pageable) {
+  public Page<AccountWithMembershipInfoResponseV2> listWithMembershipInfoIncludingTitle(
+      GetAccountWithMembershipInfoRequestV2 dto, Pageable pageable) {
     return accountRepository.searchWithMembershipInfoIncludingTitle(dto, pageable);
   }
 

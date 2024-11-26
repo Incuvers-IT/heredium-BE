@@ -23,8 +23,8 @@ import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import art.heredium.domain.account.entity.Account;
-import art.heredium.domain.account.model.dto.request.GetAccountWithMembershipInfoIncludingTitleRequest;
 import art.heredium.domain.account.model.dto.request.GetAccountWithMembershipInfoRequest;
+import art.heredium.domain.account.model.dto.request.GetAccountWithMembershipInfoRequestV2;
 import art.heredium.domain.account.model.dto.request.GetAdminAccountRequest;
 import art.heredium.domain.account.model.dto.request.GetAdminSleeperRequest;
 import art.heredium.domain.account.model.dto.response.*;
@@ -79,7 +79,7 @@ public class ExcelService {
   }
 
   public Map<String, Object> accountInfoDownload(
-      GetAccountWithMembershipInfoIncludingTitleRequest dto, String fileName) {
+      GetAccountWithMembershipInfoRequestV2 dto, String fileName) {
     List<AccountWithMembershipInfoExcelDownloadResponse> accountInfos =
         this.accountRepository.listWithMembershipInfoIncludingTitle(dto);
     ExcelModelManager enm = new ExcelModelManager();

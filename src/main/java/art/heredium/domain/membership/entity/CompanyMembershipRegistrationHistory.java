@@ -22,9 +22,6 @@ public class CompanyMembershipRegistrationHistory {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
-  @Column(name = "title")
-  private String title;
-
   @Column(name = "email")
   private String email;
 
@@ -53,7 +50,6 @@ public class CompanyMembershipRegistrationHistory {
 
   @Builder
   public CompanyMembershipRegistrationHistory(
-      final String title,
       final String email,
       final String phone,
       final String startDate,
@@ -62,7 +58,6 @@ public class CompanyMembershipRegistrationHistory {
       final RegistrationStatus status,
       final String failedReason,
       final Account account) {
-    this.title = title;
     this.email = email;
     this.phone = phone;
     this.startDate = startDate;
