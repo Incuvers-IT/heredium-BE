@@ -188,17 +188,13 @@ public class CouponUsageService {
             membershipRegistration =
                 membershipRegistrationRepository
                     .findTopByAccountOrderByRegistrationDateDesc(account)
-                    .orElse(null);
-
-            LocalDateTime registrationDate =
-                membershipRegistration != null
-                    ? membershipRegistration.getRegistrationDate()
-                    : null;
-
-            couponStartedDate =
-                registrationDate != null
-                    ? registrationDate.isAfter(now) ? registrationDate : now
-                    : now;
+                    .orElseThrow(
+                        () ->
+                            new ApiException(
+                                ErrorCode.MEMBERSHIP_REGISTRATION_NOT_FOUND,
+                                "Membership registration not found with accountId: "
+                                    + account.getId()));
+            couponStartedDate = membershipRegistration.getRegistrationDate();
             couponEndedDate = couponStartedDate.plusDays(coupon.getPeriodInDays());
           } else {
             throw new ApiException(ErrorCode.INVALID_COUPON_SOURCE);
