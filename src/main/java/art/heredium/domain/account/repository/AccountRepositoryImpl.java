@@ -44,7 +44,7 @@ import art.heredium.domain.ticket.type.TicketType;
 
 @RequiredArgsConstructor
 public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
-  private static final String COMPANY_PREFIX = "Company-";
+  private static final String COMPANY_PREFIX = "법인회원-";
 
   private final JPAQueryFactory queryFactory;
 
