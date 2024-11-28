@@ -35,7 +35,7 @@ import art.heredium.domain.membership.model.dto.response.ActiveMembershipRegistr
 @RequiredArgsConstructor
 public class MembershipRegistrationRepositoryImpl
     implements MembershipRegistrationRepositoryQueryDsl {
-  private static final String COMPANY_PREFIX = "Company-";
+  private static final String COMPANY_PREFIX = "법인회원-";
 
   private final JPAQueryFactory queryFactory;
 
