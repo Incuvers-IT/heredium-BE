@@ -36,8 +36,8 @@ public class HttpLogFilter implements Filter {
         new ContentCachingRequestWrapper((HttpServletRequest) request);
     final ContentCachingResponseWrapper cachedResponse =
         new ContentCachingResponseWrapper((HttpServletResponse) response);
-    chain.doFilter(cachedRequest, cachedResponse);
     HttpLogFilter.logRequest(cachedRequest);
+    chain.doFilter(cachedRequest, cachedResponse);
     HttpLogFilter.logResponse(cachedRequest, cachedResponse);
   }
 
