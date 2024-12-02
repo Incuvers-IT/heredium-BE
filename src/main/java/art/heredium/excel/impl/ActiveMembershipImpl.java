@@ -24,7 +24,7 @@ public class ActiveMembershipImpl implements CreateBody {
         Arrays.asList(
             "NO",
             "멤버십 이름",
-            "아이디",
+            "계정", // account (value is user's email)
             "이름",
             "연락처",
             "결제상태",
@@ -47,7 +47,7 @@ public class ActiveMembershipImpl implements CreateBody {
           Arrays.asList(
               createString(list.size() - (cnt++)),
               createString(entity.getMembershipOrCompanyName()),
-              createString(entity.getAccountId()),
+              createString(entity.getEmail()),
               createString(entity.getName()),
               createString(entity.getPhone()),
               createString(entity.getPaymentStatus()),
