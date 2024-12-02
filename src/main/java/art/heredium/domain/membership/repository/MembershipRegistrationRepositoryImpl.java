@@ -98,6 +98,7 @@ public class MembershipRegistrationRepositoryImpl
                     .then(company.name.prepend(COMPANY_PREFIX))
                     .otherwise((String) null),
                 account.id,
+                account.email,
                 accountInfo.name,
                 accountInfo.phone,
                 membershipRegistration.paymentStatus,
