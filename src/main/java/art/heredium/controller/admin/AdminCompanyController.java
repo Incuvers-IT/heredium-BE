@@ -34,8 +34,10 @@ public class AdminCompanyController {
   }
 
   @PostMapping("/{companyId}/membership-registrations/upload")
-  public synchronized ResponseEntity<CompanyMembershipRegistrationResponse> uploadMembershipRegistrations(
-      @PathVariable Long companyId, @RequestParam("file") MultipartFile file) throws IOException {
+  public synchronized ResponseEntity<CompanyMembershipRegistrationResponse>
+      uploadMembershipRegistrations(
+          @PathVariable Long companyId, @RequestParam("file") MultipartFile file)
+          throws IOException {
     ValidationUtil.validateExcelExtension(file);
     CompanyMembershipRegistrationResponse response =
         companyService.uploadMembershipRegistration(companyId, file);

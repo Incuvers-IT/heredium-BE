@@ -8,7 +8,7 @@ import lombok.Getter;
 @AllArgsConstructor
 @Getter
 public enum UploadedMembershipRegistrationColumns {
-  EMAIL(0, "이메일"),
+  EMAIL(0, "계정"), // column's name is account, but the value is email
   PHONE(1, "핸드폰"),
   START_DATE(2, "시작 날짜 (YYYY-MM-DD)"),
   PRICE(3, "가격"),
