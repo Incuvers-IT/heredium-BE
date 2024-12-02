@@ -19,6 +19,9 @@ public class ActiveMembershipRegistrationsResponse {
   @JsonProperty("account_id")
   private Long accountId;
 
+  @JsonProperty("email")
+  private String email;
+
   @JsonProperty("name")
   private String name;
 
@@ -49,6 +52,7 @@ public class ActiveMembershipRegistrationsResponse {
   public ActiveMembershipRegistrationsResponse(
       final String membershipOrCompanyName,
       final Long accountId,
+      final String email,
       final String name,
       final String phone,
       final PaymentStatus paymentStatus,
@@ -60,6 +64,7 @@ public class ActiveMembershipRegistrationsResponse {
       final Boolean isAgreeToReceiveMarketing) {
     this.membershipOrCompanyName = membershipOrCompanyName;
     this.accountId = accountId;
+    this.email = email;
     this.name = name;
     this.phone = phone;
     this.paymentStatus = paymentStatus != null ? paymentStatus.getDesc() : null;
