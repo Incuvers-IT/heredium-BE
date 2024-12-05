@@ -130,7 +130,9 @@ public class CouponUsageService {
         this.couponUsageRepository.findByAccountIdAndIsUsedFalseAndNotExpiredAndSource(
             accountId, CouponSource.MEMBERSHIP_PACKAGE);
     if (couponUsage.getCoupon().getMembership() == null) {
-      log.info("Membership is null when sendCouponUsedMessageToAlimTalk {}", couponUsage);
+      log.info(
+          "Ignore sendWithMembershipCouponUsedMessageToAlimTalk due to membership is null {}",
+          couponUsage);
       return;
     }
     this.sendWithMembershipCouponUsedMessageToAlimTalk(couponUsage, remainedCouponUsages);
