@@ -239,7 +239,7 @@ public class CouponUsageService {
 
   private void sendCouponDeliveredMessageToAlimTalk(
       final Map<Account, CouponUsage> accountsToSendAlimTalk) {
-    log.info("Start sendCouponDeliveredMessageToAlimTalk");
+    log.info("Start sendCouponDeliveredMessageToAlimTalk {}", accountsToSendAlimTalk);
     Map<String, Map<String, String>> phonesAndMessagesToSendAlimTalk = new HashMap<>();
     try {
       accountsToSendAlimTalk.forEach(
@@ -298,23 +298,23 @@ public class CouponUsageService {
 
   private void sendCouponUsedMessageToAlimTalk(
       final CouponUsage couponUsage, final List<CouponUsage> remainedCouponUsages) {
-    log.info("Start sendCouponUsedMessageToAlimTalk");
-    Map<String, String> params = new HashMap<>();
-    params.put("accountName", couponUsage.getAccount().getAccountInfo().getName());
-    params.put("membershipName", couponUsage.getCoupon().getMembership().getName());
-    params.put("issuedDate", couponUsage.getDeliveredDate().format(COUPON_DATETIME_FORMAT));
-    params.put("issuedCouponName", couponUsage.getCoupon().getName());
-    params.put("remainedDetailCoupons", this.buildCouponDetails(remainedCouponUsages));
-    params.put("CSTel", herediumProperties.getTel());
-    params.put("CSEmail", herediumProperties.getEmail());
+    log.info("Start sendCouponUsedMessageToAlimTalk {}, {}", couponUsage, remainedCouponUsages);
     try {
+      Map<String, String> params = new HashMap<>();
+      params.put("accountName", couponUsage.getAccount().getAccountInfo().getName());
+      params.put("membershipName", couponUsage.getCoupon().getMembership().getName());
+      params.put("issuedDate", couponUsage.getDeliveredDate().format(COUPON_DATETIME_FORMAT));
+      params.put("issuedCouponName", couponUsage.getCoupon().getName());
+      params.put("remainedDetailCoupons", this.buildCouponDetails(remainedCouponUsages));
+      params.put("CSTel", herediumProperties.getTel());
+      params.put("CSEmail", herediumProperties.getEmail());
+
       this.alimTalk.sendAlimTalkWithoutTitle(
           couponUsage.getAccount().getAccountInfo().getPhone(),
           params,
           AlimTalkTemplate.COUPON_HAS_BEEN_USED);
     } catch (Exception e) {
-      log.warn(
-          "Sending message to AlimTalk failed: {}, message params: {}", e.getMessage(), params);
+      log.warn("Sending message to AlimTalk failed: {}", e.getMessage());
     } finally {
       log.info("End sendCouponUsedMessageToAlimTalk");
     }
