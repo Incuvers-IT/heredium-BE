@@ -79,28 +79,27 @@ public class AlimTalkTestService {
 
   private void sendMockedCouponDeliveredMessageToAlimTalk(String toPhone) {
     log.info("Start sendMockedCouponDeliveredMessageToAlimTalk");
-    Map<String, String> variables = new HashMap<>();
-    final String accountName = "TestAccountName";
-    final String couponType = CouponType.COFFEE.getDesc();
-    final String couponStartDate = "2024-11-06 15:30";
-    final String couponEndDate = "2025-11-06 17:00";
-    final String issuedCouponName = "TestCouponName";
-    final String discountPercent = "100";
-    variables.put("accountName", accountName);
-    variables.put("couponType", couponType);
-    variables.put("couponName", issuedCouponName);
-    variables.put("discountPercent", discountPercent + "%");
-    variables.put("couponStartDate", couponStartDate);
-    variables.put("couponEndDate", couponEndDate);
-    variables.put("numberOfUses", "2");
-
-    List<Map<String, String>> params = Arrays.asList(variables);
     try {
+      Map<String, String> variables = new HashMap<>();
+      final String accountName = "TestAccountName";
+      final String couponType = CouponType.COFFEE.getDesc();
+      final String couponStartDate = "2024-11-06 15:30";
+      final String couponEndDate = "2025-11-06 17:00";
+      final String issuedCouponName = "TestCouponName";
+      final String discountPercent = "100";
+      variables.put("accountName", accountName);
+      variables.put("couponType", couponType);
+      variables.put("couponName", issuedCouponName);
+      variables.put("discountPercent", discountPercent + "%");
+      variables.put("couponStartDate", couponStartDate);
+      variables.put("couponEndDate", couponEndDate);
+      variables.put("numberOfUses", "2");
+
+      List<Map<String, String>> params = Arrays.asList(variables);
       this.herediumAlimTalk.sendAlimTalkWithoutTitle(
           toPhone, params, AlimTalkTemplate.COUPON_HAS_BEEN_DELIVERED);
     } catch (Exception e) {
-      log.warn(
-          "Sending message to AlimTalk failed: {}, message params: {}", e.getMessage(), params);
+      log.warn("Sending message to AlimTalk failed: {}", e.getMessage());
     } finally {
       log.info("End sendMockedCouponDeliveredMessageToAlimTalk");
     }
