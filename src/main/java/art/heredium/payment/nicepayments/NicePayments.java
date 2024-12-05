@@ -12,7 +12,7 @@ import feign.FeignException;
 
 import art.heredium.core.config.error.entity.ApiException;
 import art.heredium.core.config.error.entity.ErrorCode;
-import art.heredium.core.util.Base64Encoder;
+import art.heredium.core.util.Base64Util;
 import art.heredium.domain.ticket.entity.Ticket;
 import art.heredium.payment.dto.PaymentsPayRequest;
 import art.heredium.payment.inf.PaymentService;
@@ -104,7 +104,7 @@ public class NicePayments implements PaymentService<PaymentsPayRequest> {
 
   private String getAuthorization() {
     String secretKey = environment.getProperty(PaymentType.NICEPAYMENTS.getPropertyKeyName());
-    return Base64Encoder.encodeAuthorization(secretKey);
+    return Base64Util.encodeAuthorization(secretKey);
   }
 
   // TODO: Will be removed in the future
