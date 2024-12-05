@@ -129,7 +129,11 @@ public class CouponUsageService {
     List<CouponUsage> remainedCouponUsages =
         this.couponUsageRepository.findByAccountIdAndIsUsedFalseAndNotExpiredAndSource(
             accountId, CouponSource.MEMBERSHIP_PACKAGE);
-    this.sendCouponUsedMessageToAlimTalk(couponUsage, remainedCouponUsages);
+    if (couponUsage.getCoupon().getMembership() == null) {
+      log.info("Membership is null when sendCouponUsedMessageToAlimTalk {}", couponUsage);
+      return;
+    }
+    this.sendWithMembershipCouponUsedMessageToAlimTalk(couponUsage, remainedCouponUsages);
   }
 
   private CouponUsage getCouponUsageByUuid(@NonNull final String uuid) {
@@ -296,9 +300,12 @@ public class CouponUsageService {
     return this.couponUsageRepository.deleteByMembershipRegistrationId(membershipRegistrationId);
   }
 
-  private void sendCouponUsedMessageToAlimTalk(
+  private void sendWithMembershipCouponUsedMessageToAlimTalk(
       final CouponUsage couponUsage, final List<CouponUsage> remainedCouponUsages) {
-    log.info("Start sendCouponUsedMessageToAlimTalk {}, {}", couponUsage, remainedCouponUsages);
+    log.info(
+        "Start sendWithMembershipCouponUsedMessageToAlimTalk {}, {}",
+        couponUsage,
+        remainedCouponUsages);
     try {
       Map<String, String> params = new HashMap<>();
       params.put("accountName", couponUsage.getAccount().getAccountInfo().getName());
@@ -316,7 +323,7 @@ public class CouponUsageService {
     } catch (Exception e) {
       log.warn("Sending message to AlimTalk failed: {}", e.getMessage());
     } finally {
-      log.info("End sendCouponUsedMessageToAlimTalk");
+      log.info("End sendWithMembershipCouponUsedMessageToAlimTalk");
     }
   }
 
