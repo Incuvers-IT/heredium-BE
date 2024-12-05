@@ -1,18 +1,26 @@
 package art.heredium.payment.tosspayments;
 
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
+import java.util.Optional;
+
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import feign.FeignException;
 
 import art.heredium.core.config.error.entity.ApiException;
 import art.heredium.core.config.error.entity.ErrorCode;
-import art.heredium.core.util.Base64Encoder;
+import art.heredium.core.util.Base64Util;
 import art.heredium.domain.ticket.entity.Ticket;
 import art.heredium.payment.dto.PaymentsPayRequest;
 import art.heredium.payment.inf.PaymentService;
+import art.heredium.payment.tosspayments.dto.error.TossErrorResponse;
 import art.heredium.payment.tosspayments.dto.request.TossPaymentsPayRequest;
 import art.heredium.payment.tosspayments.dto.request.TossPaymentsRefundRequest;
 import art.heredium.payment.tosspayments.dto.response.TossPaymentsPayResponse;
@@ -21,11 +29,13 @@ import art.heredium.payment.type.PaymentType;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class TossPayments implements PaymentService<PaymentsPayRequest> {
 
   private final TossPaymentsClient client;
 
   private final Environment environment;
+  private final ObjectMapper objectMapper = new ObjectMapper();
 
   @Override
   public TossPaymentsPayResponse pay(PaymentsPayRequest dto, Long amount) {
@@ -76,13 +86,41 @@ public class TossPayments implements PaymentService<PaymentsPayRequest> {
     try {
       client.refund(getAuthorization(paymentType), paymentKey, payloadMap);
     } catch (FeignException e) {
-      throw new ApiException(ErrorCode.BAD_REQUEST, e.responseBody());
+      log.error("Error handleRefund {}, body {}", e.getMessage(), e.responseBody());
+      e.printStackTrace();
+      try {
+        final String responseBody = this.toString(e.responseBody().get());
+        final String decodedStr = Base64Util.decode(responseBody);
+        String errorMessage =
+            this.toTossErrorResponse(decodedStr).map(TossErrorResponse::getMessage).orElse(null);
+        throw new ApiException(ErrorCode.BAD_REQUEST, errorMessage);
+      } catch (Exception exception) {
+        log.error("Exception handleRefund ", exception);
+        throw new ApiException(ErrorCode.BAD_REQUEST);
+      }
+    }
+  }
+
+  private String toString(ByteBuffer byteBuffer) {
+    byte[] bytes = new byte[byteBuffer.remaining()];
+    byteBuffer.get(bytes);
+    return new String(bytes, StandardCharsets.UTF_8);
+  }
+
+  private Optional<TossErrorResponse> toTossErrorResponse(String responseBody) {
+    try {
+      final TossErrorResponse errorResponse =
+          this.objectMapper.readValue(responseBody, TossErrorResponse.class);
+      log.info("TossErrorResponse {} ", errorResponse);
+      return Optional.of(errorResponse);
+    } catch (JsonProcessingException e) {
+      return Optional.empty();
     }
   }
 
   private String getAuthorization(PaymentType type) {
     String secretKey = environment.getProperty(type.getPropertyKeyName());
-    return Base64Encoder.encodeAuthorization(secretKey + ":");
+    return Base64Util.encodeAuthorization(secretKey + ":");
   }
 
   private TossPaymentsPayResponse confirmPaymentWithRequestPaymentType(PaymentsPayRequest dto) {
