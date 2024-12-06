@@ -25,11 +25,7 @@ public enum AlimTalkTemplate {
       "@spadecompany",
       ""), // dev templateCode has not been created
   COUPON_HAS_BEEN_USED(
-      "쿠폰이 사용되었습니다",
-      "@heredium",
-      "HEREDIUM018",
-      "@spadecompany",
-      ""), // dev templateCode has not been created
+      "쿠폰이 사용되었습니다", "@heredium", "HEREDIUM018", "@spadecompany", ""), // TODO: Will be removed
   MEMBERSHIP_PACKAGE_HAS_EXPIRED(
       "멤버십 패키지가 만료되었습니다",
       "@heredium",
@@ -39,9 +35,13 @@ public enum AlimTalkTemplate {
   COUPON_HAS_BEEN_DELIVERED(
       "쿠폰발행",
       "@heredium",
-      "HEREDIUM022", // TODO: Will be rollbacked
+      "HEREDIUM022",
       "@spadecompany",
       ""), // dev templateCode has not been created
+  NON_MEMBERSHIP_COUPON_HAS_BEEN_USED(
+      "", "@heredium", "HEREDIUM023", "@spadecompany", ""), // dev templateCode has not been created
+  WITH_MEMBERSHIP_COUPON_HAS_BEEN_USED(
+      "", "@heredium", "HEREDIUM024", "@spadecompany", ""), // dev templateCode has not been created
   ;
 
   private String prodPlusFriendId;
