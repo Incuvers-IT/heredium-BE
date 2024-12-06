@@ -86,13 +86,12 @@ public class TossPayments implements PaymentService<PaymentsPayRequest> {
     try {
       client.refund(getAuthorization(paymentType), paymentKey, payloadMap);
     } catch (FeignException e) {
-      log.error("Error handleRefund {}, body {}", e.getMessage(), e.responseBody());
-      e.printStackTrace();
       try {
         final String responseBody = this.toString(e.responseBody().get());
-        final String decodedStr = Base64Util.decode(responseBody);
+        log.error("Error handleRefund {}, body {}", e.getMessage(), responseBody);
+        e.printStackTrace();
         String errorMessage =
-            this.toTossErrorResponse(decodedStr).map(TossErrorResponse::getMessage).orElse(null);
+            this.toTossErrorResponse(responseBody).map(TossErrorResponse::getMessage).orElse(null);
         throw new ApiException(ErrorCode.BAD_REQUEST, errorMessage);
       } catch (Exception exception) {
         log.error("Exception handleRefund ", exception);
@@ -114,7 +113,14 @@ public class TossPayments implements PaymentService<PaymentsPayRequest> {
       log.info("TossErrorResponse {} ", errorResponse);
       return Optional.of(errorResponse);
     } catch (JsonProcessingException e) {
-      return Optional.empty();
+      // Decode response body
+      final String decodedStr = Base64Util.decode(responseBody);
+      log.info("DecodedStr toTossErrorResponse {}", decodedStr);
+      try {
+        return Optional.of(this.objectMapper.readValue(decodedStr, TossErrorResponse.class));
+      } catch (JsonProcessingException ex) {
+        return Optional.empty();
+      }
     }
   }
 
