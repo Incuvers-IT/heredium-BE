@@ -295,8 +295,8 @@ public class CouponUsageService {
   }
 
   @Transactional(rollbackFor = Exception.class)
-  public List<CouponUsage> rollbackCouponDistribution(Long membershipRegistrationId) {
-    return this.couponUsageRepository.deleteByMembershipRegistrationId(membershipRegistrationId);
+  public void rollbackCouponDistribution(Long membershipRegistrationId) {
+    this.couponUsageRepository.deleteByMembershipRegistrationId(membershipRegistrationId);
   }
 
   private void sendWithMembershipCouponUsedMessageToAlimTalk(final CouponUsage couponUsage) {

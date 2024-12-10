@@ -21,7 +21,6 @@ import art.heredium.core.config.properties.HerediumProperties;
 import art.heredium.domain.account.entity.Account;
 import art.heredium.domain.coupon.entity.Coupon;
 import art.heredium.domain.coupon.entity.CouponUsage;
-import art.heredium.domain.coupon.model.dto.response.CouponUsageResponse;
 import art.heredium.domain.membership.entity.Membership;
 import art.heredium.domain.membership.entity.MembershipRegistration;
 import art.heredium.domain.membership.entity.PaymentStatus;
@@ -99,13 +98,7 @@ public class MembershipPaymentService {
     this.validateMembershipRegistrationForRefund(membershipRegistration);
     String paymentKey = membershipRegistration.getPaymentKey();
     String paymentOrderId = membershipRegistration.getPaymentOrderId();
-    List<CouponUsageResponse> rolledBackCouponUsageResponses = new ArrayList<>();
-    List<CouponUsage> rolledBackCoupons =
-        this.couponUsageService.rollbackCouponDistribution(membershipRegistration.getId());
-    if (!rolledBackCoupons.isEmpty()) {
-      rolledBackCouponUsageResponses =
-          rolledBackCoupons.stream().map(CouponUsageResponse::new).collect(Collectors.toList());
-    }
+    this.couponUsageService.rollbackCouponDistribution(membershipRegistration.getId());
     membershipRegistration.updatePaymentStatus(PaymentStatus.REFUND);
     this.membershipRegistrationRepository.save(membershipRegistration);
     membershipRegistration.getPaymentType().refund(paymentKey, paymentOrderId);
@@ -113,7 +106,6 @@ public class MembershipPaymentService {
         .paymentKey(paymentKey)
         .paymentOrderId(paymentOrderId)
         .paymentType(membershipRegistration.getPaymentType())
-        .rolledBackCoupons(rolledBackCouponUsageResponses)
         .build();
   }
 
