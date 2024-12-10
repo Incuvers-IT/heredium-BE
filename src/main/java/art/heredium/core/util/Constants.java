@@ -38,6 +38,8 @@ public class Constants {
   /** 전시 시작전 {BOOKING_DATE} 일 전부터 예매가능한 날짜로 설정 */
   public static long BOOKING_DATE = 90;
 
+  public static final String COMPANY_PREFIX = "법인회원-";
+
   @Value("${spring.profiles.active}")
   public void setProfileActive(String value) {
     PROFILE_ACTIVE = value;
