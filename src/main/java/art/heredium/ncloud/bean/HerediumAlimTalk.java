@@ -72,8 +72,7 @@ public class HerediumAlimTalk {
       log.info("RCV sendAlimTalk {}", results);
       return results;
     } catch (Exception e) {
-      log.error("Error sendAlimTalk " + e + " " + e.getMessage());
-      e.printStackTrace();
+      log.error("Error sendAlimTalk ", e);
     }
     return null;
   }
