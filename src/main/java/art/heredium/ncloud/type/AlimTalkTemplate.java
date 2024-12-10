@@ -24,8 +24,6 @@ public enum AlimTalkTemplate {
       "HEREDIUM021",
       "@spadecompany",
       ""), // dev templateCode has not been created
-  COUPON_HAS_BEEN_USED(
-      "쿠폰이 사용되었습니다", "@heredium", "HEREDIUM018", "@spadecompany", ""), // TODO: Will be removed
   MEMBERSHIP_PACKAGE_HAS_EXPIRED(
       "멤버십 패키지가 만료되었습니다",
       "@heredium",

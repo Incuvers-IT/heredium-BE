@@ -111,17 +111,15 @@ public class AlimTalkTestService {
     final String accountName = "TestAccountName";
     final String membershipName = "TestMembershipName";
     final String issuedDate = "2024-11-06 15:30";
-    final String issuedCouponName = "TestCouponName";
-    final String remainedDetailCoupons = this.buildMockedCouponDetails();
+    final String couponType = CouponType.ARTSHOP.getDesc();
     params.put("accountName", accountName);
     params.put("membershipName", membershipName);
     params.put("issuedDate", issuedDate);
-    params.put("issuedCouponName", issuedCouponName);
-    params.put("remainedDetailCoupons", remainedDetailCoupons);
+    params.put("couponType", couponType);
 
     try {
       this.herediumAlimTalk.sendAlimTalkWithoutTitle(
-          phone, params, AlimTalkTemplate.COUPON_HAS_BEEN_USED);
+          phone, params, AlimTalkTemplate.WITH_MEMBERSHIP_COUPON_HAS_BEEN_USED);
     } catch (Exception e) {
       log.warn(
           "Sending message to AlimTalk failed: {}, message params: {}", e.getMessage(), params);
