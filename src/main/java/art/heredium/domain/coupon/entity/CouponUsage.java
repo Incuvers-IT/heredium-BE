@@ -11,7 +11,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
 import lombok.Setter;
-import lombok.ToString;
 
 import org.springframework.lang.Nullable;
 
@@ -29,7 +28,6 @@ import art.heredium.domain.membership.entity.MembershipRegistration;
 @DynamicInsert
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
-@ToString(exclude = {"coupon", "account"})
 public class CouponUsage extends BaseEntity {
 
   @Id

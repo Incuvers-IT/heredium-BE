@@ -272,7 +272,8 @@ public class CouponUsageService {
       log.warn(
           "Sending message to AlimTalk failed: {}, message params: {}",
           e.getMessage(),
-          phonesAndMessagesToSendAlimTalk);
+          phonesAndMessagesToSendAlimTalk,
+          e);
     } finally {
       log.info("End sendCouponDeliveredMessageToAlimTalk");
     }
@@ -316,7 +317,7 @@ public class CouponUsageService {
           params,
           AlimTalkTemplate.WITH_MEMBERSHIP_COUPON_HAS_BEEN_USED);
     } catch (Exception e) {
-      log.warn("Sending message to AlimTalk failed: {}", e.getMessage());
+      log.warn("Sending message to AlimTalk failed: ", e);
     } finally {
       log.info("End sendWithMembershipCouponUsedMessageToAlimTalk");
     }
@@ -339,7 +340,7 @@ public class CouponUsageService {
           params,
           AlimTalkTemplate.NON_MEMBERSHIP_COUPON_HAS_BEEN_USED);
     } catch (Exception e) {
-      log.warn("Sending message to AlimTalk failed: {}", e.getMessage());
+      log.warn("Sending message to AlimTalk failed: ", e);
     } finally {
       log.info("End sendNonMembershipCouponUsedMessageToAlimTalk");
     }
