@@ -45,6 +45,6 @@ public interface CouponUsageRepository extends JpaRepository<CouponUsage, Long> 
 
   Optional<CouponUsage> findByUuid(String uuid);
 
-  List<CouponUsage> deleteByMembershipRegistrationId(
+  void deleteByMembershipRegistrationId(
       @Param("membershipRegistrationId") Long membershipRegistrationId);
 }
