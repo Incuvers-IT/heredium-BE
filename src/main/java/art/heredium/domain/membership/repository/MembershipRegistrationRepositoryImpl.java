@@ -120,7 +120,8 @@ public class MembershipRegistrationRepositoryImpl
             signedUpDateBetween(request.getSignUpDateFrom(), request.getSignUpDateTo()),
             isAgreeToReceiveMarketing(request.getIsAgreeToReceiveMarketing()),
             textContains(request.getText()),
-            isNotExpired());
+            isNotExpired())
+        .orderBy(membershipRegistration.paymentDate.desc());
   }
 
   private JPQLQuery<Long> countUsedCouponsByType(final CouponType couponType) {
