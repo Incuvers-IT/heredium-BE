@@ -20,6 +20,7 @@ import com.querydsl.jpa.JPQLQuery;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 
+import art.heredium.core.util.Constants;
 import art.heredium.domain.account.entity.QAccount;
 import art.heredium.domain.account.entity.QAccountInfo;
 import art.heredium.domain.company.entity.QCompany;
@@ -35,8 +36,6 @@ import art.heredium.domain.membership.model.dto.response.ActiveMembershipRegistr
 @RequiredArgsConstructor
 public class MembershipRegistrationRepositoryImpl
     implements MembershipRegistrationRepositoryQueryDsl {
-  private static final String COMPANY_PREFIX = "법인회원-";
-
   private final JPAQueryFactory queryFactory;
 
   @Override
@@ -95,7 +94,7 @@ public class MembershipRegistrationRepositoryImpl
                             RegistrationType.MEMBERSHIP_PACKAGE))
                     .then(membership.name)
                     .when(membershipRegistration.registrationType.eq(RegistrationType.COMPANY))
-                    .then(company.name.prepend(COMPANY_PREFIX))
+                    .then(company.name.prepend(Constants.COMPANY_PREFIX))
                     .otherwise((String) null),
                 account.id,
                 account.email,

@@ -22,6 +22,7 @@ import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import org.apache.tika.utils.StringUtils;
 
+import art.heredium.core.util.Constants;
 import art.heredium.domain.account.entity.Account;
 import art.heredium.domain.account.entity.QAccount;
 import art.heredium.domain.account.entity.QAccountInfo;
@@ -44,8 +45,6 @@ import art.heredium.domain.ticket.type.TicketType;
 
 @RequiredArgsConstructor
 public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
-  private static final String COMPANY_PREFIX = "법인회원-";
-
   private final JPAQueryFactory queryFactory;
 
   @Override
@@ -144,7 +143,7 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
                             RegistrationType.MEMBERSHIP_PACKAGE))
                     .then(membership.name)
                     .when(membershipRegistration.registrationType.eq(RegistrationType.COMPANY))
-                    .then(company.name.prepend(COMPANY_PREFIX))
+                    .then(company.name.prepend(Constants.COMPANY_PREFIX))
                     .otherwise((String) null),
                 membershipRegistration.paymentStatus,
                 membershipRegistration.paymentDate,
@@ -550,7 +549,7 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
                     .when(membership.isNotNull())
                     .then(membership.name)
                     .when(company.isNotNull())
-                    .then(company.name.prepend(COMPANY_PREFIX))
+                    .then(company.name.prepend(Constants.COMPANY_PREFIX))
                     .otherwise((String) null),
                 JPAExpressions.select(Wildcard.count)
                     .from(ticket)
@@ -743,7 +742,7 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
                     .when(qMembership.isNotNull())
                     .then(qMembership.name)
                     .when(qCompany.isNotNull())
-                    .then(qCompany.name.prepend(COMPANY_PREFIX))
+                    .then(qCompany.name.prepend(Constants.COMPANY_PREFIX))
                     .otherwise((String) null),
                 JPAExpressions.select(Wildcard.count)
                     .from(qTicket)
@@ -810,7 +809,7 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
                             RegistrationType.MEMBERSHIP_PACKAGE))
                     .then(membership.name)
                     .when(membershipRegistration.registrationType.eq(RegistrationType.COMPANY))
-                    .then(company.name.prepend(COMPANY_PREFIX))
+                    .then(company.name.prepend(Constants.COMPANY_PREFIX))
                     .otherwise((String) null),
                 membershipRegistration.paymentStatus,
                 membershipRegistration.paymentDate,
