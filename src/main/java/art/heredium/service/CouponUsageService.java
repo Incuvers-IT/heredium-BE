@@ -121,14 +121,17 @@ public class CouponUsageService {
     couponUsage.setIsUsed(true);
     couponUsage.setUsedDate(LocalDateTime.now());
     couponUsageRepository.save(couponUsage);
-    if (couponUsage.getCoupon().getFromSource() == CouponSource.MEMBERSHIP_PACKAGE
-        && couponUsage.getCoupon().getMembership() == null) {
-      log.info(
-          "Ignore sendCouponUsedMessageToAlimTalk due to coupon source is membership package and membership is null {}",
-          couponUsage);
+    if (couponUsage.getCoupon().getFromSource() == CouponSource.MEMBERSHIP_PACKAGE) {
+      if (couponUsage.getCoupon().getMembership() == null) {
+        log.info(
+            "Ignore sendCouponUsedMessageToAlimTalk due to coupon source is membership package and membership is null {}",
+            couponUsage);
+        return;
+      }
+      this.sendWithMembershipCouponUsedMessageToAlimTalk(couponUsage);
       return;
     }
-    this.sendCouponUsedMessageToAlimTalk(couponUsage);
+    this.sendNonMembershipCouponUsedMessageToAlimTalk(couponUsage);
   }
 
   private CouponUsage getCouponUsageByUuid(@NonNull final String uuid) {
@@ -295,14 +298,12 @@ public class CouponUsageService {
     return this.couponUsageRepository.deleteByMembershipRegistrationId(membershipRegistrationId);
   }
 
-  private void sendCouponUsedMessageToAlimTalk(final CouponUsage couponUsage) {
-    log.info("Start sendCouponUsedMessageToAlimTalk {}", couponUsage);
+  private void sendWithMembershipCouponUsedMessageToAlimTalk(final CouponUsage couponUsage) {
+    log.info("Start sendWithMembershipCouponUsedMessageToAlimTalk {}", couponUsage);
     try {
-      Map<String, String> params = new HashMap<>();
+      final Map<String, String> params = new HashMap<>();
       params.put("accountName", couponUsage.getAccount().getAccountInfo().getName());
-      if (couponUsage.getCoupon().getFromSource() == CouponSource.MEMBERSHIP_PACKAGE) {
-        params.put("membershipName", couponUsage.getCoupon().getMembership().getName());
-      }
+      params.put("membershipName", couponUsage.getCoupon().getMembership().getName());
       params.put(
           "issuedDate",
           couponUsage.getUsedDate().format(COUPON_DATETIME_FORMAT)); // Is actually used date
@@ -317,22 +318,31 @@ public class CouponUsageService {
     } catch (Exception e) {
       log.warn("Sending message to AlimTalk failed: {}", e.getMessage());
     } finally {
-      log.info("End sendCouponUsedMessageToAlimTalk");
+      log.info("End sendWithMembershipCouponUsedMessageToAlimTalk");
     }
   }
 
-  private String buildCouponDetails(List<CouponUsage> coupons) {
-    return coupons.stream()
-        .map(
-            coupon ->
-                String.format(
-                    " - %s, %s%% : %s",
-                    coupon.getCoupon().getName(),
-                    coupon.getCoupon().getDiscountPercent(),
-                    Boolean.TRUE.equals(coupon.getCoupon().getIsPermanent())
-                        ? "상시할인"
-                        : coupon.getCoupon().getNumberOfUses()))
-        .collect(Collectors.joining("\n"));
+  private void sendNonMembershipCouponUsedMessageToAlimTalk(final CouponUsage couponUsage) {
+    log.info("Start sendNonMembershipCouponUsedMessageToAlimTalk {}", couponUsage);
+    try {
+      final Map<String, String> params = new HashMap<>();
+      params.put("accountName", couponUsage.getAccount().getAccountInfo().getName());
+      params.put(
+          "issuedDate",
+          couponUsage.getUsedDate().format(COUPON_DATETIME_FORMAT)); // Is actually used date
+      params.put("couponType", couponUsage.getCoupon().getCouponType().getDesc());
+      params.put("CSTel", herediumProperties.getTel());
+      params.put("CSEmail", herediumProperties.getEmail());
+
+      this.alimTalk.sendAlimTalkWithoutTitle(
+          couponUsage.getAccount().getAccountInfo().getPhone(),
+          params,
+          AlimTalkTemplate.NON_MEMBERSHIP_COUPON_HAS_BEEN_USED);
+    } catch (Exception e) {
+      log.warn("Sending message to AlimTalk failed: {}", e.getMessage());
+    } finally {
+      log.info("End sendNonMembershipCouponUsedMessageToAlimTalk");
+    }
   }
 
   public CouponUsageCheckResponse checkActiveMembershipCouponUsage(final long accountId) {
