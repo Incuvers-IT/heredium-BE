@@ -10,6 +10,7 @@ import lombok.Setter;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import art.heredium.core.util.Constants;
 import art.heredium.domain.coupon.entity.CouponType;
 import art.heredium.domain.coupon.entity.CouponUsage;
 import art.heredium.domain.membership.entity.MembershipRegistration;
@@ -52,7 +53,7 @@ public class MembershipRegistrationResponse {
             : null;
     this.companyName =
         membershipRegistration.getCompany() != null
-            ? membershipRegistration.getCompany().getName()
+            ? Constants.COMPANY_PREFIX + membershipRegistration.getCompany().getName()
             : null;
     this.registrationDate = membershipRegistration.getRegistrationDate();
     this.expirationDate = membershipRegistration.getExpirationDate();
