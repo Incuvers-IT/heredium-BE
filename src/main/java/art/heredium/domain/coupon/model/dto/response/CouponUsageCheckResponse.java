@@ -8,6 +8,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 @Getter
 @AllArgsConstructor
 public class CouponUsageCheckResponse {
-  @JsonProperty("already_used_coupons_from_current_active_membership")
-  private boolean alreadyUsedCouponsFromCurrentActiveMembership;
+  @JsonProperty("number_of_used_coupons")
+  private long numberOfUsedCoupons;
 }
