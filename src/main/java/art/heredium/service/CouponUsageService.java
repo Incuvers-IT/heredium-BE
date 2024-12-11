@@ -251,7 +251,7 @@ public class CouponUsageService {
             variables.put("couponType", coupon.getCoupon().getCouponType().getDesc());
             variables.put("couponName", coupon.getCoupon().getName());
             variables.put(
-                "discountPercent",
+                "disCountPercent",
                 coupon.getCoupon().getDiscountPercent() != 100
                     ? coupon.getCoupon().getDiscountPercent() + "%"
                     : "무료");
