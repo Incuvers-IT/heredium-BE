@@ -133,6 +133,11 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
     QMembership membership = QMembership.membership;
     QTicket ticket = QTicket.ticket;
 
+    BooleanExpression isValidMembership = membershipRegistration.paymentStatus.eq(PaymentStatus.COMPLETED)
+        .and(membershipRegistration.paymentKey.isNotNull())
+        .and(membershipRegistration.paymentOrderId.isNotNull())
+        .and(membershipRegistration.registrationType.eq(RegistrationType.MEMBERSHIP_PACKAGE));
+
     return queryFactory
         .select(
             Projections.constructor(
@@ -180,14 +185,7 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
                 account.id,
                 membershipRegistration.registrationType,
                 membershipRegistration.id,
-                membershipRegistration
-                    .paymentStatus
-                    .eq(PaymentStatus.COMPLETED)
-                    .and(membershipRegistration.paymentKey.isNotNull())
-                    .and(membershipRegistration.paymentOrderId.isNotNull())
-                    .and(
-                        membershipRegistration.registrationType.eq(
-                            RegistrationType.MEMBERSHIP_PACKAGE))))
+                isValidMembership))
         .from(account)
         .innerJoin(account.accountInfo, accountInfo)
         .innerJoin(membershipRegistration)
