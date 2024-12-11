@@ -29,9 +29,6 @@ public interface CouponUsageRepository extends JpaRepository<CouponUsage, Long> 
   @Query("SELECT DISTINCT cu.coupon FROM CouponUsage cu WHERE cu.account.id = :accountId")
   List<Coupon> findDistinctCouponsByAccountId(@Param("accountId") Long accountId);
 
-  List<CouponUsage> findByMembershipRegistrationIdAndIsUsedTrue(
-      @Param("membershipRegistrationId") Long membershipRegistrationId);
-
   List<CouponUsage> findByAccountIdAndCouponIdAndIsUsedTrue(
       @Param("accountId") Long accountId, @Param("couponId") Long couponId);
 
@@ -46,5 +43,8 @@ public interface CouponUsageRepository extends JpaRepository<CouponUsage, Long> 
   Optional<CouponUsage> findByUuid(String uuid);
 
   void deleteByMembershipRegistrationId(
+      @Param("membershipRegistrationId") Long membershipRegistrationId);
+
+  long countByMembershipRegistrationIdAndIsUsedTrue(
       @Param("membershipRegistrationId") Long membershipRegistrationId);
 }

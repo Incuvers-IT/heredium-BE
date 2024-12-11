@@ -66,10 +66,6 @@ public class CouponUsageService {
     return responseDtos;
   }
 
-  public List<CouponUsage> findByMembershipRegistrationIdAndIsUsedTrue(final long accountId) {
-    return this.couponUsageRepository.findByMembershipRegistrationIdAndIsUsedTrue(accountId);
-  }
-
   @Transactional(rollbackFor = Exception.class)
   public void assignCoupons(final long couponId, @NonNull List<Long> accountIds) {
     final Coupon coupon =
@@ -346,21 +342,13 @@ public class CouponUsageService {
     }
   }
 
-  public CouponUsageCheckResponse checkActiveMembershipCouponUsage(final long accountId) {
-    // Find active membership registration for the account
-    MembershipRegistration activeMembership =
-        membershipRegistrationRepository
-            .findCompletedOneByAccountIdAndNotExpired(accountId)
-            .orElse(null);
+  public CouponUsageCheckResponse checkActiveMembershipCouponUsage(
+      final long membershipRegistrationId) {
+    // Get the count of used coupons directly
+    long usedCouponsCount =
+        couponUsageRepository.countByMembershipRegistrationIdAndIsUsedTrue(
+            membershipRegistrationId);
 
-    if (activeMembership == null) {
-      return new CouponUsageCheckResponse(false);
-    }
-
-    // Use existing method to check for used coupons
-    List<CouponUsage> usedCoupons =
-        findByMembershipRegistrationIdAndIsUsedTrue(activeMembership.getId());
-
-    return new CouponUsageCheckResponse(!usedCoupons.isEmpty());
+    return new CouponUsageCheckResponse(usedCouponsCount);
   }
 }
