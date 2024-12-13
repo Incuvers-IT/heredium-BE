@@ -116,7 +116,10 @@ public class CompanyService {
       if (identifier == null) {
         companyMembershipRegistrationResponse
             .getFailedCases()
-            .add("Invalid request: either email, phone or name is missing");
+            .add(
+                String.format(
+                    "잘못된 요청: 이메일: %s, 핸드폰: %s, 이름: %s",
+                    request.getEmail(), request.getPhone(), request.getName()));
         failedMembershipRegistrationHistoryIds.add(requestHistoryMap.get(request));
         continue;
       }
@@ -197,7 +200,9 @@ public class CompanyService {
   }
 
   private String getUniqueIdentifier(CompanyMembershipRegistrationRequest request) {
-    if (request.getEmail() == null || request.getPhone() == null || request.getName() == null) {
+    if (StringUtils.isEmpty(request.getEmail())
+        || StringUtils.isEmpty(request.getPhone())
+        || StringUtils.isEmpty(request.getName())) {
       return null;
     }
     return String.format(

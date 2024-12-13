@@ -75,7 +75,7 @@ public interface AccountRepository extends JpaRepository<Account, Long>, Account
               + "WHERE a.email = :email "
               + "AND ai.phone = :phone "
               + "AND ai.name = :name "
-              + "ORDER BY ai.last_login_date IS NULL, ai.last_login_date DESC "
+              + "ORDER BY ai.last_login_date DESC "
               + "LIMIT 1",
       nativeQuery = true)
   Optional<Account> findLatestLoginAccountByEmailAndPhoneAndName(
