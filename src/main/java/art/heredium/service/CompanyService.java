@@ -111,12 +111,15 @@ public class CompanyService {
     List<Long> successfulAccountIds = new ArrayList<>(); // Changed to List
 
     for (CompanyMembershipRegistrationRequest request : requests) {
-      String identifier = getUniqueIdentifier(request);
+      String identifier = this.getUniqueIdentifier(request);
 
       if (identifier == null) {
         companyMembershipRegistrationResponse
             .getFailedCases()
-            .add("Invalid request: both email and phone are missing");
+            .add(
+                String.format(
+                    "잘못된 요청: 이메일: %s, 핸드폰: %s, 이름: %s",
+                    request.getEmail(), request.getPhone(), request.getName()));
         failedMembershipRegistrationHistoryIds.add(requestHistoryMap.get(request));
         continue;
       }
@@ -134,21 +137,11 @@ public class CompanyService {
         continue;
       }
 
-      Account selectedAccount = null;
-
-      // First, try to find an account by email with the latest login
-      if (StringUtils.isNotBlank(request.getEmail())) {
-        Optional<Account> accountByEmail =
-            accountRepository.findLatestLoginAccountByEmail(request.getEmail());
-        selectedAccount = accountByEmail.orElse(null);
-      }
-
-      // If no account found by email, search by phone
-      if (selectedAccount == null && request.getPhone() != null) {
-        Optional<Account> accountByPhone =
-            accountRepository.findLatestLoginAccountByPhone(request.getPhone());
-        selectedAccount = accountByPhone.orElse(null);
-      }
+      final Account selectedAccount =
+          accountRepository
+              .findLatestLoginAccountByEmailAndPhoneAndName(
+                  request.getEmail(), request.getPhone(), request.getName())
+              .orElse(null);
 
       if (selectedAccount != null && !successfulAccountIds.contains(selectedAccount.getId())) {
         // Check if the account already has an active membership
@@ -160,8 +153,9 @@ public class CompanyService {
           companyMembershipRegistrationResponse
               .getFailedCases()
               .add(
-                  "Account already has an active membership: "
-                      + (request.getEmail() != null ? request.getEmail() : request.getPhone()));
+                  String.format(
+                      "Account already has an active membership: %s, %s, %s",
+                      request.getEmail(), request.getPhone(), request.getName()));
           failedMembershipRegistrationHistoryIds.add(requestHistoryMap.get(request));
           continue;
         }
@@ -185,10 +179,9 @@ public class CompanyService {
         companyMembershipRegistrationResponse
             .getFailedCases()
             .add(
-                "No account found for email: "
-                    + request.getEmail()
-                    + " or phone: "
-                    + request.getPhone());
+                String.format(
+                    "No account found for email:%s, phone:%s and name:%s",
+                    request.getEmail(), request.getPhone(), request.getName()));
         failedMembershipRegistrationHistoryIds.add(requestHistoryMap.get(request));
       }
     }
@@ -207,12 +200,13 @@ public class CompanyService {
   }
 
   private String getUniqueIdentifier(CompanyMembershipRegistrationRequest request) {
-    if (request.getEmail() != null) {
-      return "email:" + request.getEmail();
-    } else if (request.getPhone() != null) {
-      return "phone:" + request.getPhone();
+    if (StringUtils.isEmpty(request.getEmail())
+        || StringUtils.isEmpty(request.getPhone())
+        || StringUtils.isEmpty(request.getName())) {
+      return null;
     }
-    return null;
+    return String.format(
+        "email:%s, phone:%s, name:%s", request.getEmail(), request.getPhone(), request.getName());
   }
 
   private CompanyMembershipExcelConvertResponse parseExcelFile(MultipartFile file)
@@ -235,10 +229,12 @@ public class CompanyService {
       final String startDate = getCellValueAsString(row.getCell(2));
       final String price = getCellValueAsString(row.getCell(3));
       final String paymentDate = getCellValueAsString(row.getCell(4));
+      final String name = getCellValueAsString(row.getCell(5));
       try {
         CompanyMembershipRegistrationRequest request = new CompanyMembershipRegistrationRequest();
         request.setEmail(email);
         request.setPhone(phone);
+        request.setName(name);
         request.setStartDate(getCellValueAsLocalDate(row.getCell(2)));
         request.setPrice(getCellValueAsLong(row.getCell(3)));
         request.setPaymentDate(getCellValueAsLocalDate(row.getCell(4)));

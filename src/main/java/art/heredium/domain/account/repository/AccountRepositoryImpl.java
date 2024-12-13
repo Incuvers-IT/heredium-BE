@@ -134,13 +134,19 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
     QTicket ticket = QTicket.ticket;
 
     // Create a case expression for isValidMembership
-    NumberExpression<Integer> isValidMembership = Expressions.cases()
-        .when(membershipRegistration.paymentStatus.eq(PaymentStatus.COMPLETED)
-            .and(membershipRegistration.paymentKey.isNotNull())
-            .and(membershipRegistration.paymentOrderId.isNotNull())
-            .and(membershipRegistration.registrationType.eq(RegistrationType.MEMBERSHIP_PACKAGE)))
-        .then(1)
-        .otherwise(0);
+    NumberExpression<Integer> isValidMembership =
+        Expressions.cases()
+            .when(
+                membershipRegistration
+                    .paymentStatus
+                    .eq(PaymentStatus.COMPLETED)
+                    .and(membershipRegistration.paymentKey.isNotNull())
+                    .and(membershipRegistration.paymentOrderId.isNotNull())
+                    .and(
+                        membershipRegistration.registrationType.eq(
+                            RegistrationType.MEMBERSHIP_PACKAGE)))
+            .then(1)
+            .otherwise(0);
 
     return queryFactory
         .select(
