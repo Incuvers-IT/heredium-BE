@@ -1,6 +1,7 @@
 package art.heredium.service;
 
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -175,25 +176,26 @@ public class CouponUsageService {
           LocalDateTime couponStartedDate;
           LocalDateTime couponEndedDate;
           MembershipRegistration membershipRegistration = null;
-
+          if (source == CouponSource.MEMBERSHIP_PACKAGE || source == CouponSource.COMPANY) {
+            membershipRegistration = this.findMembershipRegistration(account);
+          }
           if (source == CouponSource.MEMBERSHIP_PACKAGE) {
             couponStartedDate = now;
-            couponEndedDate = couponStartedDate.plusDays(coupon.getPeriodInDays());
+            couponEndedDate =
+                couponStartedDate
+                    .plusDays(coupon.getPeriodInDays())
+                    .toLocalDate()
+                    .atTime(LocalTime.MAX);
           } else if (source == CouponSource.ADMIN_SITE) {
             couponStartedDate = coupon.getStartedDate();
-            couponEndedDate = coupon.getEndedDate();
+            couponEndedDate = coupon.getEndedDate().toLocalDate().atTime(LocalTime.MAX);
           } else if (source == CouponSource.COMPANY) {
-            membershipRegistration =
-                membershipRegistrationRepository
-                    .findTopByAccountOrderByRegistrationDateDesc(account)
-                    .orElseThrow(
-                        () ->
-                            new ApiException(
-                                ErrorCode.MEMBERSHIP_REGISTRATION_NOT_FOUND,
-                                "Membership registration not found with accountId: "
-                                    + account.getId()));
             couponStartedDate = membershipRegistration.getRegistrationDate();
-            couponEndedDate = couponStartedDate.plusDays(coupon.getPeriodInDays());
+            couponEndedDate =
+                couponStartedDate
+                    .plusDays(coupon.getPeriodInDays())
+                    .toLocalDate()
+                    .atTime(LocalTime.MAX);
           } else {
             throw new ApiException(ErrorCode.INVALID_COUPON_SOURCE);
           }
@@ -233,6 +235,17 @@ public class CouponUsageService {
     }
 
     return this.couponUsageRepository.saveAll(couponUsages);
+  }
+
+  @NonNull
+  private MembershipRegistration findMembershipRegistration(@NonNull final Account account) {
+    return this.membershipRegistrationRepository
+        .findTopByAccountOrderByRegistrationDateDesc(account)
+        .orElseThrow(
+            () ->
+                new ApiException(
+                    ErrorCode.MEMBERSHIP_REGISTRATION_NOT_FOUND,
+                    "Membership registration not found with accountId: " + account.getId()));
   }
 
   private void sendCouponDeliveredMessageToAlimTalk(
