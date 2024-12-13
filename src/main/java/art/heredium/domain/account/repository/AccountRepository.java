@@ -67,4 +67,17 @@ public interface AccountRepository extends JpaRepository<Account, Long>, Account
               + "LIMIT 1",
       nativeQuery = true)
   Optional<Account> findLatestLoginAccountByEmail(@Param("email") String email);
+
+  @Query(
+      value =
+          "SELECT a.* FROM account a "
+              + "INNER JOIN account_info ai ON a.id = ai.account_id "
+              + "WHERE a.email = :email "
+              + "AND ai.phone = :phone "
+              + "AND ai.name = :name "
+              + "ORDER BY ai.last_login_date IS NULL, ai.last_login_date DESC "
+              + "LIMIT 1",
+      nativeQuery = true)
+  Optional<Account> findLatestLoginAccountByEmailAndPhoneAndName(
+      @Param("email") String email, @Param("phone") String phone, @Param("name") String name);
 }

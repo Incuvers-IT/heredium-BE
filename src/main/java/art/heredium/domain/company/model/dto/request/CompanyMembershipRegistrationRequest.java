@@ -16,6 +16,8 @@ public class CompanyMembershipRegistrationRequest {
 
   @NotBlank private String phone;
 
+  @NotBlank private String name;
+
   @NotNull private LocalDate startDate;
 
   @NotNull @Positive private Long price;
