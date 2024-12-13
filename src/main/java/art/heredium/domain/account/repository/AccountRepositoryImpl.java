@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Optional;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -44,6 +45,7 @@ import art.heredium.domain.ticket.type.TicketStateType;
 import art.heredium.domain.ticket.type.TicketType;
 
 @RequiredArgsConstructor
+@Slf4j
 public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
   private final JPAQueryFactory queryFactory;
 
@@ -120,7 +122,11 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
   @Override
   public List<AccountWithMembershipInfoExcelDownloadResponse> listWithMembershipInfoIncludingTitle(
       final GetAccountWithMembershipInfoRequestV2 dto) {
-    return this.listWithMembershipInfoForExcel(dto).fetch();
+    log.info("Start listWithMembershipInfoIncludingTitle {}", dto);
+    List<AccountWithMembershipInfoExcelDownloadResponse> responses =
+        this.listWithMembershipInfoForExcel(dto).fetch();
+    log.info("End listWithMembershipInfoIncludingTitle {}", responses);
+    return responses;
   }
 
   private JPAQuery<AccountWithMembershipInfoResponseV2> listWithMembershipInfo(
@@ -793,12 +799,11 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
     // Combine counts into usage count string
     StringTemplate usageCount =
         Expressions.stringTemplate(
-            "CONCAT('멤버십횟수: ', {0}, ', "
-                + "전시사용횟수: ', {1}, ', "
-                + "프로그램사용횟수: ', {2}, ', "
-                + "음료사용횟수: ', {3})",
+            "CONCAT('멤버십횟수: ', COALESCE({0}, 0), ', "
+                + "전시사용횟수: ', COALESCE({1}, 0), ', "
+                + "프로그램사용횟수: ', COALESCE({2}, 0), ', "
+                + "음료사용횟수: ', COALESCE({3}, 0))",
             membershipCount, exhibitionCount, programCount, coffeeCount);
-
     return queryFactory
         .select(
             Projections.constructor(
