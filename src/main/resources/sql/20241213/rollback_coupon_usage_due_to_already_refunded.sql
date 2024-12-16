@@ -18,7 +18,7 @@ WHERE mg.account_id = account_id
   AND c.id = coupon_id
   AND c.from_source = 'MEMBERSHIP_PACKAGE'
   AND mg.payment_status = 'REFUND'
-  AND mg.id = (SELECT m.id FROM membership_registration m WHERE m.account_id = account_id order by m.id desc limit 1);
+  AND mg.id in (SELECT m.id FROM membership_registration m WHERE m.account_id = account_id);
 RETURN count_result > 0;
 END
 //
