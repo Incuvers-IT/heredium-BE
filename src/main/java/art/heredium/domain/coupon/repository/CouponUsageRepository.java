@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -42,6 +43,9 @@ public interface CouponUsageRepository extends JpaRepository<CouponUsage, Long> 
 
   Optional<CouponUsage> findByUuid(String uuid);
 
+  @Modifying
+  @Query(
+      "DELETE FROM CouponUsage cu WHERE cu.membershipRegistration.id = :membershipRegistrationId")
   void deleteByMembershipRegistrationId(
       @Param("membershipRegistrationId") Long membershipRegistrationId);
 
