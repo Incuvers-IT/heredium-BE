@@ -29,8 +29,14 @@ public class AccountWithMembershipInfoResponseV2 {
   @JsonProperty("end_date")
   private LocalDateTime endDate;
 
-  @JsonProperty("number_of_coupons")
-  private Long numberOfUsedCoupons;
+  @JsonProperty("number_of_used_exhibition_coupons")
+  private Long numberOfUsedExhibitionCoupons;
+
+  @JsonProperty("number_of_used_program_coupons")
+  private Long numberOfUsedProgramCoupons;
+
+  @JsonProperty("number_of_used_coffee_coupons")
+  private Long numberOfUsedCoffeeCoupons;
 
   @JsonProperty("email")
   private String email;
@@ -62,7 +68,9 @@ public class AccountWithMembershipInfoResponseV2 {
       final LocalDateTime paymentDate,
       final LocalDateTime startDate,
       final LocalDateTime endDate,
-      final Long numberOfUsedCoupons,
+      final Long numberOfUsedExhibitionCoupons,
+      final Long numberOfUsedProgramCoupons,
+      final Long numberOfUsedCoffeeCoupons,
       final String email,
       final String name,
       final String phone,
@@ -76,7 +84,9 @@ public class AccountWithMembershipInfoResponseV2 {
     this.paymentDate = paymentDate;
     this.startDate = startDate;
     this.endDate = endDate;
-    this.numberOfUsedCoupons = numberOfUsedCoupons;
+    this.numberOfUsedExhibitionCoupons = numberOfUsedExhibitionCoupons;
+    this.numberOfUsedProgramCoupons = numberOfUsedProgramCoupons;
+    this.numberOfUsedCoffeeCoupons = numberOfUsedCoffeeCoupons;
     this.email = email;
     this.name = name;
     this.phone = phone;
