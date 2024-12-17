@@ -212,7 +212,8 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
         .where(
             paymentDateBetween(dto.getPaymentDateFrom(), dto.getPaymentDateTo()),
             paymentStatusIn(dto.getPaymentStatus()),
-            textContains(dto.getText()));
+            textContains(dto.getText()))
+        .orderBy(membershipRegistration.expirationDate.desc());
   }
 
   private JPQLQuery<Long> selectVisitCount() {
@@ -856,7 +857,8 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
         .where(
             paymentDateBetween(dto.getPaymentDateFrom(), dto.getPaymentDateTo()),
             paymentStatusIn(dto.getPaymentStatus()),
-            textContains(dto.getText()));
+            textContains(dto.getText()))
+        .orderBy(membershipRegistration.expirationDate.desc());
   }
 
   private JPQLQuery<Long> countUsedCouponsByType(CouponType couponType) {
