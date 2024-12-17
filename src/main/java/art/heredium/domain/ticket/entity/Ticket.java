@@ -179,6 +179,10 @@ public class Ticket implements Serializable {
   @Column(name = "is_coupon_already_refund")
   private Boolean isCouponAlreadyRefund;
 
+  @Comment("최종 결제 가격")
+  @Column(name = "coupon_discount_amount")
+  private Long couponDiscountAmount;
+
   public Ticket(
       List<TicketPrice> prices,
       TicketUserInfo ticketUserInfo,
@@ -315,6 +319,10 @@ public class Ticket implements Serializable {
 
   public void setPrice(long price) {
     this.price = price;
+  }
+
+  public void setCouponDiscountAmount(long couponDiscountAmount) {
+    this.couponDiscountAmount = couponDiscountAmount;
   }
 
   public boolean isRefund() {
