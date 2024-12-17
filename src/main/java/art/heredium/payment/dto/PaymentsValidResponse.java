@@ -19,10 +19,12 @@ public class PaymentsValidResponse {
   private String email;
 
   public static PaymentsValidResponse from(Ticket ticket) {
+    long couponDiscountAmount =
+        ticket.getCouponDiscountAmount() != null ? ticket.getCouponDiscountAmount() : 0;
     return PaymentsValidResponse.builder()
         .uuid(ticket.getUuid())
         .title(ticket.getTitle())
-        .amount(ticket.getPrice())
+        .amount(ticket.getPrice() - couponDiscountAmount)
         .name(ticket.getName())
         .email(ticket.getEmail())
         .build();
