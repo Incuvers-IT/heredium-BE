@@ -28,8 +28,14 @@ public class AccountWithMembershipInfoExcelDownloadResponse {
   @JsonProperty("end_date")
   private LocalDateTime endDate;
 
-  @JsonProperty("number_of_coupons")
-  private Long numberOfUsedCoupons;
+  @JsonProperty("number_of_used_exhibition_coupons")
+  private Long numberOfUsedExhibitionCoupons;
+
+  @JsonProperty("number_of_used_program_coupons")
+  private Long numberOfUsedProgramCoupons;
+
+  @JsonProperty("number_of_used_coffee_coupons")
+  private Long numberOfUsedCoffeeCoupons;
 
   @JsonProperty("email")
   private String email;
@@ -49,8 +55,17 @@ public class AccountWithMembershipInfoExcelDownloadResponse {
   @JsonProperty("last_login_date")
   private LocalDateTime lastLoginDate;
 
-  @JsonProperty("usage_count")
-  private String usageCount;
+  @JsonProperty("number_of_active_memberships")
+  private Long numberOfActiveMemberships;
+
+  @JsonProperty("number_of_exhibition_tickets")
+  private Long numberOfExhibitionTickets;
+
+  @JsonProperty("number_of_program_tickets")
+  private Long numberOfProgramTickets;
+
+  @JsonProperty("number_of_coffee_tickets")
+  private Long numberOfCoffeeTickets;
 
   @JsonProperty("marketing_consent")
   private Boolean marketingConsent;
@@ -61,28 +76,38 @@ public class AccountWithMembershipInfoExcelDownloadResponse {
       final LocalDateTime paymentDate,
       final LocalDateTime startDate,
       final LocalDateTime endDate,
-      final Long numberOfUsedCoupons,
+      final Long numberOfUsedExhibitionCoupons,
+      final Long numberOfUsedProgramCoupons,
+      final Long numberOfUsedCoffeeCoupons,
       final String email,
       final String name,
       final String phone,
       final Long amount,
       final LocalDateTime createdDate,
       final LocalDateTime lastLoginDate,
-      final String usageCount,
+      final Long numberOfActiveMemberships,
+      final Long numberOfExhibitionTickets,
+      final Long numberOfProgramTickets,
+      final Long numberOfCoffeeTickets,
       final Boolean marketingConsent) {
     this.membershipName = membershipName;
     this.paymentStatus = paymentStatus != null ? paymentStatus.getDesc() : null;
     this.paymentDate = paymentDate;
     this.startDate = startDate;
     this.endDate = endDate;
-    this.numberOfUsedCoupons = numberOfUsedCoupons;
+    this.numberOfUsedExhibitionCoupons = numberOfUsedExhibitionCoupons;
+    this.numberOfUsedProgramCoupons = numberOfUsedProgramCoupons;
+    this.numberOfUsedCoffeeCoupons = numberOfUsedCoffeeCoupons;
     this.email = email;
     this.name = name;
     this.phone = phone;
     this.amount = amount;
     this.createdDate = createdDate;
     this.lastLoginDate = lastLoginDate;
-    this.usageCount = usageCount;
+    this.numberOfActiveMemberships = numberOfActiveMemberships;
+    this.numberOfExhibitionTickets = numberOfExhibitionTickets;
+    this.numberOfProgramTickets = numberOfProgramTickets;
+    this.numberOfCoffeeTickets = numberOfCoffeeTickets;
     this.marketingConsent = marketingConsent;
   }
 }
