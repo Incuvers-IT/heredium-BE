@@ -33,6 +33,7 @@ import art.heredium.domain.account.model.dto.request.*;
 import art.heredium.domain.account.model.dto.response.*;
 import art.heredium.domain.company.entity.QCompany;
 import art.heredium.domain.coupon.entity.CouponSource;
+import art.heredium.domain.coupon.entity.CouponType;
 import art.heredium.domain.coupon.entity.QCoupon;
 import art.heredium.domain.coupon.entity.QCouponUsage;
 import art.heredium.domain.membership.entity.PaymentStatus;
@@ -775,7 +776,6 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
       final GetAccountWithMembershipInfoRequestV2 dto) {
     QAccount account = QAccount.account;
     QAccountInfo accountInfo = QAccountInfo.accountInfo;
-    QCouponUsage couponUsage = QCouponUsage.couponUsage;
     QCompany company = QCompany.company;
     QMembershipRegistration membershipRegistration = QMembershipRegistration.membershipRegistration;
     QMembership membership = QMembership.membership;
@@ -796,14 +796,6 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
     JPQLQuery<Integer> programCount = getTicketCountByKind(account, ticket, TicketKindType.PROGRAM);
     JPQLQuery<Integer> coffeeCount = getTicketCountByKind(account, ticket, TicketKindType.COFFEE);
 
-    // Combine counts into usage count string
-    StringTemplate usageCount =
-        Expressions.stringTemplate(
-            "CONCAT('멤버십횟수: ', COALESCE({0}, 0), ', "
-                + "전시사용횟수: ', COALESCE({1}, 0), ', "
-                + "프로그램사용횟수: ', COALESCE({2}, 0), ', "
-                + "음료사용횟수: ', COALESCE({3}, 0))",
-            membershipCount, exhibitionCount, programCount, coffeeCount);
     return queryFactory
         .select(
             Projections.constructor(
@@ -820,9 +812,9 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
                 membershipRegistration.paymentDate,
                 membershipRegistration.registrationDate,
                 membershipRegistration.expirationDate,
-                JPAExpressions.select(couponUsage.count())
-                    .from(couponUsage)
-                    .where(couponUsage.account.eq(account).and(couponUsage.isUsed.isTrue())),
+                this.countUsedCouponsByType(CouponType.EXHIBITION),
+                this.countUsedCouponsByType(CouponType.PROGRAM),
+                this.countUsedCouponsByType(CouponType.COFFEE),
                 account.email,
                 accountInfo.name,
                 accountInfo.phone,
@@ -850,7 +842,10 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
                                         PaymentStatus.COMPLETED)))),
                 account.createdDate,
                 accountInfo.lastLoginDate,
-                usageCount,
+                membershipCount,
+                exhibitionCount,
+                programCount,
+                coffeeCount,
                 accountInfo.isMarketingReceive))
         .from(account)
         .innerJoin(account.accountInfo, accountInfo)
@@ -862,6 +857,19 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
             paymentDateBetween(dto.getPaymentDateFrom(), dto.getPaymentDateTo()),
             paymentStatusIn(dto.getPaymentStatus()),
             textContains(dto.getText()));
+  }
+
+  private JPQLQuery<Long> countUsedCouponsByType(CouponType couponType) {
+    QCouponUsage couponUsage = QCouponUsage.couponUsage;
+    QAccount account = QAccount.account;
+    return JPAExpressions.select(couponUsage.count())
+        .from(couponUsage)
+        .where(
+            couponUsage
+                .account
+                .eq(account)
+                .and(couponUsage.coupon.couponType.eq(couponType))
+                .and(couponUsage.isUsed.isTrue()));
   }
 
   private JPQLQuery<Integer> getTicketCountByKind(

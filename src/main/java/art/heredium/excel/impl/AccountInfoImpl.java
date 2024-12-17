@@ -28,14 +28,19 @@ public class AccountInfoImpl implements CreateBody {
             "결제일시",
             "시작일시",
             "종료일시",
-            "사용 쿠폰 수",
+            "전시",
+            "프로그램",
+            "커피",
             "이용금액",
             "계정",
             "이름",
             "연락처",
             "생성 날짜",
             "마지막 로그인 날짜",
-            "사용 횟수",
+            "멤버십횟수",
+            "전시사용횟수",
+            "프로그램사용횟수",
+            "음료사용횟수",
             "마케팅 동의");
     return new ArrayList<>(headList);
   }
@@ -57,7 +62,9 @@ public class AccountInfoImpl implements CreateBody {
               createString(
                   entity.getStartDate() != null ? entity.getStartDate().format(dtfd) : null),
               createString(entity.getEndDate() != null ? entity.getEndDate().format(dtfd) : null),
-              createString(entity.getNumberOfUsedCoupons()),
+              createString(entity.getNumberOfUsedExhibitionCoupons()),
+              createString(entity.getNumberOfUsedProgramCoupons()),
+              createString(entity.getNumberOfUsedCoffeeCoupons()),
               createString(entity.getAmount()),
               createString(entity.getEmail()),
               createString(entity.getName()),
@@ -68,7 +75,10 @@ public class AccountInfoImpl implements CreateBody {
                   entity.getLastLoginDate() != null
                       ? entity.getLastLoginDate().format(dtfdWithTime)
                       : null),
-              createString(entity.getUsageCount()),
+              createString(entity.getNumberOfActiveMemberships()),
+              createString(entity.getNumberOfExhibitionTickets()),
+              createString(entity.getNumberOfProgramTickets()),
+              createString(entity.getNumberOfCoffeeTickets()),
               createString(entity.getMarketingConsent()));
       bodyList1.add(asList);
     }
