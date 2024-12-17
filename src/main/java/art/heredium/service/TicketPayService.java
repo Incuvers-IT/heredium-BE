@@ -155,7 +155,8 @@ public class TicketPayService {
             .orElseThrow(() -> new ApiException(ErrorCode.TICKET_PRICE_NOT_FOUND));
 
     long discountAmount = (mostExpensiveItem.getPrice() * coupon.getDiscountPercent()) / 100;
-    ticket.setPrice(ticket.getPrice() - discountAmount);
+
+    ticket.setCouponDiscountAmount(discountAmount);
   }
 
   private boolean isCouponApplicableToTicket(CouponType couponType, TicketKindType ticketKindType) {
