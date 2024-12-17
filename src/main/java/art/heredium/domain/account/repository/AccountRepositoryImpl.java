@@ -171,9 +171,9 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
                 membershipRegistration.paymentDate,
                 membershipRegistration.registrationDate,
                 membershipRegistration.expirationDate,
-                JPAExpressions.select(couponUsage.count())
-                    .from(couponUsage)
-                    .where(couponUsage.account.eq(account).and(couponUsage.isUsed.isTrue())),
+                this.countUsedCouponsByType(CouponType.EXHIBITION),
+                this.countUsedCouponsByType(CouponType.PROGRAM),
+                this.countUsedCouponsByType(CouponType.COFFEE),
                 account.email,
                 accountInfo.name,
                 accountInfo.phone,
