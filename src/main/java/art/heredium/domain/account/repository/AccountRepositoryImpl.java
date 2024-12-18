@@ -179,7 +179,7 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
                 accountInfo.phone,
                 Expressions.numberTemplate(
                     Long.class,
-                    "COALESCE({0}, 0) + COALESCE({1}, 0), + COALESCE({2}, 0)",
+                    "COALESCE({0}, 0) + COALESCE({1}, 0) + COALESCE({2}, 0)",
                     JPAExpressions.select(ticket.price.sum())
                         .from(ticket)
                         .where(
@@ -836,7 +836,7 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
                 accountInfo.phone,
                 Expressions.numberTemplate(
                     Long.class,
-                    "COALESCE({0}, 0) + COALESCE({1}, 0), + COALESCE({2}, 0)",
+                    "COALESCE({0}, 0) + COALESCE({1}, 0) + COALESCE({2}, 0)",
                     JPAExpressions.select(ticket.price.sum())
                         .from(ticket)
                         .where(
