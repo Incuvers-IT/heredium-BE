@@ -198,10 +198,7 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
                                 .eq(account)
                                 .and(
                                     membershipRegistration.paymentStatus.eq(
-                                        PaymentStatus.COMPLETED))
-                                .and(
-                                    membershipRegistration.registrationType.eq(
-                                        RegistrationType.MEMBERSHIP_PACKAGE))),
+                                        PaymentStatus.COMPLETED))),
                     JPAExpressions.select(membershipRegistration.price.sum())
                         .from(membershipRegistration)
                         .where(
@@ -210,10 +207,7 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
                                 .eq(account)
                                 .and(
                                     membershipRegistration.paymentStatus.eq(
-                                        PaymentStatus.COMPLETED))
-                                .and(
-                                    membershipRegistration.registrationType.eq(
-                                        RegistrationType.COMPANY)))),
+                                        PaymentStatus.COMPLETED)))),
                 account.id,
                 membershipRegistration.registrationType,
                 membershipRegistration.id,
@@ -855,10 +849,7 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
                                 .eq(account)
                                 .and(
                                     membershipRegistration.paymentStatus.eq(
-                                        PaymentStatus.COMPLETED))
-                                .and(
-                                    membershipRegistration.registrationType.eq(
-                                        RegistrationType.MEMBERSHIP_PACKAGE))),
+                                        PaymentStatus.COMPLETED))),
                     JPAExpressions.select(membershipRegistration.price.sum())
                         .from(membershipRegistration)
                         .where(
@@ -867,10 +858,7 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
                                 .eq(account)
                                 .and(
                                     membershipRegistration.paymentStatus.eq(
-                                        PaymentStatus.COMPLETED))
-                                .and(
-                                    membershipRegistration.registrationType.eq(
-                                        RegistrationType.COMPANY)))),
+                                        PaymentStatus.COMPLETED)))),
                 account.createdDate,
                 accountInfo.lastLoginDate,
                 membershipCount,
