@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import com.querydsl.core.group.GroupBy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -197,7 +198,7 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
     QTicket ticket = QTicket.ticket;
     QAccount account = QAccount.account;
     QMembershipRegistration membershipRegistration = QMembershipRegistration.membershipRegistration;
-    QMembership membership = QMembership.membership;
+    QMembership membership = membershipRegistration.membership;
     return Expressions.numberTemplate(
         Long.class,
         "COALESCE({0}, 0) + COALESCE({1}, 0) + COALESCE(SUM({2}), 0)",
@@ -210,10 +211,8 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
                     .and(
                         ticket.state.notIn(
                             TicketStateType.USER_REFUND, TicketStateType.ADMIN_REFUND))),
-        JPAExpressions.select(membership.price)
+        JPAExpressions.select(membership.price.sum())
             .from(membership)
-                .innerJoin(membershipRegistration)
-                .on(membership.eq(membershipRegistration.membership))
             .where(
                 membershipRegistration
                     .account
