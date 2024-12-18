@@ -198,7 +198,7 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
     QTicket ticket = QTicket.ticket;
     QAccount account = QAccount.account;
     QMembershipRegistration membershipRegistration = QMembershipRegistration.membershipRegistration;
-    QMembership membership = membershipRegistration.membership;
+    QMembership membership = QMembership.membership;
     return Expressions.numberTemplate(
         Long.class,
         "COALESCE({0}, 0) + COALESCE({1}, 0) + COALESCE(SUM({2}), 0)",
