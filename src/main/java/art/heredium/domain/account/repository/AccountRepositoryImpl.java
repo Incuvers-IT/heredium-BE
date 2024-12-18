@@ -212,6 +212,7 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
                             TicketStateType.USER_REFUND, TicketStateType.ADMIN_REFUND))),
         JPAExpressions.select(membershipRegistration.membership.price.sum())
             .from(membershipRegistration)
+            .groupBy(membershipRegistration.account.id)
             .having(
                 membershipRegistration
                     .account
