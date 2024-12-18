@@ -179,7 +179,7 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
                 accountInfo.phone,
                 Expressions.numberTemplate(
                     Long.class,
-                    "COALESCE({0}, 0) + COALESCE({1}, 0)",
+                    "COALESCE({0}, 0) + COALESCE({1}, 0), + COALESCE({2}, 0)",
                     JPAExpressions.select(ticket.price.sum())
                         .from(ticket)
                         .where(
@@ -190,6 +190,18 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
                                     ticket.state.notIn(
                                         TicketStateType.USER_REFUND,
                                         TicketStateType.ADMIN_REFUND))),
+                    JPAExpressions.select(membershipRegistration.membership.price.sum())
+                        .from(membershipRegistration)
+                        .where(
+                            membershipRegistration
+                                .account
+                                .eq(account)
+                                .and(
+                                    membershipRegistration.paymentStatus.eq(
+                                        PaymentStatus.COMPLETED))
+                                .and(
+                                    membershipRegistration.registrationType.eq(
+                                        RegistrationType.MEMBERSHIP_PACKAGE))),
                     JPAExpressions.select(membershipRegistration.price.sum())
                         .from(membershipRegistration)
                         .where(
@@ -198,7 +210,10 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
                                 .eq(account)
                                 .and(
                                     membershipRegistration.paymentStatus.eq(
-                                        PaymentStatus.COMPLETED)))),
+                                        PaymentStatus.COMPLETED))
+                                .and(
+                                    membershipRegistration.registrationType.eq(
+                                        RegistrationType.COMPANY)))),
                 account.id,
                 membershipRegistration.registrationType,
                 membershipRegistration.id,
@@ -821,7 +836,7 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
                 accountInfo.phone,
                 Expressions.numberTemplate(
                     Long.class,
-                    "COALESCE({0}, 0) + COALESCE({1}, 0)",
+                    "COALESCE({0}, 0) + COALESCE({1}, 0), + COALESCE({2}, 0)",
                     JPAExpressions.select(ticket.price.sum())
                         .from(ticket)
                         .where(
@@ -832,6 +847,18 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
                                     ticket.state.notIn(
                                         TicketStateType.USER_REFUND,
                                         TicketStateType.ADMIN_REFUND))),
+                    JPAExpressions.select(membershipRegistration.membership.price.sum())
+                        .from(membershipRegistration)
+                        .where(
+                            membershipRegistration
+                                .account
+                                .eq(account)
+                                .and(
+                                    membershipRegistration.paymentStatus.eq(
+                                        PaymentStatus.COMPLETED))
+                                .and(
+                                    membershipRegistration.registrationType.eq(
+                                        RegistrationType.MEMBERSHIP_PACKAGE))),
                     JPAExpressions.select(membershipRegistration.price.sum())
                         .from(membershipRegistration)
                         .where(
@@ -840,7 +867,10 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
                                 .eq(account)
                                 .and(
                                     membershipRegistration.paymentStatus.eq(
-                                        PaymentStatus.COMPLETED)))),
+                                        PaymentStatus.COMPLETED))
+                                .and(
+                                    membershipRegistration.registrationType.eq(
+                                        RegistrationType.COMPANY)))),
                 account.createdDate,
                 accountInfo.lastLoginDate,
                 membershipCount,
