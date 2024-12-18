@@ -210,10 +210,9 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
                     .and(
                         ticket.state.notIn(
                             TicketStateType.USER_REFUND, TicketStateType.ADMIN_REFUND))),
-        JPAExpressions.select(membershipRegistration.membership.price.sum())
+        JPAExpressions.select(membershipRegistration.membership.price.sum(), membershipRegistration.registrationType.castToNum(Long.class).avg())
             .from(membershipRegistration)
-            .groupBy(membershipRegistration.account)
-            .having(
+            .where(
                 membershipRegistration
                     .account
                     .eq(account)
