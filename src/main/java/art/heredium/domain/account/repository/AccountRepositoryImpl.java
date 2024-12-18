@@ -137,7 +137,6 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
     QCompany company = QCompany.company;
     QMembershipRegistration membershipRegistration = QMembershipRegistration.membershipRegistration;
     QMembership membership = QMembership.membership;
-    QTicket ticket = QTicket.ticket;
 
     // Create a case expression for isValidMembership
     NumberExpression<Integer> isValidMembership =
@@ -198,10 +197,9 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
     QTicket ticket = QTicket.ticket;
     QAccount account = QAccount.account;
     QMembershipRegistration membershipRegistration = QMembershipRegistration.membershipRegistration;
-    QMembership membership = QMembership.membership;
     return Expressions.numberTemplate(
         Long.class,
-        "COALESCE({0}, 0) + COALESCE({1}, 0) + COALESCE({2}, 0)",
+        "COALESCE({0}, 0) + COALESCE({1}, 0) + COALESCE(SUM({2}), 0)",
         JPAExpressions.select(ticket.price.sum())
             .from(ticket)
             .where(
@@ -211,8 +209,8 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
                     .and(
                         ticket.state.notIn(
                             TicketStateType.USER_REFUND, TicketStateType.ADMIN_REFUND))),
-        JPAExpressions.select(membership.price.sum())
-            .from(membership)
+        JPAExpressions.select(membershipRegistration.membership.price)
+            .from(membershipRegistration)
             .where(
                 membershipRegistration
                     .account
