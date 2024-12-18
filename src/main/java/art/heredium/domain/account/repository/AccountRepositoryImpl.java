@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import com.querydsl.core.group.GroupBy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -211,12 +210,15 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
                         ticket.state.notIn(
                             TicketStateType.USER_REFUND, TicketStateType.ADMIN_REFUND))),
         JPAExpressions.select(membershipRegistration.membership.price.sum())
-            .from(membershipRegistration.membership)
+            .from(membershipRegistration)
             .where(
                 membershipRegistration
                     .account
                     .eq(account)
-                    .and(membershipRegistration.paymentStatus.eq(PaymentStatus.COMPLETED))),
+                    .and(membershipRegistration.paymentStatus.eq(PaymentStatus.COMPLETED))
+                    .and(
+                        membershipRegistration.registrationType.eq(
+                            RegistrationType.MEMBERSHIP_PACKAGE))),
         JPAExpressions.select(membershipRegistration.price.sum())
             .from(membershipRegistration)
             .where(
