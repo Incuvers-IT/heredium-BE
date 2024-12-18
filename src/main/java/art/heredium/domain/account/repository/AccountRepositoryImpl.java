@@ -198,7 +198,6 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
     QTicket ticket = QTicket.ticket;
     QAccount account = QAccount.account;
     QMembershipRegistration membershipRegistration = QMembershipRegistration.membershipRegistration;
-    QMembership membership = QMembership.membership;
     return Expressions.numberTemplate(
         Long.class,
         "COALESCE({0}, 0) + COALESCE({1}, 0) + COALESCE(SUM({2}), 0)",
@@ -211,9 +210,9 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
                     .and(
                         ticket.state.notIn(
                             TicketStateType.USER_REFUND, TicketStateType.ADMIN_REFUND))),
-        JPAExpressions.select(membership.price.sum())
-            .from(membership)
-            .where(
+        JPAExpressions.select(membershipRegistration.membership.price.sum())
+            .from(membershipRegistration)
+            .having(
                 membershipRegistration
                     .account
                     .eq(account)
