@@ -59,13 +59,13 @@ public class AccountWithMembershipInfoExcelDownloadResponse {
   private Long numberOfActiveMemberships;
 
   @JsonProperty("number_of_exhibition_tickets")
-  private Long numberOfExhibitionTickets;
+  private Integer numberOfExhibitionTickets;
 
   @JsonProperty("number_of_program_tickets")
-  private Long numberOfProgramTickets;
+  private Integer numberOfProgramTickets;
 
   @JsonProperty("number_of_coffee_tickets")
-  private Long numberOfCoffeeTickets;
+  private Integer numberOfCoffeeTickets;
 
   @JsonProperty("marketing_consent")
   private Boolean marketingConsent;
@@ -86,9 +86,9 @@ public class AccountWithMembershipInfoExcelDownloadResponse {
       final LocalDateTime createdDate,
       final LocalDateTime lastLoginDate,
       final Long numberOfActiveMemberships,
-      final Long numberOfExhibitionTickets,
-      final Long numberOfProgramTickets,
-      final Long numberOfCoffeeTickets,
+      final Integer numberOfExhibitionTickets,
+      final Integer numberOfProgramTickets,
+      final Integer numberOfCoffeeTickets,
       final Boolean marketingConsent) {
     this.membershipName = membershipName;
     this.paymentStatus = paymentStatus != null ? paymentStatus.getDesc() : null;
