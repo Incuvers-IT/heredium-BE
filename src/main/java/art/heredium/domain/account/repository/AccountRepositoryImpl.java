@@ -213,17 +213,19 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
                         ticket.state.notIn(
                             TicketStateType.USER_REFUND, TicketStateType.ADMIN_REFUND))),
         // Truy vấn tính tổng giá trị membership sử dụng JOIN
-        JPAExpressions.select(membership.price.sum())
+        JPAExpressions.select(membership.price)
             .from(membershipRegistration)
-            .join(membershipRegistration.membership, membership) // Điều kiện JOIN
+            .innerJoin(membershipRegistration.membership, membership) // Điều kiện JOIN
             .where(
                 membershipRegistration
                     .account
                     .eq(account)
-                    .and(membershipRegistration.paymentStatus.eq(PaymentStatus.COMPLETED))
                     .and(
-                        membershipRegistration.registrationType.eq(
-                            RegistrationType.MEMBERSHIP_PACKAGE))),
+                        membershipRegistration
+                            .paymentStatus
+                            .eq(PaymentStatus.COMPLETED)
+                            .or(membershipRegistration.paymentStatus.eq(PaymentStatus.EXPIRED))))
+            .limit(1),
         // Truy vấn tính tổng giá trị membership_registration (không JOIN)
         JPAExpressions.select(membershipRegistration.price.sum())
             .from(membershipRegistration)
@@ -231,7 +233,11 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
                 membershipRegistration
                     .account
                     .eq(account)
-                    .and(membershipRegistration.paymentStatus.eq(PaymentStatus.COMPLETED))));
+                    .and(
+                        membershipRegistration
+                            .paymentStatus
+                            .eq(PaymentStatus.COMPLETED)
+                            .or(membershipRegistration.paymentStatus.eq(PaymentStatus.EXPIRED)))));
   }
 
   private JPQLQuery<Long> selectVisitCount() {
