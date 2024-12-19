@@ -271,8 +271,9 @@ public class TicketPayService {
       applyCouponDiscount(entity, couponUsage);
       entity.updateCouponUuid(couponUuid);
     }
-
-    if (!StringUtils.isEmpty(entity.getPgId()) || entity.getPrice() > 0) {
+    long couponDiscountAmount =
+        entity.getCouponDiscountAmount() == null ? 0 : entity.getCouponDiscountAmount();
+    if (!StringUtils.isEmpty(entity.getPgId()) || (entity.getPrice() - couponDiscountAmount) > 0) {
       throw new ApiException(ErrorCode.BAD_VALID, "결제가 필요합니다.");
     }
     ticketRepository.saveAndFlush(entity);
