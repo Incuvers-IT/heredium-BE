@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import art.heredium.domain.membership.entity.PaymentStatus;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.data.domain.Page;
@@ -62,6 +63,7 @@ public class MembershipRegistrationRepositoryImpl
                 signedUpDateBetween(request.getSignUpDateFrom(), request.getSignUpDateTo()),
                 isAgreeToReceiveMarketing(request.getIsAgreeToReceiveMarketing()),
                 textContains(request.getText()),
+                paymentStatusNotIn(PaymentStatus.REFUND),
                 isNotExpired());
     final long total = Optional.ofNullable(countQuery.fetchOne()).orElse(0L);
     List<ActiveMembershipRegistrationsResponse> content = new ArrayList<>();
@@ -69,6 +71,11 @@ public class MembershipRegistrationRepositoryImpl
       content = query.offset(pageable.getOffset()).limit(pageable.getPageSize()).fetch();
     }
     return new PageImpl<>(content, pageable, total);
+  }
+
+  private BooleanExpression paymentStatusNotIn(PaymentStatus paymentStatus) {
+      QMembershipRegistration membershipRegistration = QMembershipRegistration.membershipRegistration;
+      return membershipRegistration.paymentStatus.notIn(paymentStatus);
   }
 
   @Override
@@ -119,6 +126,7 @@ public class MembershipRegistrationRepositoryImpl
             signedUpDateBetween(request.getSignUpDateFrom(), request.getSignUpDateTo()),
             isAgreeToReceiveMarketing(request.getIsAgreeToReceiveMarketing()),
             textContains(request.getText()),
+            paymentStatusNotIn(PaymentStatus.REFUND),
             isNotExpired())
         .orderBy(membershipRegistration.paymentDate.desc());
   }
