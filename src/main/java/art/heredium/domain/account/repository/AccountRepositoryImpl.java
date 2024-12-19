@@ -197,9 +197,12 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
     QTicket ticket = QTicket.ticket;
     QAccount account = QAccount.account;
     QMembershipRegistration membershipRegistration = QMembershipRegistration.membershipRegistration;
+    QMembership membership = QMembership.membership;
+
     return Expressions.numberTemplate(
         Long.class,
         "COALESCE({0}, 0) + COALESCE({1}, 0) + COALESCE(SUM({2}), 0)",
+        // Truy vấn tính tổng giá trị từ ticket
         JPAExpressions.select(ticket.price.sum())
             .from(ticket)
             .where(
@@ -209,8 +212,10 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
                     .and(
                         ticket.state.notIn(
                             TicketStateType.USER_REFUND, TicketStateType.ADMIN_REFUND))),
-        JPAExpressions.select(membershipRegistration.membership.price.sum())
+        // Truy vấn tính tổng giá trị membership sử dụng JOIN
+        JPAExpressions.select(membership.price.sum())
             .from(membershipRegistration)
+            .join(membershipRegistration.membership, membership) // Điều kiện JOIN
             .where(
                 membershipRegistration
                     .account
@@ -219,6 +224,7 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
                     .and(
                         membershipRegistration.registrationType.eq(
                             RegistrationType.MEMBERSHIP_PACKAGE))),
+        // Truy vấn tính tổng giá trị membership_registration (không JOIN)
         JPAExpressions.select(membershipRegistration.price.sum())
             .from(membershipRegistration)
             .where(
