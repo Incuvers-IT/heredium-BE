@@ -27,6 +27,7 @@ import art.heredium.domain.company.entity.QCompany;
 import art.heredium.domain.coupon.entity.CouponType;
 import art.heredium.domain.coupon.entity.QCoupon;
 import art.heredium.domain.coupon.entity.QCouponUsage;
+import art.heredium.domain.membership.entity.PaymentStatus;
 import art.heredium.domain.membership.entity.QMembership;
 import art.heredium.domain.membership.entity.QMembershipRegistration;
 import art.heredium.domain.membership.entity.RegistrationType;
@@ -62,6 +63,7 @@ public class MembershipRegistrationRepositoryImpl
                 signedUpDateBetween(request.getSignUpDateFrom(), request.getSignUpDateTo()),
                 isAgreeToReceiveMarketing(request.getIsAgreeToReceiveMarketing()),
                 textContains(request.getText()),
+                paymentStatusIn(PaymentStatus.COMPLETED),
                 isNotExpired());
     final long total = Optional.ofNullable(countQuery.fetchOne()).orElse(0L);
     List<ActiveMembershipRegistrationsResponse> content = new ArrayList<>();
@@ -69,6 +71,14 @@ public class MembershipRegistrationRepositoryImpl
       content = query.offset(pageable.getOffset()).limit(pageable.getPageSize()).fetch();
     }
     return new PageImpl<>(content, pageable, total);
+  }
+
+  private BooleanExpression paymentStatusIn(PaymentStatus... paymentStatuses) {
+    QMembershipRegistration membershipRegistration = QMembershipRegistration.membershipRegistration;
+    if (paymentStatuses != null && paymentStatuses.length != 0) {
+      return membershipRegistration.paymentStatus.in(paymentStatuses);
+    }
+    return null;
   }
 
   @Override
@@ -119,6 +129,7 @@ public class MembershipRegistrationRepositoryImpl
             signedUpDateBetween(request.getSignUpDateFrom(), request.getSignUpDateTo()),
             isAgreeToReceiveMarketing(request.getIsAgreeToReceiveMarketing()),
             textContains(request.getText()),
+            paymentStatusIn(PaymentStatus.COMPLETED),
             isNotExpired())
         .orderBy(membershipRegistration.paymentDate.desc());
   }
