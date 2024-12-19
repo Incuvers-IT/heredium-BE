@@ -134,9 +134,11 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
       final GetAccountWithMembershipInfoRequestV2 dto) {
     QAccount account = QAccount.account;
     QAccountInfo accountInfo = QAccountInfo.accountInfo;
+    QCouponUsage couponUsage = QCouponUsage.couponUsage;
     QCompany company = QCompany.company;
     QMembershipRegistration membershipRegistration = QMembershipRegistration.membershipRegistration;
     QMembership membership = QMembership.membership;
+    QTicket ticket = QTicket.ticket;
 
     // Create a case expression for isValidMembership
     NumberExpression<Integer> isValidMembership =
@@ -175,7 +177,28 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
                 account.email,
                 accountInfo.name,
                 accountInfo.phone,
-                selectAmountSum(),
+                Expressions.numberTemplate(
+                    Long.class,
+                    "COALESCE({0}, 0) + COALESCE({1}, 0)",
+                    JPAExpressions.select(ticket.price.sum())
+                        .from(ticket)
+                        .where(
+                            ticket
+                                .account
+                                .eq(account)
+                                .and(
+                                    ticket.state.notIn(
+                                        TicketStateType.USER_REFUND,
+                                        TicketStateType.ADMIN_REFUND))),
+                    JPAExpressions.select(membershipRegistration.price.sum())
+                        .from(membershipRegistration)
+                        .where(
+                            membershipRegistration
+                                .account
+                                .eq(account)
+                                .and(
+                                    membershipRegistration.paymentStatus.eq(
+                                        PaymentStatus.COMPLETED)))),
                 account.id,
                 membershipRegistration.registrationType,
                 membershipRegistration.id,
@@ -191,53 +214,6 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
             paymentStatusIn(dto.getPaymentStatus()),
             textContains(dto.getText()))
         .orderBy(membershipRegistration.expirationDate.desc());
-  }
-
-  private NumberTemplate<Long> selectAmountSum() {
-    QTicket ticket = QTicket.ticket;
-    QAccount account = QAccount.account;
-    QMembershipRegistration membershipRegistration = QMembershipRegistration.membershipRegistration;
-    QMembership membership = QMembership.membership;
-
-    return Expressions.numberTemplate(
-        Long.class,
-        "COALESCE({0}, 0) + COALESCE({1}, 0) + COALESCE(SUM({2}), 0)",
-        // Truy vấn tính tổng giá trị từ ticket
-        JPAExpressions.select(ticket.price.sum())
-            .from(ticket)
-            .where(
-                ticket
-                    .account
-                    .eq(account)
-                    .and(
-                        ticket.state.notIn(
-                            TicketStateType.USER_REFUND, TicketStateType.ADMIN_REFUND))),
-        // Truy vấn tính tổng giá trị membership sử dụng JOIN
-        JPAExpressions.select(membership.price)
-            .from(membershipRegistration)
-            .innerJoin(membershipRegistration.membership, membership) // Điều kiện JOIN
-            .where(
-                membershipRegistration
-                    .account
-                    .eq(account)
-                    .and(
-                        membershipRegistration
-                            .paymentStatus
-                            .eq(PaymentStatus.COMPLETED)
-                            .or(membershipRegistration.paymentStatus.eq(PaymentStatus.EXPIRED))))
-            .limit(1),
-        // Truy vấn tính tổng giá trị membership_registration (không JOIN)
-        JPAExpressions.select(membershipRegistration.price.sum())
-            .from(membershipRegistration)
-            .where(
-                membershipRegistration
-                    .account
-                    .eq(account)
-                    .and(
-                        membershipRegistration
-                            .paymentStatus
-                            .eq(PaymentStatus.COMPLETED)
-                            .or(membershipRegistration.paymentStatus.eq(PaymentStatus.EXPIRED)))));
   }
 
   private JPQLQuery<Long> selectVisitCount() {
@@ -843,7 +819,28 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
                 account.email,
                 accountInfo.name,
                 accountInfo.phone,
-                selectAmountSum(),
+                Expressions.numberTemplate(
+                    Long.class,
+                    "COALESCE({0}, 0) + COALESCE({1}, 0)",
+                    JPAExpressions.select(ticket.price.sum())
+                        .from(ticket)
+                        .where(
+                            ticket
+                                .account
+                                .eq(account)
+                                .and(
+                                    ticket.state.notIn(
+                                        TicketStateType.USER_REFUND,
+                                        TicketStateType.ADMIN_REFUND))),
+                    JPAExpressions.select(membershipRegistration.price.sum())
+                        .from(membershipRegistration)
+                        .where(
+                            membershipRegistration
+                                .account
+                                .eq(account)
+                                .and(
+                                    membershipRegistration.paymentStatus.eq(
+                                        PaymentStatus.COMPLETED)))),
                 account.createdDate,
                 accountInfo.lastLoginDate,
                 membershipCount,
