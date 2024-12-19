@@ -100,6 +100,7 @@ public class MembershipPaymentService {
     String paymentOrderId = membershipRegistration.getPaymentOrderId();
     this.couponUsageService.rollbackCouponDistribution(membershipRegistration.getId());
     membershipRegistration.updatePaymentStatus(PaymentStatus.REFUND);
+    membershipRegistration.updateExpirationDate(LocalDateTime.now());
     this.membershipRegistrationRepository.save(membershipRegistration);
     membershipRegistration.getPaymentType().refund(paymentKey, paymentOrderId);
     return MembershipRefundResponse.builder()
