@@ -38,6 +38,9 @@ import art.heredium.ncloud.type.AlimTalkTemplate;
 public class CouponUsageService {
   private static final DateTimeFormatter COUPON_DATETIME_FORMAT =
       DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+
+  private static final DateTimeFormatter COUPON_DATE_FORMAT =
+      DateTimeFormatter.ofPattern("yyyy-MM-dd");
   private final CouponUsageRepository couponUsageRepository;
   private final CouponRepository couponRepository;
   private final AccountRepository accountRepository;
@@ -260,14 +263,16 @@ public class CouponUsageService {
             variables.put("couponType", coupon.getCoupon().getCouponType().getDesc());
             variables.put("couponName", coupon.getCoupon().getName());
             variables.put(
-                "disCountPercent",
+                "discountPercent",
                 coupon.getCoupon().getDiscountPercent() != 100
                     ? coupon.getCoupon().getDiscountPercent() + "%"
                     : "무료");
             variables.put(
-                "couponStartDate", coupon.getDeliveredDate().format(COUPON_DATETIME_FORMAT));
+                "couponStartDate",
+                coupon.getDeliveredDate().format(COUPON_DATE_FORMAT)); // No need to show time
             variables.put(
-                "couponEndDate", coupon.getExpirationDate().format(COUPON_DATETIME_FORMAT));
+                "couponEndDate",
+                coupon.getExpirationDate().format(COUPON_DATE_FORMAT)); // No need to show time
             variables.put(
                 "numberOfUses",
                 coupon.isPermanent() ? "상시할인" : coupon.getCoupon().getNumberOfUses() + "회");
@@ -276,7 +281,7 @@ public class CouponUsageService {
             phonesAndMessagesToSendAlimTalk.put(account.getAccountInfo().getPhone(), variables);
           });
       this.alimTalk.sendAlimTalkWithoutTitle(
-          phonesAndMessagesToSendAlimTalk, AlimTalkTemplate.COUPON_HAS_BEEN_DELIVERED);
+          phonesAndMessagesToSendAlimTalk, AlimTalkTemplate.COUPON_HAS_BEEN_ISSUED_V2);
     } catch (Exception e) {
       log.warn(
           "Sending message to AlimTalk failed: {}, message params: {}",
