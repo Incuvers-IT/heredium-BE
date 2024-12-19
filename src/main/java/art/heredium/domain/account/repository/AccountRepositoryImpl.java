@@ -109,8 +109,7 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
             .where(
                 paymentDateBetween(dto.getPaymentDateFrom(), dto.getPaymentDateTo()),
                 paymentStatusIn(dto.getPaymentStatus()),
-                textContains(dto.getText()),
-                paymentStatusNot(PaymentStatus.REFUND));
+                textContains(dto.getText()));
 
     final long total = Optional.ofNullable(countQuery.fetchOne()).orElse(0L);
 
@@ -213,8 +212,7 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
         .where(
             paymentDateBetween(dto.getPaymentDateFrom(), dto.getPaymentDateTo()),
             paymentStatusIn(dto.getPaymentStatus()),
-            textContains(dto.getText()),
-            paymentStatusNot(PaymentStatus.REFUND))
+            textContains(dto.getText()))
         .orderBy(membershipRegistration.expirationDate.desc());
   }
 
@@ -660,11 +658,6 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
       return membershipRegistration.paymentStatus.in(paymentStatuses);
     }
     return null;
-  }
-
-  private BooleanExpression paymentStatusNot(PaymentStatus paymentStatus) {
-    QMembershipRegistration membershipRegistration = QMembershipRegistration.membershipRegistration;
-    return membershipRegistration.paymentStatus.notIn(paymentStatus);
   }
 
   private BooleanExpression hasNumberOfEntries(Boolean hasEntries) {
