@@ -190,15 +190,24 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
                                     ticket.state.notIn(
                                         TicketStateType.USER_REFUND,
                                         TicketStateType.ADMIN_REFUND))),
-                    JPAExpressions.select(membershipRegistration.price.sum())
-                        .from(membershipRegistration)
-                        .where(
+                    Expressions.cases()
+                        .when(
                             membershipRegistration
-                                .account
-                                .eq(account)
+                                .registrationType
+                                .eq(RegistrationType.MEMBERSHIP_PACKAGE)
                                 .and(
-                                    membershipRegistration.paymentStatus.eq(
-                                        PaymentStatus.COMPLETED)))),
+                                    membershipRegistration.paymentStatus.in(
+                                        PaymentStatus.EXPIRED, PaymentStatus.COMPLETED)))
+                        .then(membershipRegistration.membership.price) // Nếu là MEMBERSHIP_PACKAGE
+                        .when(
+                            membershipRegistration
+                                .registrationType
+                                .eq(RegistrationType.COMPANY)
+                                .and(
+                                    membershipRegistration.paymentStatus.in(
+                                        PaymentStatus.EXPIRED, PaymentStatus.COMPLETED)))
+                        .then(membershipRegistration.price.intValue())
+                        .otherwise(0)),
                 account.id,
                 membershipRegistration.registrationType,
                 membershipRegistration.id,
@@ -832,15 +841,24 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
                                     ticket.state.notIn(
                                         TicketStateType.USER_REFUND,
                                         TicketStateType.ADMIN_REFUND))),
-                    JPAExpressions.select(membershipRegistration.price.sum())
-                        .from(membershipRegistration)
-                        .where(
+                    Expressions.cases()
+                        .when(
                             membershipRegistration
-                                .account
-                                .eq(account)
+                                .registrationType
+                                .eq(RegistrationType.MEMBERSHIP_PACKAGE)
                                 .and(
-                                    membershipRegistration.paymentStatus.eq(
-                                        PaymentStatus.COMPLETED)))),
+                                    membershipRegistration.paymentStatus.in(
+                                        PaymentStatus.EXPIRED, PaymentStatus.COMPLETED)))
+                        .then(membershipRegistration.membership.price) // Nếu là MEMBERSHIP_PACKAGE
+                        .when(
+                            membershipRegistration
+                                .registrationType
+                                .eq(RegistrationType.COMPANY)
+                                .and(
+                                    membershipRegistration.paymentStatus.in(
+                                        PaymentStatus.EXPIRED, PaymentStatus.COMPLETED)))
+                        .then(membershipRegistration.price.intValue())
+                        .otherwise(0)),
                 account.createdDate,
                 accountInfo.lastLoginDate,
                 membershipCount,
