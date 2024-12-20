@@ -375,7 +375,6 @@ public class Ticket implements Serializable {
   public void initPay(PaymentTicketResponse res, PaymentType paymentType) {
     this.payMethod = res.getPayMethod();
     this.pgId = res.getPaymentKey();
-    this.price = res.getPaymentAmount();
     this.payment = paymentType;
   }
 
