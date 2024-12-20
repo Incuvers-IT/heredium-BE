@@ -214,18 +214,25 @@ public class TicketPayService {
               AlimTalkTemplate.TICKET_INFORMATION,
               entity.getStartDate().minusDays(1).withHour(10));
       entity.updateSmsRequestId(smsRequestId);
-      entity.updateCouponUuid(couponUuid);
+      if (couponUuid != null) {
+        // Validate coupon first
+        CouponUsage couponUsage = validateCouponUsage(couponUuid, entity.getKind());
+
+        // Apply coupon discount if valid
+        if (couponUsage != null) {
+          applyCouponDiscount(entity, couponUsage);
+          entity.updateCouponUuid(couponUuid);
+          couponUsageService.checkoutCouponUsage(couponUuid);
+        }
+
+        jwtRedisUtil.deleteData(COUPON_USAGE_CACHE_KEY + couponUuid);
+        jwtRedisUtil.deleteData(COUPON_UUID_CACHE_KEY + entity.getUuid());
+      }
       ticketRepository.saveAndFlush(entity);
     } catch (Exception e) {
       log.error("티켓구매 에러", e);
       dto.getType().cancel(entity, dto);
       throw new ApiException(ErrorCode.DB_ERROR, e.getMessage());
-    }
-
-    if (couponUuid != null) {
-      couponUsageService.checkoutCouponUsage(couponUuid);
-      jwtRedisUtil.deleteData(COUPON_USAGE_CACHE_KEY + couponUuid);
-      jwtRedisUtil.deleteData(COUPON_UUID_CACHE_KEY + entity.getUuid());
     }
 
     return new PostUserTicketResponse(entity);
