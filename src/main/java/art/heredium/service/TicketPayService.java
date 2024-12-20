@@ -223,7 +223,16 @@ public class TicketPayService {
     }
 
     if (couponUuid != null) {
-      couponUsageService.checkoutCouponUsage(couponUuid);
+      // Validate coupon first
+      CouponUsage couponUsage = validateCouponUsage(couponUuid, entity.getKind());
+
+      // Apply coupon discount if valid
+      if (couponUsage != null) {
+        applyCouponDiscount(entity, couponUsage);
+        entity.updateCouponUuid(couponUuid);
+        couponUsageService.checkoutCouponUsage(couponUuid);
+      }
+
       jwtRedisUtil.deleteData(COUPON_USAGE_CACHE_KEY + couponUuid);
       jwtRedisUtil.deleteData(COUPON_UUID_CACHE_KEY + entity.getUuid());
     }
