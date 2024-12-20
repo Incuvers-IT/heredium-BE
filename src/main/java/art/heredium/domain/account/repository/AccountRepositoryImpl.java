@@ -876,7 +876,7 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
             paymentDateBetween(dto.getPaymentDateFrom(), dto.getPaymentDateTo()),
             paymentStatusIn(dto.getPaymentStatus()),
             textContains(dto.getText()))
-        .orderBy(membershipRegistration.expirationDate.desc());
+        .orderBy(membershipRegistration.registrationDate.desc());
   }
 
   private JPQLQuery<Long> countUsedCouponsByType(CouponType couponType) {
