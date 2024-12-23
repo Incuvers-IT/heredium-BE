@@ -225,7 +225,8 @@ public class CompanyService {
       if (isRowEmpty(row)) continue;
 
       final String email = getCellValueAsString(row.getCell(0));
-      final String phone = getCellValueAsString(row.getCell(1));
+      final String phone =
+          String.format("%11s", getCellValueAsString(row.getCell(1))).replace(" ", "0");
       final String startDate = getCellValueAsString(row.getCell(2));
       final String price = getCellValueAsString(row.getCell(3));
       final String paymentDate = getCellValueAsString(row.getCell(4));
