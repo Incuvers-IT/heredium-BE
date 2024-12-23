@@ -30,10 +30,10 @@ public enum AlimTalkTemplate {
       "HEREDIUM020",
       "@spadecompany",
       ""), // dev templateCode has not been created
-  COUPON_HAS_BEEN_ISSUED_V2(
+  COUPON_HAS_BEEN_ISSUED_V3(
       "쿠폰발행",
       "@heredium",
-      "HEREDIUM025",
+      "HEREDIUM026",
       "@spadecompany",
       ""), // Replaced for COUPON_HAS_BEEN_DELIVERED
   NON_MEMBERSHIP_COUPON_HAS_BEEN_USED(
