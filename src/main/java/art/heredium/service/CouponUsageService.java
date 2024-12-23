@@ -281,7 +281,7 @@ public class CouponUsageService {
             phonesAndMessagesToSendAlimTalk.put(account.getAccountInfo().getPhone(), variables);
           });
       this.alimTalk.sendAlimTalkWithoutTitle(
-          phonesAndMessagesToSendAlimTalk, AlimTalkTemplate.COUPON_HAS_BEEN_ISSUED_V2);
+          phonesAndMessagesToSendAlimTalk, AlimTalkTemplate.COUPON_HAS_BEEN_ISSUED_V3);
     } catch (Exception e) {
       log.warn(
           "Sending message to AlimTalk failed: {}, message params: {}",
