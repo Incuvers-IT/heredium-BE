@@ -105,16 +105,16 @@
 [//]: # "- 이용 혜택 : 전시 쿠폰"
 [//]: # "클래식 음악과 컨템포러리 아트가 함께하는 헤레디움, 멤버십을 통해 더욱 다양한 전시와 공연을 만나보세요!"
 
-### COUPON_HAS_BEEN_ISSUED_V2
+### COUPON_HAS_BEEN_ISSUED_V3
 
 헤레디움
 [쿠폰 발급 안내]
 안녕하세요 #{accountName}님, 헤레디움 커피 쿠폰이 발급되었습니다.
 
-[커피 쿠폰] - 쿠폰 종류 표출
+#{couponType} 쿠폰
 
-- 쿠폰명 : [#{couponName}]
-- 쿠폰혜택 : [#{couponType}] [#{discountPercent}] [#{numberOfUses}]
+- 쿠폰명 : #{couponName}
+- 쿠폰혜택 : #{couponType} #{discountPercent} #{numberOfUses}
 - 사용기한 : #{couponStartDate} ~ #{couponEndDate}
 
 클래식 음악과 컨템포러리 아트가 함께하는 헤레디움, 다양한 전시와 공연을 만나보세요!
