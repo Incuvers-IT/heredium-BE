@@ -16,3 +16,6 @@ INNER JOIN membership_registration mr ON t.account_id = mr.account_id;
 
 -- Delete all membership_registration records
 DELETE FROM membership_registration;
+
+-- Delete company membership registration history records
+DELETE FROM company_membership_registration_history;
