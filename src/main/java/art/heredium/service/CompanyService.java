@@ -73,7 +73,7 @@ public class CompanyService {
   }
 
   public List<CompanyResponseDto> getAllCompanies() {
-    return companyRepository.findAll().stream()
+    return companyRepository.findAllByIsDeletedFalse().stream()
         .map(this::convertToDto)
         .collect(Collectors.toList());
   }
