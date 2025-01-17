@@ -54,4 +54,10 @@ public class AdminCompanyController {
     }
     return ResponseEntity.badRequest().body(existingMemberships);
   }
+
+  @PutMapping("/{companyId}")
+  public ResponseEntity<CompanyResponseDto> updateCompany(
+      @PathVariable Long companyId, @RequestParam String name) {
+    return ResponseEntity.ok(this.companyService.updateCompany(companyId, name));
+  }
 }
