@@ -54,7 +54,8 @@ public class PostHistoryRepositoryImpl implements PostHistoryRepositoryQueryDsl 
                 PostHistoryBaseResponse.class,
                 postHistory.id,
                 postHistory.lastModifiedDate,
-                postHistory.modifyUserEmail))
+                postHistory.modifyUserEmail,
+                postHistory.lastModifiedName))
         .from(postHistory)
         .where(
             lastModifiedDateBetween(request.getModifyDateFrom(), request.getModifyDateTo()),

@@ -19,4 +19,7 @@ public class PostHistoryBaseResponse {
 
   @JsonProperty("modify_user_email")
   private String modifyUserEmail;
+
+  @JsonProperty("modify_user_name")
+  private String modifyUserName;
 }

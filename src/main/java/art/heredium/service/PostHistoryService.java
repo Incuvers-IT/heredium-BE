@@ -14,9 +14,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import art.heredium.core.config.error.entity.ApiException;
 import art.heredium.core.config.error.entity.ErrorCode;
 import art.heredium.domain.post.entity.PostHistory;
-import art.heredium.domain.post.model.dto.response.PostHistoryResponse;
 import art.heredium.domain.post.model.dto.request.PostHistorySearchRequest;
 import art.heredium.domain.post.model.dto.response.PostHistoryBaseResponse;
+import art.heredium.domain.post.model.dto.response.PostHistoryResponse;
 import art.heredium.domain.post.repository.PostHistoryRepository;
 import art.heredium.domain.post.repository.PostHistoryRepositoryImpl;
 
