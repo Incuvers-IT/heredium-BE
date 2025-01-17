@@ -416,4 +416,16 @@ public class CompanyService {
     }
     return existingMemberships;
   }
+
+  public CompanyResponseDto updateCompany(Long companyId, String name) {
+    Company company =
+        companyRepository
+            .findById(companyId)
+            .orElseThrow(() -> new ApiException(ErrorCode.COMPANY_NOT_FOUND));
+
+    company.setName(name);
+    Company updatedCompany = companyRepository.save(company);
+
+    return convertToDto(updatedCompany);
+  }
 }
