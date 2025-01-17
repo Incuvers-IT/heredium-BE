@@ -7,11 +7,14 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang3.StringUtils;
 
 import art.heredium.core.config.error.entity.ApiException;
@@ -31,11 +34,13 @@ import art.heredium.domain.membership.repository.MembershipRepository;
 import art.heredium.domain.post.entity.Post;
 import art.heredium.domain.post.entity.PostHistory;
 import art.heredium.domain.post.model.dto.request.*;
+import art.heredium.domain.post.model.dto.response.AdminPostDetailsResponse;
 import art.heredium.domain.post.repository.PostRepository;
 import art.heredium.ncloud.bean.CloudStorage;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class PostService {
   private static final String THUMBNAIL_URL_DELIMITER = ";";
   private final PostRepository postRepository;
@@ -44,6 +49,7 @@ public class PostService {
   private final CloudStorage cloudStorage;
   private final MembershipRepository membershipRepository;
   private final CouponRepository couponRepository;
+  private final ObjectMapper objectMapper = new ObjectMapper();
 
   public Optional<Post> findFirstByIsEnabledTrue() {
     return this.postRepository.findFirstByIsEnabledTrue();
@@ -308,10 +314,16 @@ public class PostService {
   }
 
   private void updatePostHistory(Post post) {
+    String content = null;
+    try {
+      content = this.objectMapper.writeValueAsString(new AdminPostDetailsResponse(post));
+    } catch (JsonProcessingException e) {
+      log.info("Failed to deserialize AdminPostDetailsResponse");
+    }
     this.postHistoryService.save(
         PostHistory.builder()
             .modifyUserEmail(post.getAdmin().getEmail())
-            .postContent(post.getContentDetail())
+            .postContent(content)
             .build());
   }
 
