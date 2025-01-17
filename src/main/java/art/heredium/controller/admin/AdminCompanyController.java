@@ -60,4 +60,10 @@ public class AdminCompanyController {
       @PathVariable Long companyId, @RequestParam String name) {
     return ResponseEntity.ok(this.companyService.updateCompany(companyId, name));
   }
+
+  @DeleteMapping("/{companyId}")
+  public ResponseEntity<Void> deleteCompany(@PathVariable Long companyId) {
+    this.companyService.deleteCompany(companyId);
+    return ResponseEntity.ok().build();
+  }
 }
