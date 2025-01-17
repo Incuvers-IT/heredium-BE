@@ -1,6 +1,7 @@
 package art.heredium.domain.post.entity;
 
 import javax.persistence.Column;
+import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Table;
@@ -19,6 +20,7 @@ import org.hibernate.annotations.DynamicInsert;
 
 import art.heredium.domain.common.entity.BaseEntity;
 
+@Entity
 @Getter
 @Setter
 @Table(name = "post_history")
