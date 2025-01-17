@@ -428,4 +428,15 @@ public class CompanyService {
 
     return convertToDto(updatedCompany);
   }
+
+  @Transactional(rollbackFor = Exception.class)
+  public void deleteCompany(Long companyId) {
+    Company company =
+        companyRepository
+            .findById(companyId)
+            .orElseThrow(() -> new ApiException(ErrorCode.COMPANY_NOT_FOUND));
+
+    company.setDeleted(true);
+    companyRepository.save(company);
+  }
 }
