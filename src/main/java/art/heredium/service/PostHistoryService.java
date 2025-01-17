@@ -7,13 +7,11 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import art.heredium.core.config.error.entity.ApiException;
 import art.heredium.core.config.error.entity.ErrorCode;
 import art.heredium.domain.post.entity.PostHistory;
-import art.heredium.domain.post.model.dto.response.AdminPostDetailsResponse;
 import art.heredium.domain.post.model.dto.response.PostHistoryResponse;
 import art.heredium.domain.post.repository.PostHistoryRepository;
 
@@ -36,18 +34,12 @@ public class PostHistoryService {
             .findById(postHistoryId)
             .orElseThrow(
                 () -> new ApiException(ErrorCode.POST_HISTORY_NOT_FOUND, "Post history not found"));
-    AdminPostDetailsResponse content = null;
-    try {
-      content =
-          this.objectMapper.readValue(postHistory.getPostContent(), AdminPostDetailsResponse.class);
-    } catch (JsonProcessingException e) {
-      log.info("Failed to serialize content: {}", postHistory.getPostContent());
-    }
     return PostHistoryResponse.builder()
         .postHistoryId(postHistory.getId())
         .modifiedDate(postHistory.getLastModifiedDate())
         .modifyUserEmail(postHistory.getModifyUserEmail())
-        .content(content)
+        .modifyUserName(postHistory.getLastModifiedName())
+        .content(postHistory.getPostContent())
         .build();
   }
 }
