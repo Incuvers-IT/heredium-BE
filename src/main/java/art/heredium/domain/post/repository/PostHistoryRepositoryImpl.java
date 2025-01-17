@@ -36,7 +36,7 @@ public class PostHistoryRepositoryImpl implements PostHistoryRepositoryQueryDsl 
             .from(postHistory)
             .where(
                 lastModifiedDateBetween(request.getModifyDateFrom(), request.getModifyDateTo()),
-                modifyUserEmail(request.getModifyUserEmail()));
+                modifyUserEmailOrName(request.getModifyUserEmailOrName()));
 
     final long total = Optional.ofNullable(countQuery.fetchOne()).orElse(0L);
     List<PostHistoryBaseResponse> content = new ArrayList<>();
@@ -58,7 +58,7 @@ public class PostHistoryRepositoryImpl implements PostHistoryRepositoryQueryDsl 
         .from(postHistory)
         .where(
             lastModifiedDateBetween(request.getModifyDateFrom(), request.getModifyDateTo()),
-            modifyUserEmail(request.getModifyUserEmail()))
+            modifyUserEmailOrName(request.getModifyUserEmailOrName()))
         .orderBy(postHistory.lastModifiedDate.desc());
   }
 
@@ -76,10 +76,13 @@ public class PostHistoryRepositoryImpl implements PostHistoryRepositoryQueryDsl 
     return null;
   }
 
-  private BooleanExpression modifyUserEmail(String modifyUserEmail) {
+  private BooleanExpression modifyUserEmailOrName(String modifyUserEmailOrName) {
     QPostHistory postHistory = QPostHistory.postHistory;
-    if (modifyUserEmail != null) {
-      return postHistory.modifyUserEmail.equalsIgnoreCase(modifyUserEmail);
+    if (modifyUserEmailOrName != null) {
+      return postHistory
+          .modifyUserEmail
+          .likeIgnoreCase(modifyUserEmailOrName)
+          .or(postHistory.lastModifiedName.likeIgnoreCase(modifyUserEmailOrName));
     }
     return null;
   }

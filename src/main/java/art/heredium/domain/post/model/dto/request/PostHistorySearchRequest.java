@@ -17,5 +17,5 @@ public class PostHistorySearchRequest {
   private LocalDateTime modifyDateTo;
 
   @JsonProperty("modify_user")
-  private String modifyUserEmail;
+  private String modifyUserEmailOrName;
 }
