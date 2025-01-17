@@ -29,6 +29,7 @@ import art.heredium.domain.membership.entity.Membership;
 import art.heredium.domain.membership.model.dto.request.MembershipCreateRequest;
 import art.heredium.domain.membership.repository.MembershipRepository;
 import art.heredium.domain.post.entity.Post;
+import art.heredium.domain.post.entity.PostHistory;
 import art.heredium.domain.post.model.dto.request.*;
 import art.heredium.domain.post.repository.PostRepository;
 import art.heredium.ncloud.bean.CloudStorage;
@@ -39,6 +40,7 @@ public class PostService {
   private static final String THUMBNAIL_URL_DELIMITER = ";";
   private final PostRepository postRepository;
   private final MembershipService membershipService;
+  private final PostHistoryService postHistoryService;
   private final CloudStorage cloudStorage;
   private final MembershipRepository membershipRepository;
   private final CouponRepository couponRepository;
@@ -167,6 +169,7 @@ public class PostService {
 
     updatePostFields(post, request);
     updateMemberships(post, request.getMemberships());
+    updatePostHistory(post);
 
     postRepository.save(post);
   }
@@ -302,6 +305,14 @@ public class PostService {
     membershipRepository.save(membership);
 
     updateCoupons(membership, request.getCoupons());
+  }
+
+  private void updatePostHistory(Post post) {
+    this.postHistoryService.save(
+        PostHistory.builder()
+            .modifyUserEmail(post.getAdmin().getEmail())
+            .postContent(post.getContentDetail())
+            .build());
   }
 
   private void createNewMembership(Post post, PostMembershipUpdateRequest request) {
