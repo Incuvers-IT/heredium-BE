@@ -6,6 +6,8 @@ import javax.validation.Valid;
 
 import lombok.RequiredArgsConstructor;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,8 +16,10 @@ import art.heredium.core.config.error.entity.ApiException;
 import art.heredium.core.config.error.entity.ErrorCode;
 import art.heredium.domain.post.entity.Post;
 import art.heredium.domain.post.model.dto.request.PostCreateRequest;
+import art.heredium.domain.post.model.dto.request.PostHistorySearchRequest;
 import art.heredium.domain.post.model.dto.request.PostUpdateRequest;
 import art.heredium.domain.post.model.dto.response.AdminPostDetailsResponse;
+import art.heredium.domain.post.model.dto.response.PostHistoryBaseResponse;
 import art.heredium.domain.post.model.dto.response.PostHistoryResponse;
 import art.heredium.service.MembershipService;
 import art.heredium.service.PostHistoryService;
@@ -59,6 +63,12 @@ public class AdminPostController {
   public ResponseEntity<Void> updatePost(@Valid @RequestBody PostUpdateRequest request) {
     postService.updatePost(request);
     return ResponseEntity.ok().build();
+  }
+
+  @GetMapping("/history/search")
+  public ResponseEntity<Page<PostHistoryBaseResponse>> search(
+      PostHistorySearchRequest request, Pageable pageable) {
+    return ResponseEntity.ok(this.postHistoryService.listPostHistory(request, pageable));
   }
 
   @GetMapping(value = "/history/{post_history_id}")
