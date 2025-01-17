@@ -16,7 +16,9 @@ import art.heredium.domain.post.entity.Post;
 import art.heredium.domain.post.model.dto.request.PostCreateRequest;
 import art.heredium.domain.post.model.dto.request.PostUpdateRequest;
 import art.heredium.domain.post.model.dto.response.AdminPostDetailsResponse;
+import art.heredium.domain.post.model.dto.response.PostHistoryResponse;
 import art.heredium.service.MembershipService;
+import art.heredium.service.PostHistoryService;
 import art.heredium.service.PostService;
 
 @RestController
@@ -27,6 +29,7 @@ public class AdminPostController {
 
   private final MembershipService membershipService;
   private final PostService postService;
+  private final PostHistoryService postHistoryService;
 
   @PostMapping
   public ResponseEntity<Long> createPost(@Valid @RequestBody PostCreateRequest request) {
@@ -56,5 +59,11 @@ public class AdminPostController {
   public ResponseEntity<Void> updatePost(@Valid @RequestBody PostUpdateRequest request) {
     postService.updatePost(request);
     return ResponseEntity.ok().build();
+  }
+
+  @GetMapping(value = "/history/{post_history_id}")
+  public ResponseEntity<PostHistoryResponse> getPostHistory(
+      @PathVariable(value = "post_history_id") Long postHistoryId) {
+    return ResponseEntity.ok(this.postHistoryService.getPostHistory(postHistoryId));
   }
 }
