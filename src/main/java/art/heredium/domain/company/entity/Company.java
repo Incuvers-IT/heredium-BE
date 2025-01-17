@@ -27,8 +27,13 @@ public class Company {
   @Column(name = "name", nullable = false, unique = true)
   private String name;
 
+  @Comment("삭제 여부")
+  @Column(name = "is_deleted", nullable = false)
+  private boolean isDeleted;
+
   @Builder
   public Company(final String name) {
     this.name = name;
+    this.isDeleted = false;
   }
 }
