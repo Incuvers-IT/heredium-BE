@@ -3,12 +3,14 @@ package art.heredium.domain.post.model.dto.response;
 import java.util.List;
 
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 @Getter
 @Setter
+@NoArgsConstructor
 public class ThumbnailUrlResponse {
   @JsonProperty("small")
   private String smallThumbnailUrl;
