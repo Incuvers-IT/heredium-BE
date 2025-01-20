@@ -65,7 +65,7 @@ public class PostHistoryRepositoryImpl implements PostHistoryRepositoryQueryDsl 
         .where(
             lastModifiedDateBetween(modifyDateFrom, modifyDateTo),
             modifyUserEmailOrName(modifyUser))
-        .orderBy(postHistory.lastModifiedDate.desc());
+        .orderBy(postHistory.id.desc());
   }
 
   private BooleanExpression lastModifiedDateBetween(LocalDateTime from, LocalDateTime to) {
