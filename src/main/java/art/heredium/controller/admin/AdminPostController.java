@@ -1,5 +1,6 @@
 package art.heredium.controller.admin;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 import javax.validation.Valid;
@@ -8,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,7 +18,6 @@ import art.heredium.core.config.error.entity.ApiException;
 import art.heredium.core.config.error.entity.ErrorCode;
 import art.heredium.domain.post.entity.Post;
 import art.heredium.domain.post.model.dto.request.PostCreateRequest;
-import art.heredium.domain.post.model.dto.request.PostHistorySearchRequest;
 import art.heredium.domain.post.model.dto.request.PostUpdateRequest;
 import art.heredium.domain.post.model.dto.response.AdminPostDetailsResponse;
 import art.heredium.domain.post.model.dto.response.PostHistoryBaseResponse;
@@ -67,8 +68,17 @@ public class AdminPostController {
 
   @GetMapping("/history/search")
   public ResponseEntity<Page<PostHistoryBaseResponse>> search(
-      PostHistorySearchRequest request, Pageable pageable) {
-    return ResponseEntity.ok(this.postHistoryService.listPostHistory(request, pageable));
+      @RequestParam(value = "modify_date_from", required = false)
+          @DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
+          LocalDateTime modifyDateFrom,
+      @RequestParam(value = "modify_date_to", required = false)
+          @DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
+          LocalDateTime modifyDateTo,
+      @RequestParam(value = "modify_user", required = false) String modifyUser,
+      Pageable pageable) {
+    return ResponseEntity.ok(
+        this.postHistoryService.listPostHistory(
+            modifyDateFrom, modifyDateTo, modifyUser, pageable));
   }
 
   @GetMapping(value = "/history/{post_history_id}")

@@ -1,5 +1,7 @@
 package art.heredium.service;
 
+import java.time.LocalDateTime;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -15,7 +17,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import art.heredium.core.config.error.entity.ApiException;
 import art.heredium.core.config.error.entity.ErrorCode;
 import art.heredium.domain.post.entity.PostHistory;
-import art.heredium.domain.post.model.dto.request.PostHistorySearchRequest;
 import art.heredium.domain.post.model.dto.response.AdminPostDetailsResponse;
 import art.heredium.domain.post.model.dto.response.PostHistoryBaseResponse;
 import art.heredium.domain.post.model.dto.response.PostHistoryResponse;
@@ -37,8 +38,12 @@ public class PostHistoryService {
   }
 
   public Page<PostHistoryBaseResponse> listPostHistory(
-      PostHistorySearchRequest request, Pageable pageable) {
-    return this.postHistoryRepositoryImpl.search(request, pageable);
+      LocalDateTime modifyDateFrom,
+      LocalDateTime modifyDateTo,
+      String modifyUser,
+      Pageable pageable) {
+    return this.postHistoryRepositoryImpl.search(
+        modifyDateFrom, modifyDateTo, modifyUser, pageable);
   }
 
   public PostHistoryResponse getPostHistory(Long postHistoryId) {
