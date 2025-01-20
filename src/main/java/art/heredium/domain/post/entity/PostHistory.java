@@ -4,6 +4,7 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
+import javax.persistence.Id;
 import javax.persistence.Table;
 
 import lombok.AccessLevel;
@@ -13,8 +14,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
-
-import org.springframework.data.annotation.Id;
 
 import org.hibernate.annotations.DynamicInsert;
 
@@ -30,7 +29,6 @@ import art.heredium.domain.common.entity.BaseEntity;
 @ToString
 @Builder
 public class PostHistory extends BaseEntity {
-
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
@@ -40,4 +38,12 @@ public class PostHistory extends BaseEntity {
 
   @Column(name = "modify_user_email")
   private String modifyUserEmail;
+
+  public void setId(Long id) {
+    this.id = id;
+  }
+
+  public Long getId() {
+    return id;
+  }
 }
