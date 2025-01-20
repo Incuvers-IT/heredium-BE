@@ -321,11 +321,14 @@ public class PostService {
     } catch (JsonProcessingException e) {
       log.info("Failed to deserialize AdminPostDetailsResponse");
     }
-    this.postHistoryService.save(
-        PostHistory.builder()
-            .modifyUserEmail(post.getAdmin().getEmail())
-            .postContent(content)
-            .build());
+    PostHistory savedPostHistory =
+        this.postHistoryService.save(
+            PostHistory.builder()
+                .modifyUserEmail(post.getAdmin().getEmail())
+                .postContent(content)
+                .build());
+    savedPostHistory.updateLastModifiedDate();
+    savedPostHistory.updateLastModifiedName();
   }
 
   private void createNewMembership(Post post, PostMembershipUpdateRequest request) {

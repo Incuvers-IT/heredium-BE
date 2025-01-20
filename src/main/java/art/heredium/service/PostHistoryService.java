@@ -7,7 +7,6 @@ import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,10 +31,9 @@ public class PostHistoryService {
   private final PostHistoryRepositoryImpl postHistoryRepositoryImpl;
   private final ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
 
-  @Async
   @Transactional(rollbackFor = Exception.class)
-  public void save(PostHistory entity) {
-    this.postHistoryRepository.save(entity);
+  public PostHistory save(PostHistory entity) {
+    return this.postHistoryRepository.save(entity);
   }
 
   public Page<PostHistoryBaseResponse> listPostHistory(
