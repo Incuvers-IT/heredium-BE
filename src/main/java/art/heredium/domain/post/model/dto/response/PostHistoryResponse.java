@@ -19,7 +19,7 @@ public class PostHistoryResponse {
   private Long postHistoryId;
 
   @JsonProperty("content")
-  private String content;
+  private AdminPostDetailsResponse content;
 
   @JsonProperty("modified_date")
   private LocalDateTime modifiedDate;
