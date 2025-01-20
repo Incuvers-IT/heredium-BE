@@ -63,28 +63,27 @@ public class PostHistoryRepositoryImpl implements PostHistoryRepositoryQueryDsl 
         .orderBy(postHistory.lastModifiedDate.desc());
   }
 
-  private BooleanExpression lastModifiedDateBetween(LocalDateTime from, LocalDateTime to) {
+  private BooleanExpression lastModifiedDateBetween(
+      Optional<LocalDateTime> from, Optional<LocalDateTime> to) {
     QPostHistory postHistory = QPostHistory.postHistory;
-    if (from != null && to != null) {
-      return postHistory.lastModifiedDate.between(from, to);
+    if (from.isPresent() && to.isPresent()) {
+      return postHistory.lastModifiedDate.between(from.get(), to.get());
     }
-    if (from != null) {
-      return postHistory.lastModifiedDate.goe(from);
+    if (from.isPresent()) {
+      return postHistory.lastModifiedDate.goe(from.get());
     }
-    if (to != null) {
-      return postHistory.lastModifiedDate.loe(to);
-    }
-    return null;
+    return to.map(postHistory.lastModifiedDate::loe).orElse(null);
   }
 
-  private BooleanExpression modifyUserEmailOrName(String modifyUserEmailOrName) {
+  private BooleanExpression modifyUserEmailOrName(Optional<String> modifyUserEmailOrName) {
     QPostHistory postHistory = QPostHistory.postHistory;
-    if (modifyUserEmailOrName != null) {
-      return postHistory
-          .modifyUserEmail
-          .likeIgnoreCase(modifyUserEmailOrName)
-          .or(postHistory.lastModifiedName.likeIgnoreCase(modifyUserEmailOrName));
-    }
-    return null;
+    return modifyUserEmailOrName
+        .map(
+            s ->
+                postHistory
+                    .modifyUserEmail
+                    .likeIgnoreCase(s)
+                    .or(postHistory.lastModifiedName.likeIgnoreCase(s)))
+        .orElse(null);
   }
 }
