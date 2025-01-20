@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import art.heredium.core.config.error.entity.ApiException;
 import art.heredium.core.config.error.entity.ErrorCode;
@@ -29,7 +30,7 @@ import art.heredium.domain.post.repository.PostHistoryRepositoryImpl;
 public class PostHistoryService {
   private final PostHistoryRepository postHistoryRepository;
   private final PostHistoryRepositoryImpl postHistoryRepositoryImpl;
-  private final ObjectMapper objectMapper = new ObjectMapper();
+  private final ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
 
   @Async
   @Transactional(rollbackFor = Exception.class)
