@@ -3,6 +3,7 @@ package art.heredium.domain.coupon.model.dto.response;
 import java.time.LocalDateTime;
 
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -12,6 +13,7 @@ import art.heredium.domain.coupon.entity.CouponType;
 
 @Getter
 @Setter
+@NoArgsConstructor
 public class CouponResponse {
 
   @JsonProperty("coupon_id")
