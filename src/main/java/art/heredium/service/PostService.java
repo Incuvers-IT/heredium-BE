@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.apache.commons.lang3.StringUtils;
 
 import art.heredium.core.config.error.entity.ApiException;
@@ -49,7 +50,7 @@ public class PostService {
   private final CloudStorage cloudStorage;
   private final MembershipRepository membershipRepository;
   private final CouponRepository couponRepository;
-  private final ObjectMapper objectMapper = new ObjectMapper();
+  private final ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
 
   public Optional<Post> findFirstByIsEnabledTrue() {
     return this.postRepository.findFirstByIsEnabledTrue();
