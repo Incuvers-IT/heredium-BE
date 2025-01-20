@@ -26,8 +26,8 @@ import art.heredium.domain.post.repository.PostHistoryRepositoryImpl;
 @RequiredArgsConstructor
 @Slf4j
 public class PostHistoryService {
-  private PostHistoryRepository postHistoryRepository;
-  private PostHistoryRepositoryImpl postHistoryRepositoryImpl;
+  private final PostHistoryRepository postHistoryRepository;
+  private final PostHistoryRepositoryImpl postHistoryRepositoryImpl;
   private final ObjectMapper objectMapper = new ObjectMapper();
 
   @Async
