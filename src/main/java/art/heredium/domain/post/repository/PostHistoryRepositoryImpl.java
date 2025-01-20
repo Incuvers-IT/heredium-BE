@@ -17,7 +17,6 @@ import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 
 import art.heredium.domain.post.entity.QPostHistory;
-import art.heredium.domain.post.model.dto.request.PostHistorySearchRequest;
 import art.heredium.domain.post.model.dto.response.PostHistoryBaseResponse;
 
 @RequiredArgsConstructor
@@ -25,9 +24,14 @@ public class PostHistoryRepositoryImpl implements PostHistoryRepositoryQueryDsl 
   private final JPAQueryFactory queryFactory;
 
   @Override
-  public Page<PostHistoryBaseResponse> search(PostHistorySearchRequest request, Pageable pageable) {
+  public Page<PostHistoryBaseResponse> search(
+      LocalDateTime modifyDateFrom,
+      LocalDateTime modifyDateTo,
+      String modifyUser,
+      Pageable pageable) {
     QPostHistory postHistory = QPostHistory.postHistory;
-    JPAQuery<PostHistoryBaseResponse> query = this.queryPostHistory(request);
+    JPAQuery<PostHistoryBaseResponse> query =
+        this.queryPostHistory(modifyDateFrom, modifyDateTo, modifyUser);
 
     // Create a count query
     JPAQuery<Long> countQuery =
@@ -35,8 +39,8 @@ public class PostHistoryRepositoryImpl implements PostHistoryRepositoryQueryDsl 
             .select(postHistory.count())
             .from(postHistory)
             .where(
-                lastModifiedDateBetween(request.getModifyDateFrom(), request.getModifyDateTo()),
-                modifyUserEmailOrName(request.getModifyUserEmailOrName()));
+                lastModifiedDateBetween(modifyDateFrom, modifyDateTo),
+                modifyUserEmailOrName(modifyUser));
 
     final long total = Optional.ofNullable(countQuery.fetchOne()).orElse(0L);
     List<PostHistoryBaseResponse> content = new ArrayList<>();
@@ -46,7 +50,8 @@ public class PostHistoryRepositoryImpl implements PostHistoryRepositoryQueryDsl 
     return new PageImpl<>(content, pageable, total);
   }
 
-  private JPAQuery<PostHistoryBaseResponse> queryPostHistory(PostHistorySearchRequest request) {
+  private JPAQuery<PostHistoryBaseResponse> queryPostHistory(
+      LocalDateTime modifyDateFrom, LocalDateTime modifyDateTo, String modifyUser) {
     QPostHistory postHistory = QPostHistory.postHistory;
     return queryFactory
         .select(
@@ -58,32 +63,33 @@ public class PostHistoryRepositoryImpl implements PostHistoryRepositoryQueryDsl 
                 postHistory.lastModifiedName))
         .from(postHistory)
         .where(
-            lastModifiedDateBetween(request.getModifyDateFrom(), request.getModifyDateTo()),
-            modifyUserEmailOrName(request.getModifyUserEmailOrName()))
+            lastModifiedDateBetween(modifyDateFrom, modifyDateTo),
+            modifyUserEmailOrName(modifyUser))
         .orderBy(postHistory.lastModifiedDate.desc());
   }
 
-  private BooleanExpression lastModifiedDateBetween(
-      Optional<LocalDateTime> from, Optional<LocalDateTime> to) {
+  private BooleanExpression lastModifiedDateBetween(LocalDateTime from, LocalDateTime to) {
     QPostHistory postHistory = QPostHistory.postHistory;
-    if (from.isPresent() && to.isPresent()) {
-      return postHistory.lastModifiedDate.between(from.get(), to.get());
+    if (from != null && to != null) {
+      return postHistory.lastModifiedDate.between(from, to);
     }
-    if (from.isPresent()) {
-      return postHistory.lastModifiedDate.goe(from.get());
+    if (from != null) {
+      return postHistory.lastModifiedDate.goe(from);
     }
-    return to.map(postHistory.lastModifiedDate::loe).orElse(null);
+    if (to != null) {
+      return postHistory.lastModifiedDate.loe(to);
+    }
+    return null;
   }
 
-  private BooleanExpression modifyUserEmailOrName(Optional<String> modifyUserEmailOrName) {
+  private BooleanExpression modifyUserEmailOrName(String modifyUserEmailOrName) {
     QPostHistory postHistory = QPostHistory.postHistory;
-    return modifyUserEmailOrName
-        .map(
-            s ->
-                postHistory
-                    .modifyUserEmail
-                    .likeIgnoreCase(s)
-                    .or(postHistory.lastModifiedName.likeIgnoreCase(s)))
-        .orElse(null);
+    if (modifyUserEmailOrName != null) {
+      return postHistory
+          .modifyUserEmail
+          .likeIgnoreCase(modifyUserEmailOrName)
+          .or(postHistory.lastModifiedName.likeIgnoreCase(modifyUserEmailOrName));
+    }
+    return null;
   }
 }
