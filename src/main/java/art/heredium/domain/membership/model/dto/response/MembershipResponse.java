@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -13,6 +14,7 @@ import art.heredium.domain.membership.entity.Membership;
 
 @Setter
 @Getter
+@NoArgsConstructor
 public class MembershipResponse {
 
   @JsonProperty("membership_id")

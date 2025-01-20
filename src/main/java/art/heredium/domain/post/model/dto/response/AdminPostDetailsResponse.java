@@ -15,6 +15,7 @@ import art.heredium.domain.post.entity.Post;
 @Getter
 @Setter
 @AllArgsConstructor
+@NoArgsConstructor
 public class AdminPostDetailsResponse {
   private static final String THUMBNAIL_URL_DELIMITER = ";";
 
@@ -88,6 +89,7 @@ public class AdminPostDetailsResponse {
 
   @Getter
   @Setter
+  @NoArgsConstructor
   public static class AdditionalInfoResponse {
     @JsonProperty("future_exhibition_count")
     private Integer futureExhibitionCount;
@@ -126,6 +128,7 @@ public class AdminPostDetailsResponse {
 
   @Getter
   @Setter
+  @NoArgsConstructor
   public static class NoteImageResponse {
     @JsonProperty("note_image_url")
     private String noteImageUrl;
