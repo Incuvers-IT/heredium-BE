@@ -114,6 +114,7 @@ public class PostService {
     if (request.getMemberships() != null) {
       membershipService.createMemberships(postId, request.getMemberships());
     }
+    this.updatePostHistory(post);
 
     return postId;
   }
@@ -176,9 +177,9 @@ public class PostService {
 
     updatePostFields(post, request);
     updateMemberships(post, request.getMemberships());
-    updatePostHistory(post);
 
-    postRepository.save(post);
+    final Post savedPost = postRepository.save(post);
+    this.updatePostHistory(savedPost);
   }
 
   private void updatePostFields(Post post, PostUpdateRequest request) {
