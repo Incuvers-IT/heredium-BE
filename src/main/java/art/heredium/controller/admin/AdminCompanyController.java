@@ -3,6 +3,8 @@ package art.heredium.controller.admin;
 import java.io.IOException;
 import java.util.List;
 
+import javax.validation.Valid;
+
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.http.ResponseEntity;
@@ -12,6 +14,7 @@ import org.springframework.web.multipart.MultipartFile;
 import art.heredium.core.annotation.ManagerPermission;
 import art.heredium.core.util.ValidationUtil;
 import art.heredium.domain.company.model.dto.request.CompanyCreateRequest;
+import art.heredium.domain.company.model.dto.request.CompanyUpdateRequest;
 import art.heredium.domain.company.model.dto.response.CompanyMembershipRegistrationResponse;
 import art.heredium.domain.company.model.dto.response.CompanyResponseDto;
 import art.heredium.service.CompanyService;
@@ -59,6 +62,14 @@ public class AdminCompanyController {
   public ResponseEntity<CompanyResponseDto> updateCompany(
       @PathVariable Long companyId, @RequestParam String name) {
     return ResponseEntity.ok(this.companyService.updateCompany(companyId, name));
+  }
+
+  @PutMapping("/{companyId}/detail")
+  public ResponseEntity<Void> updateCompany(
+      @PathVariable(value = "companyId") Long companyId,
+      @Valid @RequestBody CompanyUpdateRequest request) {
+    this.companyService.updateCompanyDetail(companyId, request);
+    return ResponseEntity.ok().build();
   }
 
   @DeleteMapping("/{companyId}")
