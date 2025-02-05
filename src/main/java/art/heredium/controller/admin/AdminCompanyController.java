@@ -15,6 +15,7 @@ import art.heredium.core.annotation.ManagerPermission;
 import art.heredium.core.util.ValidationUtil;
 import art.heredium.domain.company.model.dto.request.CompanyCreateRequest;
 import art.heredium.domain.company.model.dto.request.CompanyUpdateRequest;
+import art.heredium.domain.company.model.dto.response.CompanyDetailResponse;
 import art.heredium.domain.company.model.dto.response.CompanyMembershipRegistrationResponse;
 import art.heredium.domain.company.model.dto.response.CompanyResponseDto;
 import art.heredium.service.CompanyService;
@@ -34,6 +35,12 @@ public class AdminCompanyController {
   @GetMapping
   public ResponseEntity<List<CompanyResponseDto>> getCompanyList() {
     return ResponseEntity.ok(this.companyService.getAllCompanies());
+  }
+
+  @GetMapping("/{companyId}/detail")
+  public ResponseEntity<CompanyDetailResponse> getCompanyDetail(
+      @PathVariable(value = "companyId") Long companyId) {
+    return ResponseEntity.ok(this.companyService.getCompanyDetail(companyId));
   }
 
   @PostMapping("/{companyId}/membership-registrations/upload")
