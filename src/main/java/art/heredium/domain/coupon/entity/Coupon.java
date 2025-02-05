@@ -80,6 +80,9 @@ public class Coupon extends BaseEntity {
   @Column(name = "from_source", nullable = false)
   private CouponSource fromSource;
 
+  @Column(name = "is_deleted", nullable = false)
+  private boolean isDeleted;
+
   @Builder
   public Coupon(
       String name,
@@ -106,6 +109,7 @@ public class Coupon extends BaseEntity {
     this.numberOfUses = numberOfUses;
     this.isPermanent = isPermanent;
     this.fromSource = fromSource;
+    this.isDeleted = false;
   }
 
   public void updateImageUrl(String imageUrl) {
