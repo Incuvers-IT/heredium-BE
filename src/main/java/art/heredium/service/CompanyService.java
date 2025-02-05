@@ -22,13 +22,16 @@ import art.heredium.core.config.error.entity.InvalidUploadDataException;
 import art.heredium.domain.account.entity.Account;
 import art.heredium.domain.account.repository.AccountRepository;
 import art.heredium.domain.company.entity.Company;
+import art.heredium.domain.company.model.dto.request.CompanyCouponUpdateRequest;
 import art.heredium.domain.company.model.dto.request.CompanyCreateRequest;
 import art.heredium.domain.company.model.dto.request.CompanyMembershipRegistrationRequest;
+import art.heredium.domain.company.model.dto.request.CompanyUpdateRequest;
 import art.heredium.domain.company.model.dto.response.CompanyMembershipExcelConvertResponse;
 import art.heredium.domain.company.model.dto.response.CompanyMembershipRegistrationResponse;
 import art.heredium.domain.company.model.dto.response.CompanyResponseDto;
 import art.heredium.domain.company.repository.CompanyRepository;
 import art.heredium.domain.coupon.entity.Coupon;
+import art.heredium.domain.coupon.entity.CouponSource;
 import art.heredium.domain.coupon.repository.CouponRepository;
 import art.heredium.domain.membership.entity.MembershipRegistration;
 import art.heredium.domain.membership.entity.PaymentStatus;
@@ -438,5 +441,93 @@ public class CompanyService {
 
     company.setDeleted(true);
     companyRepository.save(company);
+  }
+
+  @Transactional(rollbackFor = Exception.class)
+  public void updateCompanyDetail(Long companyId, CompanyUpdateRequest request) {
+    Company company =
+        this.companyRepository
+            .findById(companyId)
+            .orElseThrow(() -> new ApiException(ErrorCode.COMPANY_NOT_FOUND));
+    List<CompanyCouponUpdateRequest> updatedOrDeletedCoupons =
+        request.getCoupons().stream()
+            .filter(coupon -> coupon.getId() != null)
+            .collect(Collectors.toList());
+    List<CompanyCouponUpdateRequest> createdCoupons =
+        request.getCoupons().stream()
+            .filter(coupon -> coupon.getId() == null)
+            .collect(Collectors.toList());
+    this.updateCompanyFields(company, request);
+    this.updateCouponsFields(company, updatedOrDeletedCoupons);
+    this.createNewCoupons(company, createdCoupons);
+  }
+
+  private void updateCompanyFields(final Company company, CompanyUpdateRequest request) {
+    if (request.getName() != null) {
+      company.setName(request.getName());
+    }
+    if (request.getIsDeleted() != null) {
+      company.setDeleted(request.getIsDeleted());
+    }
+  }
+
+  private void updateCouponsFields(Company company, List<CompanyCouponUpdateRequest> requests) {
+    for (CompanyCouponUpdateRequest request : requests) {
+      Coupon coupon =
+          this.couponRepository
+              .findById(request.getId())
+              .orElseThrow(() -> new ApiException(ErrorCode.COUPON_NOT_FOUND));
+      if (!Objects.equals(coupon.getCompany(), company)) {
+        throw new ApiException(
+            ErrorCode.COUPON_NOT_ALLOWED,
+            String.format(
+                "Coupon %s does not belong to company: %s", coupon.getId(), company.getName()));
+      }
+      if (request.getName() != null) {
+        coupon.setName(request.getName());
+      }
+      if (request.getCouponType() != null) {
+        coupon.setCouponType(request.getCouponType());
+      }
+      if (request.getDiscountPercent() != null) {
+        coupon.setDiscountPercent(request.getDiscountPercent());
+      }
+      if (request.getPeriodInDays() != null) {
+        coupon.setPeriodInDays(request.getPeriodInDays());
+      }
+      if (request.getImageUrl() != null) {
+        coupon.setImageUrl(request.getImageUrl());
+      }
+      if (request.getNumberOfUses() != null) {
+        coupon.setNumberOfUses(request.getNumberOfUses());
+      }
+      if (request.getIsPermanent() != null) {
+        coupon.setIsPermanent(request.getIsPermanent());
+      }
+      if (request.getIsDeleted() != null) {
+        coupon.setDeleted(request.getIsDeleted());
+      }
+    }
+  }
+
+  private void createNewCoupons(
+      final Company company, final List<CompanyCouponUpdateRequest> requests) {
+    List<Coupon> createdCoupons =
+        requests.stream()
+            .map(
+                request ->
+                    Coupon.builder()
+                        .name(request.getName())
+                        .couponType(request.getCouponType())
+                        .discountPercent(request.getDiscountPercent())
+                        .fromSource(CouponSource.COMPANY)
+                        .company(company)
+                        .numberOfUses(request.getNumberOfUses())
+                        .imageUrl(request.getImageUrl())
+                        .isPermanent(request.getIsPermanent())
+                        .periodInDays(request.getPeriodInDays())
+                        .build())
+            .collect(Collectors.toList());
+    this.couponRepository.saveAll(createdCoupons);
   }
 }
