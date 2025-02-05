@@ -222,7 +222,7 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
             paymentDateBetween(dto.getPaymentDateFrom(), dto.getPaymentDateTo()),
             paymentStatusIn(dto.getPaymentStatus()),
             textContains(dto.getText()))
-        .orderBy(membershipRegistration.registrationDate.desc());
+        .orderBy(membershipRegistration.createdDate.desc());
   }
 
   private JPQLQuery<Long> selectVisitCount() {
