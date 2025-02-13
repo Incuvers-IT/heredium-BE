@@ -26,6 +26,7 @@ import art.heredium.domain.company.model.dto.request.CompanyCouponUpdateRequest;
 import art.heredium.domain.company.model.dto.request.CompanyCreateRequest;
 import art.heredium.domain.company.model.dto.request.CompanyMembershipRegistrationRequest;
 import art.heredium.domain.company.model.dto.request.CompanyUpdateRequest;
+import art.heredium.domain.company.model.dto.response.CompanyDetailResponse;
 import art.heredium.domain.company.model.dto.response.CompanyMembershipExcelConvertResponse;
 import art.heredium.domain.company.model.dto.response.CompanyMembershipRegistrationResponse;
 import art.heredium.domain.company.model.dto.response.CompanyResponseDto;
@@ -167,7 +168,7 @@ public class CompanyService {
             createMembershipRegistration(request, selectedAccount, company);
         membershipRegistrationRepository.save(registration);
 
-        List<Coupon> companyCoupons = couponRepository.findByCompany(company);
+        List<Coupon> companyCoupons = couponRepository.findByCompanyAndIsDeletedFalse(company);
         couponUsageService.distributeMembershipAndCompanyCoupons(
             selectedAccount, companyCoupons, true);
 
@@ -529,5 +530,14 @@ public class CompanyService {
                         .build())
             .collect(Collectors.toList());
     this.couponRepository.saveAll(createdCoupons);
+  }
+
+  public CompanyDetailResponse getCompanyDetail(Long companyId) {
+    final Company company =
+        this.companyRepository
+            .findByIdAndIsDeletedFalse(companyId)
+            .orElseThrow(() -> new ApiException(ErrorCode.COMPANY_NOT_FOUND));
+    final List<Coupon> coupons = this.couponRepository.findByCompanyAndIsDeletedFalse(company);
+    return new CompanyDetailResponse(company, coupons);
   }
 }

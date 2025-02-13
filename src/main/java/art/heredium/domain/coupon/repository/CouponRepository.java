@@ -10,5 +10,5 @@ import art.heredium.domain.coupon.entity.Coupon;
 
 @Repository
 public interface CouponRepository extends JpaRepository<Coupon, Long> {
-  List<Coupon> findByCompany(Company company);
+  List<Coupon> findByCompanyAndIsDeletedFalse(Company company);
 }
