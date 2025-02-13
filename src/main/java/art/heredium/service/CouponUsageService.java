@@ -49,7 +49,8 @@ public class CouponUsageService {
   private final HerediumAlimTalk alimTalk;
 
   public List<CouponResponseDto> getCouponsWithUsageByAccountId(Long accountId) {
-    List<Coupon> coupons = couponUsageRepository.findDistinctCouponsByAccountId(accountId);
+    List<Coupon> coupons =
+        couponUsageRepository.findDistinctCouponsByAccountIdAndIsNotDeleted(accountId);
     List<CouponResponseDto> responseDtos = new ArrayList<>();
 
     for (Coupon coupon : coupons) {

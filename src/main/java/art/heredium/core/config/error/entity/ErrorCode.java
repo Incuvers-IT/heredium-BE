@@ -91,7 +91,7 @@ public enum ErrorCode {
   POST_ALREADY_EXISTED(HttpStatus.BAD_REQUEST),
   INVALID_REGISTRATION_DATE(HttpStatus.BAD_REQUEST),
   INVALID_MEMBERSHIP_TO_REFUND(HttpStatus.BAD_REQUEST),
-  ;
+  COUPON_NOT_ALLOWED(HttpStatus.BAD_REQUEST);
   private HttpStatus status;
 
   ErrorCode(final HttpStatus status) {
