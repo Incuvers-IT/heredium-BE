@@ -10,7 +10,7 @@ import lombok.Getter;
 public enum CouponIssuanceTemplateColumns {
   EMAIL(0, "계정"),
   NAME(1, "이름"),
-  PHONE(2, "연락처");
+  PHONE(2, "연락처(숫자만 표기)");
 
   private final int columnIndex;
   private final String columnName;
