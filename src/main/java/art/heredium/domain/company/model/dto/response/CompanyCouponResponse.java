@@ -38,6 +38,9 @@ public class CompanyCouponResponse {
   @JsonProperty("number_of_uses")
   private Long numberOfUses;
 
+  @JsonProperty("is_permanent")
+  private Boolean isPermanent;
+
   public CompanyCouponResponse(Coupon coupon) {
     this.id = coupon.getId();
     this.name = coupon.getName();
@@ -48,5 +51,6 @@ public class CompanyCouponResponse {
     this.endedDate = coupon.getEndedDate();
     this.imageUrl = coupon.getImageUrl();
     this.numberOfUses = coupon.getNumberOfUses();
+    this.isPermanent = coupon.getIsPermanent();
   }
 }
