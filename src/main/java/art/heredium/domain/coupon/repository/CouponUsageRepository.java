@@ -29,18 +29,18 @@ public interface CouponUsageRepository extends JpaRepository<CouponUsage, Long> 
       @Param("accountId") Long accountId, @Param("source") CouponSource source);
 
   @Query(
-      "SELECT DISTINCT cu.coupon FROM CouponUsage cu WHERE cu.account.id = :accountId AND cu.isDeleted = false")
+      "SELECT DISTINCT cu.coupon FROM CouponUsage INNER JOIN Coupon c cu WHERE cu.account.id = :accountId AND c.isDeleted = false")
   List<Coupon> findDistinctCouponsByAccountIdAndIsNotDeleted(@Param("accountId") Long accountId);
 
   List<CouponUsage> findByAccountIdAndCouponIdAndIsUsedTrue(
       @Param("accountId") Long accountId, @Param("couponId") Long couponId);
 
   @Query(
-      "SELECT cu FROM CouponUsage cu "
+      "SELECT cu FROM CouponUsage cu INNER JOIN Coupon c "
           + "WHERE cu.account.id = :accountId "
           + "AND cu.coupon.id = :couponId "
           + "AND (cu.isUsed = false OR cu.isPermanent = true) "
-          + "AND cu.isDeleted = false")
+          + "AND c.isDeleted = false")
   List<CouponUsage> findUnusedOrPermanentCoupons(
       @Param("accountId") Long accountId, @Param("couponId") Long couponId);
 
