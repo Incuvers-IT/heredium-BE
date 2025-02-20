@@ -284,7 +284,7 @@ public class CompanyService {
       if (!expectedColumnName.equals(StringUtils.trim(columnName))) {
         throw new ApiException(
             ErrorCode.INVALID_EXCEL_COLUMNS,
-            "Column names should be ['이메일', '핸드폰', '시작 날짜', '가격', '지불 날짜', '이름']");
+            "Column names should be ['이메일', '핸드폰', '시작 날짜', '가격', '결제일자', '이름']");
       }
     }
   }
