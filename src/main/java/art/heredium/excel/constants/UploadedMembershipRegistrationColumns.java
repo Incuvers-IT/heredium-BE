@@ -12,7 +12,7 @@ public enum UploadedMembershipRegistrationColumns {
   PHONE(1, "연락처(숫자만 표기"),
   START_DATE(2, "시작 날짜 (YYYY-MM-DD)"),
   PRICE(3, "가격"),
-  PAYMENT_DATE(4, "지불 날짜 (YYYY-MM-DD)"),
+  PAYMENT_DATE(4, "결제일자 (YYYY-MM-DD)"),
   NAME(5, "이름"),
   ;
 
