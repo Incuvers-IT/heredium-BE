@@ -9,7 +9,7 @@ import lombok.Getter;
 @Getter
 public enum UploadedMembershipRegistrationColumns {
   EMAIL(0, "계정"), // column's name is account, but the value is email
-  PHONE(1, "연락처(숫자만 표기"),
+  PHONE(1, "연락처(숫자만 표기)"),
   START_DATE(2, "시작 날짜 (YYYY-MM-DD)"),
   PRICE(3, "가격"),
   PAYMENT_DATE(4, "결제일자 (YYYY-MM-DD)"),
