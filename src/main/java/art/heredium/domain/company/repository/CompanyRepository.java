@@ -10,7 +10,7 @@ import art.heredium.domain.company.entity.Company;
 public interface CompanyRepository extends JpaRepository<Company, Long> {
   Optional<Company> findByName(final String name);
 
-  List<Company> findAllByIsDeletedFalse();
+  List<Company> findAll();
 
-  Optional<Company> findByIdAndIsDeletedFalse(Long companyId);
+  Optional<Company> findById(Long companyId);
 }
