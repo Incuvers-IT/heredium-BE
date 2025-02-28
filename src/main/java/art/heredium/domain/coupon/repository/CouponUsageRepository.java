@@ -29,11 +29,11 @@ public interface CouponUsageRepository extends JpaRepository<CouponUsage, Long> 
       @Param("accountId") Long accountId, @Param("source") CouponSource source);
 
   @Query(
-      "SELECT DISTINCT c FROM CouponUsage cu " +
-              "INNER JOIN Coupon c " +
-              "ON cu.coupon.id = c.id " +
-              "WHERE cu.account.id = :accountId " +
-              "AND c.isDeleted IS NOT TRUE")
+      "SELECT DISTINCT c FROM CouponUsage cu "
+          + "INNER JOIN Coupon c "
+          + "ON cu.coupon.id = c.id "
+          + "WHERE cu.account.id = :accountId "
+          + "AND c.isDeleted IS NOT TRUE")
   List<Coupon> findDistinctCouponsByAccountIdAndIsNotDeleted(@Param("accountId") Long accountId);
 
   List<CouponUsage> findByAccountIdAndCouponIdAndIsUsedTrue(
@@ -58,4 +58,11 @@ public interface CouponUsageRepository extends JpaRepository<CouponUsage, Long> 
 
   long countByMembershipRegistrationIdAndIsUsedTrue(
       @Param("membershipRegistrationId") Long membershipRegistrationId);
+
+  @Query(
+      "SELECT cu FROM CouponUsage cu "
+          + "INNER JOIN Coupon c "
+          + "ON cu.coupon.id = c.id "
+          + "WHERE c.company.id = :companyId")
+  List<CouponUsage> findAllByCompanyId(@Param("companyId") Long companyId);
 }
