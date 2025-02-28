@@ -63,6 +63,6 @@ public interface CouponUsageRepository extends JpaRepository<CouponUsage, Long> 
       "SELECT cu FROM CouponUsage cu "
           + "INNER JOIN Coupon c "
           + "ON cu.coupon.id = c.id "
-          + "WHERE cu.company.id = :companyId")
+          + "WHERE c.company.id = :companyId")
   List<CouponUsage> findAllByCompanyId(@Param("companyId") Long companyId);
 }
