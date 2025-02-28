@@ -370,4 +370,9 @@ public class CouponUsageService {
 
     return new CouponUsageCheckResponse(usedCouponsCount);
   }
+
+  public void deleteAllByCompanyId(Long companyId) {
+    List<CouponUsage> couponUsages = this.couponUsageRepository.findAllByCompanyId(companyId);
+    this.couponUsageRepository.deleteAll(couponUsages);
+  }
 }
