@@ -77,7 +77,7 @@ public class CompanyService {
   }
 
   public List<CompanyResponseDto> getAllCompanies() {
-    return companyRepository.findAllByIsDeletedFalse().stream()
+    return companyRepository.findAll().stream()
         .map(this::convertToDto)
         .collect(Collectors.toList());
   }
@@ -440,8 +440,7 @@ public class CompanyService {
             .findById(companyId)
             .orElseThrow(() -> new ApiException(ErrorCode.COMPANY_NOT_FOUND));
 
-    company.setDeleted(true);
-    companyRepository.save(company);
+    companyRepository.delete(company);
   }
 
   @Transactional(rollbackFor = Exception.class)
@@ -458,17 +457,14 @@ public class CompanyService {
         request.getCoupons().stream()
             .filter(coupon -> coupon.getId() == null)
             .collect(Collectors.toList());
-    this.updateCompanyFields(company, request);
+    this.updateCompanyName(company, request);
     this.updateCouponsFields(company, updatedOrDeletedCoupons);
     this.createNewCoupons(company, createdCoupons);
   }
 
-  private void updateCompanyFields(final Company company, CompanyUpdateRequest request) {
+  private void updateCompanyName(final Company company, CompanyUpdateRequest request) {
     if (request.getName() != null) {
       company.setName(request.getName());
-    }
-    if (request.getIsDeleted() != null) {
-      company.setDeleted(request.getIsDeleted());
     }
   }
 
@@ -535,7 +531,7 @@ public class CompanyService {
   public CompanyDetailResponse getCompanyDetail(Long companyId) {
     final Company company =
         this.companyRepository
-            .findByIdAndIsDeletedFalse(companyId)
+            .findById(companyId)
             .orElseThrow(() -> new ApiException(ErrorCode.COMPANY_NOT_FOUND));
     final List<Coupon> coupons = this.couponRepository.findByCompanyAndIsDeletedFalse(company);
     return new CompanyDetailResponse(company, coupons);
