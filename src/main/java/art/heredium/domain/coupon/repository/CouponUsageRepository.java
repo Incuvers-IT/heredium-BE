@@ -31,7 +31,7 @@ public interface CouponUsageRepository extends JpaRepository<CouponUsage, Long> 
   @Query(
       "SELECT DISTINCT c FROM CouponUsage cu " +
               "INNER JOIN Coupon c " +
-              "ON cu.couponId = c.id " +
+              "ON cu.coupon.id = c.id " +
               "WHERE cu.account.id = :accountId " +
               "AND c.isDeleted IS NOT TRUE")
   List<Coupon> findDistinctCouponsByAccountIdAndIsNotDeleted(@Param("accountId") Long accountId);
