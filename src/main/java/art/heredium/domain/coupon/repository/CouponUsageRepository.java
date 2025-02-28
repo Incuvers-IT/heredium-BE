@@ -24,12 +24,12 @@ public interface CouponUsageRepository extends JpaRepository<CouponUsage, Long> 
           + "AND cu.isUsed IS NOT TRUE "
           + "AND cu.expirationDate >= CURRENT_TIMESTAMP "
           + "AND c.fromSource = :source "
-          + "AND c.isDeleted = false")
+          + "AND c.isDeleted IS NOT TRUE")
   List<CouponUsage> findByAccountIdAndIsUsedFalseAndNotExpiredAndNotDeletedAndSource(
       @Param("accountId") Long accountId, @Param("source") CouponSource source);
 
   @Query(
-      "SELECT DISTINCT cu.coupon FROM CouponUsage cu INNER JOIN Coupon c WHERE cu.account.id = :accountId AND c.isDeleted = false")
+      "SELECT DISTINCT cu.coupon FROM CouponUsage cu INNER JOIN Coupon c WHERE cu.account.id = :accountId AND c.isDeleted IS NOT TRUE")
   List<Coupon> findDistinctCouponsByAccountIdAndIsNotDeleted(@Param("accountId") Long accountId);
 
   List<CouponUsage> findByAccountIdAndCouponIdAndIsUsedTrue(
@@ -39,8 +39,8 @@ public interface CouponUsageRepository extends JpaRepository<CouponUsage, Long> 
       "SELECT cu FROM CouponUsage cu INNER JOIN Coupon c "
           + "WHERE cu.account.id = :accountId "
           + "AND cu.coupon.id = :couponId "
-          + "AND (cu.isUsed = false OR cu.isPermanent = true) "
-          + "AND c.isDeleted = false")
+          + "AND (cu.isUsed IS NOT TRUE OR cu.isPermanent IS TRUE) "
+          + "AND c.isDeleted IS NOT TRUE")
   List<CouponUsage> findUnusedOrPermanentCoupons(
       @Param("accountId") Long accountId, @Param("couponId") Long couponId);
 
