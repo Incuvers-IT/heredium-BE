@@ -436,11 +436,14 @@ public class CompanyService {
   @Transactional(rollbackFor = Exception.class)
   public void deleteCompany(Long companyId) {
     Company company =
-        companyRepository
+        this.companyRepository
             .findById(companyId)
             .orElseThrow(() -> new ApiException(ErrorCode.COMPANY_NOT_FOUND));
 
-    companyRepository.delete(company);
+    this.couponUsageService.deleteAllByCompanyId(companyId);
+    this.couponRepository.deleteByCompanyId(companyId);
+    this.membershipRegistrationRepository.deleteAllByCompanyId(companyId);
+    this.companyRepository.delete(company);
   }
 
   @Transactional(rollbackFor = Exception.class)
