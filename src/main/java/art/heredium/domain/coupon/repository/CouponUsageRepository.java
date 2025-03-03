@@ -41,6 +41,7 @@ public interface CouponUsageRepository extends JpaRepository<CouponUsage, Long> 
 
   @Query(
       "SELECT cu FROM CouponUsage cu INNER JOIN Coupon c "
+          + "ON cu.coupon.id = c.id "
           + "WHERE cu.account.id = :accountId "
           + "AND cu.coupon.id = :couponId "
           + "AND (cu.isUsed IS NOT TRUE OR cu.isPermanent IS TRUE) "
