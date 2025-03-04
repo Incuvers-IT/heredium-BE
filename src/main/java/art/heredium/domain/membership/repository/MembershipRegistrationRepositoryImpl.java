@@ -20,7 +20,6 @@ import com.querydsl.jpa.JPQLQuery;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 
-import art.heredium.core.util.Constants;
 import art.heredium.domain.account.entity.QAccount;
 import art.heredium.domain.account.entity.QAccountInfo;
 import art.heredium.domain.company.entity.QCompany;

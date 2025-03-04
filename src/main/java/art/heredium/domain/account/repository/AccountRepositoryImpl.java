@@ -23,7 +23,6 @@ import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import org.apache.tika.utils.StringUtils;
 
-import art.heredium.core.util.Constants;
 import art.heredium.domain.account.entity.Account;
 import art.heredium.domain.account.entity.QAccount;
 import art.heredium.domain.account.entity.QAccountInfo;

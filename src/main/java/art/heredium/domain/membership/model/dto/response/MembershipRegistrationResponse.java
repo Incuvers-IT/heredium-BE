@@ -10,7 +10,6 @@ import lombok.Setter;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import art.heredium.core.util.Constants;
 import art.heredium.domain.coupon.entity.CouponType;
 import art.heredium.domain.coupon.entity.CouponUsage;
 import art.heredium.domain.membership.entity.MembershipRegistration;
