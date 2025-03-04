@@ -23,7 +23,6 @@ import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import org.apache.tika.utils.StringUtils;
 
-import art.heredium.core.util.Constants;
 import art.heredium.domain.account.entity.Account;
 import art.heredium.domain.account.entity.QAccount;
 import art.heredium.domain.account.entity.QAccountInfo;
@@ -165,7 +164,7 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
                             RegistrationType.MEMBERSHIP_PACKAGE))
                     .then(membership.name)
                     .when(membershipRegistration.registrationType.eq(RegistrationType.COMPANY))
-                    .then(company.name.prepend(Constants.COMPANY_PREFIX))
+                    .then(company.name)
                     .otherwise((String) null),
                 membershipRegistration.paymentStatus,
                 membershipRegistration.paymentDate,
@@ -566,7 +565,7 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
                     .when(membership.isNotNull())
                     .then(membership.name)
                     .when(company.isNotNull())
-                    .then(company.name.prepend(Constants.COMPANY_PREFIX))
+                    .then(company.name)
                     .otherwise((String) null),
                 JPAExpressions.select(Wildcard.count)
                     .from(ticket)
@@ -759,7 +758,7 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
                     .when(qMembership.isNotNull())
                     .then(qMembership.name)
                     .when(qCompany.isNotNull())
-                    .then(qCompany.name.prepend(Constants.COMPANY_PREFIX))
+                    .then(qCompany.name)
                     .otherwise((String) null),
                 JPAExpressions.select(Wildcard.count)
                     .from(qTicket)
@@ -816,7 +815,7 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
                             RegistrationType.MEMBERSHIP_PACKAGE))
                     .then(membership.name)
                     .when(membershipRegistration.registrationType.eq(RegistrationType.COMPANY))
-                    .then(company.name.prepend(Constants.COMPANY_PREFIX))
+                    .then(company.name)
                     .otherwise((String) null),
                 membershipRegistration.paymentStatus,
                 membershipRegistration.paymentDate,
