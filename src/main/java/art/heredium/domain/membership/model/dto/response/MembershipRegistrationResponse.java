@@ -53,7 +53,7 @@ public class MembershipRegistrationResponse {
             : null;
     this.companyName =
         membershipRegistration.getCompany() != null
-            ? Constants.COMPANY_PREFIX + membershipRegistration.getCompany().getName()
+            ? membershipRegistration.getCompany().getName()
             : null;
     this.registrationDate = membershipRegistration.getRegistrationDate();
     this.expirationDate = membershipRegistration.getExpirationDate();
