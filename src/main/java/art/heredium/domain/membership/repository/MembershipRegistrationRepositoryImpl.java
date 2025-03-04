@@ -104,7 +104,7 @@ public class MembershipRegistrationRepositoryImpl
                             RegistrationType.MEMBERSHIP_PACKAGE))
                     .then(membership.name)
                     .when(membershipRegistration.registrationType.eq(RegistrationType.COMPANY))
-                    .then(company.name.prepend(Constants.COMPANY_PREFIX))
+                    .then(company.name)
                     .otherwise((String) null),
                 account.id,
                 account.email,
