@@ -179,6 +179,7 @@ public class PostService {
     updateMemberships(post, request.getMemberships());
 
     final Post savedPost = postRepository.save(post);
+    savedPost.getMemberships().forEach(Membership::getCoupons);
     this.updatePostHistory(savedPost);
   }
 
