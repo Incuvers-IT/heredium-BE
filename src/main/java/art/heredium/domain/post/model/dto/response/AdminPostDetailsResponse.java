@@ -5,18 +5,12 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import art.heredium.domain.membership.entity.Membership;
+import lombok.*;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import art.heredium.domain.membership.model.dto.response.MembershipResponse;
 import art.heredium.domain.post.entity.Post;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.NonNull;
-import lombok.Setter;
 
 @Getter
 @Setter
