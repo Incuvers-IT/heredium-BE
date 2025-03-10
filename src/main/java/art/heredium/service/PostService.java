@@ -265,7 +265,7 @@ public class PostService {
       post.setCompletedProgramCount(additionalInfo.getCompletedProgramCount());
   }
 
-  private void updateMemberships(Post post, List<PostMembershipUpdateRequest> membershipRequests) {
+  public void updateMemberships(Post post, List<PostMembershipUpdateRequest> membershipRequests) {
     if (membershipRequests == null) return;
 
     for (PostMembershipUpdateRequest membershipRequest : membershipRequests) {
@@ -286,7 +286,7 @@ public class PostService {
     }
   }
 
-  private void updateMembership(Membership membership, PostMembershipUpdateRequest request) {
+  public void updateMembership(Membership membership, PostMembershipUpdateRequest request) {
     if (Boolean.TRUE.equals(request.getIsDeleted())) {
       membership.setIsDeleted(true);
       membership.setIsEnabled(false);
@@ -315,7 +315,7 @@ public class PostService {
     updateCoupons(membership, request.getCoupons());
   }
 
-  private void updatePostHistory(Post post) {
+  public void updatePostHistory(Post post) {
     String content = null;
     try {
       content = this.objectMapper.writeValueAsString(new AdminPostDetailsResponse(post));
@@ -332,7 +332,7 @@ public class PostService {
     savedPostHistory.updateLastModifiedName();
   }
 
-  private void createNewMembership(Post post, PostMembershipUpdateRequest request) {
+  public void createNewMembership(Post post, PostMembershipUpdateRequest request) {
     MembershipCreateRequest createRequest = new MembershipCreateRequest();
     createRequest.setName(request.getName());
     createRequest.setPrice(request.getPrice());
@@ -368,7 +368,7 @@ public class PostService {
     return createRequest;
   }
 
-  private void updateCoupons(
+  public void updateCoupons(
       Membership membership, List<MembershipCouponUpdateRequest> couponRequests) {
     if (couponRequests == null) return;
 
@@ -389,7 +389,7 @@ public class PostService {
     }
   }
 
-  private void updateCoupon(Coupon coupon, MembershipCouponUpdateRequest request) {
+  public void updateCoupon(Coupon coupon, MembershipCouponUpdateRequest request) {
     if (request.getName() != null) coupon.setName(request.getName());
     if (request.getCouponType() != null) coupon.setCouponType(request.getCouponType());
     if (request.getDiscountPercent() != null)
@@ -408,7 +408,7 @@ public class PostService {
     couponRepository.save(coupon);
   }
 
-  private void createNewCoupon(Membership membership, MembershipCouponUpdateRequest request) {
+  public void createNewCoupon(Membership membership, MembershipCouponUpdateRequest request) {
     MembershipCouponCreateRequest createRequest = convertToCouponCreateRequest(request);
 
     ValidationUtil.validateImage(this.cloudStorage, createRequest.getImageUrl());

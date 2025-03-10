@@ -52,7 +52,7 @@ public class CouponService {
     return createCoupon(request, null, company).getId();
   }
 
-  private Coupon createCoupon(
+  public Coupon createCoupon(
       @NonNull final CouponCreateRequest request,
       @Nullable final Membership membership,
       @Nullable final Company company) {
