@@ -74,7 +74,7 @@ public class MembershipService {
                       || request.getIsRegisterMembershipButtonShown())
               .build();
 
-      Membership savedMembership = membershipRepository.save(membership);
+      Membership savedMembership = membershipRepository.saveAndFlush(membership);
       membershipIds.add(savedMembership.getId());
 
       if (StringUtils.isNotEmpty(request.getImageUrl())) {
@@ -85,7 +85,7 @@ public class MembershipService {
             Constants.moveImageToNewPlace(
                 this.cloudStorage, request.getImageUrl(), newMembershipPath);
         savedMembership.updateImageUrl(permanentImageUrl);
-        membershipRepository.save(savedMembership);
+        membershipRepository.saveAndFlush(savedMembership);
       }
 
       request

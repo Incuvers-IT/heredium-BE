@@ -107,7 +107,7 @@ public class CouponService {
             .fromSource(fromSource)
             .build();
 
-    Coupon savedCoupon = couponRepository.save(coupon);
+    Coupon savedCoupon = couponRepository.saveAndFlush(coupon);
 
     if (StringUtils.isNotEmpty(request.getImageUrl())) {
       // Move coupon image to permanent storage and update the imageUrl
@@ -115,7 +115,7 @@ public class CouponService {
       String permanentCouponImageUrl =
           Constants.moveImageToNewPlace(this.cloudStorage, request.getImageUrl(), newCouponPath);
       savedCoupon.updateImageUrl(permanentCouponImageUrl);
-      couponRepository.save(savedCoupon);
+      couponRepository.saveAndFlush(savedCoupon);
     }
 
     return savedCoupon;
