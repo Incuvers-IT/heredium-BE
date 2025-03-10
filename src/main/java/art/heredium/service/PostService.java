@@ -1,6 +1,9 @@
 package art.heredium.service;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import lombok.RequiredArgsConstructor;
@@ -173,10 +176,9 @@ public class PostService {
             .orElseThrow(() -> new ApiException(ErrorCode.POST_NOT_FOUND));
 
     updatePostFields(post, request);
-    List<Membership> memberships = updateMemberships(post, request.getMemberships());
+    updateMemberships(post, request.getMemberships());
 
     final Post savedPost = postRepository.save(post);
-    savedPost.getMemberships().addAll(memberships);
     this.updatePostHistory(savedPost);
   }
 
@@ -263,9 +265,8 @@ public class PostService {
       post.setCompletedProgramCount(additionalInfo.getCompletedProgramCount());
   }
 
-  private List<Membership> updateMemberships(Post post, List<PostMembershipUpdateRequest> membershipRequests) {
-    if (membershipRequests == null) return Collections.emptyList();
-    List<Membership> memberships = new ArrayList<>();
+  public void updateMemberships(Post post, List<PostMembershipUpdateRequest> membershipRequests) {
+    if (membershipRequests == null) return;
 
     for (PostMembershipUpdateRequest membershipRequest : membershipRequests) {
       if (membershipRequest.getId() != null) {
@@ -278,20 +279,20 @@ public class PostService {
                         new ApiException(
                             ErrorCode.MEMBERSHIP_NOT_FOUND,
                             "membershipId = " + membershipRequest.getId()));
-        memberships.add(updateMembership(membership, membershipRequest));
+        updateMembership(membership, membershipRequest);
       } else {
-        return createNewMembership(post, membershipRequest);
+        createNewMembership(post, membershipRequest);
       }
     }
-    return memberships;
   }
 
-  private Membership updateMembership(Membership membership, PostMembershipUpdateRequest request) {
+  public void updateMembership(Membership membership, PostMembershipUpdateRequest request) {
     if (Boolean.TRUE.equals(request.getIsDeleted())) {
       membership.setIsDeleted(true);
       membership.setIsEnabled(false);
       membership.setIsRegisterMembershipButtonShown(false);
-      return membershipRepository.save(membership);
+      membershipRepository.save(membership);
+      return;
     }
 
     if (request.getName() != null) membership.setName(request.getName());
@@ -312,10 +313,9 @@ public class PostService {
     membershipRepository.save(membership);
 
     updateCoupons(membership, request.getCoupons());
-    return membership;
   }
 
-  private void updatePostHistory(Post post) {
+  public void updatePostHistory(Post post) {
     String content = null;
     try {
       content = this.objectMapper.writeValueAsString(new AdminPostDetailsResponse(post));
@@ -332,7 +332,7 @@ public class PostService {
     savedPostHistory.updateLastModifiedName();
   }
 
-  private List<Membership> createNewMembership(Post post, PostMembershipUpdateRequest request) {
+  public void createNewMembership(Post post, PostMembershipUpdateRequest request) {
     MembershipCreateRequest createRequest = new MembershipCreateRequest();
     createRequest.setName(request.getName());
     createRequest.setPrice(request.getPrice());
@@ -343,7 +343,7 @@ public class PostService {
         request.getIsRegisterMembershipButtonShown() == null
             || request.getIsRegisterMembershipButtonShown());
 
-   return membershipService.createMemberships(post.getId(), Arrays.asList(createRequest));
+    membershipService.createMemberships(post.getId(), Arrays.asList(createRequest));
   }
 
   private List<MembershipCouponCreateRequest> convertToCouponCreateRequests(
@@ -368,7 +368,7 @@ public class PostService {
     return createRequest;
   }
 
-  private void updateCoupons(
+  public void updateCoupons(
       Membership membership, List<MembershipCouponUpdateRequest> couponRequests) {
     if (couponRequests == null) return;
 
@@ -389,7 +389,7 @@ public class PostService {
     }
   }
 
-  private void updateCoupon(Coupon coupon, MembershipCouponUpdateRequest request) {
+  public void updateCoupon(Coupon coupon, MembershipCouponUpdateRequest request) {
     if (request.getName() != null) coupon.setName(request.getName());
     if (request.getCouponType() != null) coupon.setCouponType(request.getCouponType());
     if (request.getDiscountPercent() != null)
@@ -408,7 +408,7 @@ public class PostService {
     couponRepository.save(coupon);
   }
 
-  private void createNewCoupon(Membership membership, MembershipCouponUpdateRequest request) {
+  public void createNewCoupon(Membership membership, MembershipCouponUpdateRequest request) {
     MembershipCouponCreateRequest createRequest = convertToCouponCreateRequest(request);
 
     ValidationUtil.validateImage(this.cloudStorage, createRequest.getImageUrl());
