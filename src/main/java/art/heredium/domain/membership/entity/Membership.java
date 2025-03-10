@@ -53,7 +53,7 @@ public class Membership extends BaseEntity implements Serializable {
   @JoinColumn(name = "post_id", nullable = false)
   private Post post;
 
-  @OneToMany(mappedBy = "membership", cascade = CascadeType.ALL, orphanRemoval = true)
+  @OneToMany(mappedBy = "membership", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
   @OrderBy("name ASC")
   private List<Coupon> coupons;
 
