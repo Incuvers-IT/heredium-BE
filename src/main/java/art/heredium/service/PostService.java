@@ -320,7 +320,7 @@ public class PostService {
     updateCoupons(membership, request.getCoupons());
   }
 
-  private void updatePostHistory(Post post) {
+  public void updatePostHistory(Post post) {
     String content = null;
     try {
       content = this.objectMapper.writeValueAsString(new AdminPostDetailsResponse(post));
