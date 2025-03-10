@@ -170,7 +170,12 @@ public class PostService {
 
   @Transactional
   public void updatePost(PostUpdateRequest request) {
-    Post post =
+      try {
+          log.info("Request to update post: {}", objectMapper.writeValueAsString(request));
+      } catch (JsonProcessingException e) {
+          throw new RuntimeException(e);
+      }
+      Post post =
         postRepository
             .findFirstByOrderByIdDesc()
             .orElseThrow(() -> new ApiException(ErrorCode.POST_NOT_FOUND));
@@ -318,6 +323,7 @@ public class PostService {
   private void updatePostHistory(Post post) {
     String content = null;
     try {
+    log.info("Request to update post history: {}", objectMapper.writeValueAsString(post));
       content = this.objectMapper.writeValueAsString(new AdminPostDetailsResponse(post));
     } catch (JsonProcessingException e) {
       log.info("Failed to deserialize AdminPostDetailsResponse");
