@@ -184,6 +184,11 @@ public class PostService {
     updateMemberships(post, request.getMemberships());
 
     final Post savedPost = postRepository.save(post);
+    log.info("Saved post: {}", savedPost);
+    log.info("Saved memberships: {}", savedPost.getMemberships());
+      for (Membership membership : savedPost.getMemberships()) {
+          log.info("Saved coupons: {}", membership.getCoupons());
+      }
     this.updatePostHistory(savedPost);
   }
 
@@ -320,7 +325,12 @@ public class PostService {
     updateCoupons(membership, request.getCoupons());
   }
 
-  public void updatePostHistory(Post post) {
+  private void updatePostHistory(Post post) {
+      log.info("Saved post: {}", post);
+      log.info("Saved memberships: {}", post.getMemberships());
+      for (Membership membership : post.getMemberships()) {
+          log.info("Saved coupons: {}", membership.getCoupons());
+      }
     String content = null;
     try {
       content = this.objectMapper.writeValueAsString(new AdminPostDetailsResponse(post));
