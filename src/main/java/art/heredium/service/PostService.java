@@ -1,11 +1,17 @@
 package art.heredium.service;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import art.heredium.domain.company.entity.Company;
+import art.heredium.domain.coupon.model.dto.request.CompanyCouponCreateRequest;
+import art.heredium.domain.coupon.model.dto.request.CouponCreateRequest;
+import art.heredium.domain.coupon.model.dto.request.NonMembershipCouponCreateRequest;
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -43,6 +49,7 @@ import art.heredium.ncloud.bean.CloudStorage;
 @RequiredArgsConstructor
 @Slf4j
 public class PostService {
+    private static final Long DEFAULT_MEMBERSHIP_PERIOD = 364L; // days
   private static final String THUMBNAIL_URL_DELIMITER = ";";
   private final PostRepository postRepository;
   private final MembershipService membershipService;
@@ -181,34 +188,7 @@ public class PostService {
             .orElseThrow(() -> new ApiException(ErrorCode.POST_NOT_FOUND));
 
     updatePostFields(post, request);
-      if (request.getMemberships() == null) return;
-
-      for (PostMembershipUpdateRequest membershipRequest : request.getMemberships()) {
-          if (membershipRequest.getId() != null) {
-              Membership membership =
-                      post.getMemberships().stream()
-                              .filter(m -> m.getId().equals(membershipRequest.getId()))
-                              .findFirst()
-                              .orElseThrow(
-                                      () ->
-                                              new ApiException(
-                                                      ErrorCode.MEMBERSHIP_NOT_FOUND,
-                                                      "membershipId = " + membershipRequest.getId()));
-              updateMembership(membership, membershipRequest);
-          } else {
-              MembershipCreateRequest createRequest = new MembershipCreateRequest();
-              createRequest.setName(membershipRequest.getName());
-              createRequest.setPrice(membershipRequest.getPrice());
-              createRequest.setImageUrl(membershipRequest.getImageUrl());
-              createRequest.setIsEnabled(membershipRequest.getIsEnabled() == null || membershipRequest.getIsEnabled());
-              createRequest.setCoupons(convertToCouponCreateRequests(membershipRequest.getCoupons()));
-              createRequest.setIsRegisterMembershipButtonShown(
-                      membershipRequest.getIsRegisterMembershipButtonShown() == null
-                              || membershipRequest.getIsRegisterMembershipButtonShown());
-
-              membershipService.createMemberships(post.getId(), Arrays.asList(createRequest));
-          }
-      }
+    updateMemberships(post, request.getMemberships());
 
     final Post savedPost = postRepository.save(post);
     this.updatePostHistory(savedPost);
@@ -297,6 +277,129 @@ public class PostService {
       post.setCompletedProgramCount(additionalInfo.getCompletedProgramCount());
   }
 
+  public void updateMemberships(Post post, List<PostMembershipUpdateRequest> membershipRequests) {
+    if (membershipRequests == null) return;
+
+    for (PostMembershipUpdateRequest membershipRequest : membershipRequests) {
+      if (membershipRequest.getId() != null) {
+        Membership membership =
+            post.getMemberships().stream()
+                .filter(m -> m.getId().equals(membershipRequest.getId()))
+                .findFirst()
+                .orElseThrow(
+                    () ->
+                        new ApiException(
+                            ErrorCode.MEMBERSHIP_NOT_FOUND,
+                            "membershipId = " + membershipRequest.getId()));
+        updateMembership(membership, membershipRequest);
+      } else {
+          MembershipCreateRequest createRequest = new MembershipCreateRequest();
+          createRequest.setName(membershipRequest.getName());
+          createRequest.setPrice(membershipRequest.getPrice());
+          createRequest.setImageUrl(membershipRequest.getImageUrl());
+          createRequest.setIsEnabled(membershipRequest.getIsEnabled() == null || membershipRequest.getIsEnabled());
+          createRequest.setCoupons(convertToCouponCreateRequests(membershipRequest.getCoupons()));
+          createRequest.setIsRegisterMembershipButtonShown(
+                  membershipRequest.getIsRegisterMembershipButtonShown() == null
+                          || membershipRequest.getIsRegisterMembershipButtonShown());
+
+          this.createMemberships(post.getId(), Arrays.asList(createRequest));
+      }
+    }
+  }
+
+  public void createMemberships(long postId, List<MembershipCreateRequest> membershipRequests) {
+      final Post post =
+              postRepository
+                      .findById(postId)
+                      .orElseThrow(() -> new ApiException(ErrorCode.POST_NOT_FOUND));
+
+      if (!post.getIsEnabled()) {
+          throw new ApiException(
+                  ErrorCode.POST_NOT_ALLOW, String.format("Post number '%d' is disable", postId));
+      }
+
+      for (MembershipCreateRequest request : membershipRequests) {
+          // Validate membership image
+          ValidationUtil.validateImage(this.cloudStorage, request.getImageUrl());
+
+          Membership membership =
+                  Membership.builder()
+                          .name(request.getName())
+                          .period(DEFAULT_MEMBERSHIP_PERIOD)
+                          .price(request.getPrice())
+                          .isEnabled(request.getIsEnabled() == null || request.getIsEnabled())
+                          .imageUrl(request.getImageUrl())
+                          .post(post)
+                          .isRegisterMembershipButtonShown(
+                                  request.getIsRegisterMembershipButtonShown() == null
+                                          || request.getIsRegisterMembershipButtonShown())
+                          .build();
+
+          Membership savedMembership = membershipRepository.save(membership);
+
+          if (StringUtils.isNotEmpty(request.getImageUrl())) {
+              // Move membership image to permanent storage and update the imageUrl
+              String newMembershipPath =
+                      FilePathType.MEMBERSHIP.getPath() + "/" + savedMembership.getId();
+              String permanentImageUrl =
+                      Constants.moveImageToNewPlace(
+                              this.cloudStorage, request.getImageUrl(), newMembershipPath);
+              savedMembership.updateImageUrl(permanentImageUrl);
+              membershipRepository.save(savedMembership);
+          }
+          request
+                  .getCoupons()
+                  .forEach(
+                          couponRequest ->
+                                  this.createMembershipCoupon(couponRequest, savedMembership));
+      }
+  }
+
+    public void createMembershipCoupon(
+            @NonNull final MembershipCouponCreateRequest request,
+            @Nullable final Membership membership) {
+        if (membership == null) {
+            // This case will never happen
+            throw new ApiException(
+                    ErrorCode.BAD_VALID,
+                    String.format(
+                            "Invalid coupon request for '%s': If 'isMembershipCoupon' is true, 'membership' must be provided. If 'isMembershipCoupon' is false, 'membership' must not be provided.",
+                            request.getName()));
+        }
+        Integer periodInDays = request.getPeriodInDays();
+
+        ValidationUtil.validateImage(this.cloudStorage, request.getImageUrl());
+        final long numberOfUses = request.getIsPermanent() ? 0 : request.getNumberOfUses();
+
+        Coupon coupon =
+                Coupon.builder()
+                        .name(request.getName())
+                        .couponType(request.getCouponType())
+                        .discountPercent(request.getDiscountPercent())
+                        .startedDate(null)
+                        .endedDate(null)
+                        .periodInDays(periodInDays)
+                        .imageUrl(request.getImageUrl())
+                        .membership(membership)
+                        .company(null)
+                        .numberOfUses(numberOfUses)
+                        .isPermanent(request.getIsPermanent())
+                        .fromSource(CouponSource.MEMBERSHIP_PACKAGE)
+                        .build();
+
+        Coupon savedCoupon = couponRepository.save(coupon);
+
+        if (StringUtils.isNotEmpty(request.getImageUrl())) {
+            // Move coupon image to permanent storage and update the imageUrl
+            String newCouponPath = FilePathType.COUPON.getPath() + "/" + savedCoupon.getId();
+            String permanentCouponImageUrl =
+                    Constants.moveImageToNewPlace(this.cloudStorage, request.getImageUrl(), newCouponPath);
+            savedCoupon.updateImageUrl(permanentCouponImageUrl);
+            couponRepository.save(savedCoupon);
+        }
+    }
+
   private void updateMembership(Membership membership, PostMembershipUpdateRequest request) {
     if (Boolean.TRUE.equals(request.getIsDeleted())) {
       membership.setIsDeleted(true);
@@ -327,6 +430,11 @@ public class PostService {
   }
 
   private void updatePostHistory(Post post) {
+      log.info("Saved post: {}", post);
+      log.info("Saved memberships: {}", post.getMemberships().size());
+      for (Membership membership : post.getMemberships()) {
+          log.info("Saved coupons: {}", membership.getCoupons().size());
+      }
     String content = null;
     try {
       content = this.objectMapper.writeValueAsString(new AdminPostDetailsResponse(post));
