@@ -181,7 +181,34 @@ public class PostService {
             .orElseThrow(() -> new ApiException(ErrorCode.POST_NOT_FOUND));
 
     updatePostFields(post, request);
-    updateMemberships(post, request.getMemberships());
+      if (request.getMemberships() == null) return;
+
+      for (PostMembershipUpdateRequest membershipRequest : request.getMemberships()) {
+          if (membershipRequest.getId() != null) {
+              Membership membership =
+                      post.getMemberships().stream()
+                              .filter(m -> m.getId().equals(membershipRequest.getId()))
+                              .findFirst()
+                              .orElseThrow(
+                                      () ->
+                                              new ApiException(
+                                                      ErrorCode.MEMBERSHIP_NOT_FOUND,
+                                                      "membershipId = " + membershipRequest.getId()));
+              updateMembership(membership, membershipRequest);
+          } else {
+              MembershipCreateRequest createRequest = new MembershipCreateRequest();
+              createRequest.setName(membershipRequest.getName());
+              createRequest.setPrice(membershipRequest.getPrice());
+              createRequest.setImageUrl(membershipRequest.getImageUrl());
+              createRequest.setIsEnabled(membershipRequest.getIsEnabled() == null || membershipRequest.getIsEnabled());
+              createRequest.setCoupons(convertToCouponCreateRequests(membershipRequest.getCoupons()));
+              createRequest.setIsRegisterMembershipButtonShown(
+                      membershipRequest.getIsRegisterMembershipButtonShown() == null
+                              || membershipRequest.getIsRegisterMembershipButtonShown());
+
+              membershipService.createMemberships(post.getId(), Arrays.asList(createRequest));
+          }
+      }
 
     final Post savedPost = postRepository.save(post);
     this.updatePostHistory(savedPost);
@@ -270,27 +297,6 @@ public class PostService {
       post.setCompletedProgramCount(additionalInfo.getCompletedProgramCount());
   }
 
-  private void updateMemberships(Post post, List<PostMembershipUpdateRequest> membershipRequests) {
-    if (membershipRequests == null) return;
-
-    for (PostMembershipUpdateRequest membershipRequest : membershipRequests) {
-      if (membershipRequest.getId() != null) {
-        Membership membership =
-            post.getMemberships().stream()
-                .filter(m -> m.getId().equals(membershipRequest.getId()))
-                .findFirst()
-                .orElseThrow(
-                    () ->
-                        new ApiException(
-                            ErrorCode.MEMBERSHIP_NOT_FOUND,
-                            "membershipId = " + membershipRequest.getId()));
-        updateMembership(membership, membershipRequest);
-      } else {
-        createNewMembership(post, membershipRequest);
-      }
-    }
-  }
-
   private void updateMembership(Membership membership, PostMembershipUpdateRequest request) {
     if (Boolean.TRUE.equals(request.getIsDeleted())) {
       membership.setIsDeleted(true);
@@ -321,6 +327,7 @@ public class PostService {
   }
 
   private void updatePostHistory(Post post) {
+      log.info("Saved post: {}", post);
       log.info("Saved memberships: {}", post.getMemberships().size());
       for (Membership membership : post.getMemberships()) {
           log.info("Saved coupons: {}", membership.getCoupons().size());
@@ -339,20 +346,6 @@ public class PostService {
                 .build());
     savedPostHistory.updateLastModifiedDate();
     savedPostHistory.updateLastModifiedName();
-  }
-
-  private void createNewMembership(Post post, PostMembershipUpdateRequest request) {
-    MembershipCreateRequest createRequest = new MembershipCreateRequest();
-    createRequest.setName(request.getName());
-    createRequest.setPrice(request.getPrice());
-    createRequest.setImageUrl(request.getImageUrl());
-    createRequest.setIsEnabled(request.getIsEnabled() == null || request.getIsEnabled());
-    createRequest.setCoupons(convertToCouponCreateRequests(request.getCoupons()));
-    createRequest.setIsRegisterMembershipButtonShown(
-        request.getIsRegisterMembershipButtonShown() == null
-            || request.getIsRegisterMembershipButtonShown());
-
-    membershipService.createMemberships(post.getId(), Arrays.asList(createRequest));
   }
 
   private List<MembershipCouponCreateRequest> convertToCouponCreateRequests(
