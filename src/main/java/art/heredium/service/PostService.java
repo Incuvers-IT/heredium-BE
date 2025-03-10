@@ -184,16 +184,7 @@ public class PostService {
     updateMemberships(post, request.getMemberships());
 
     final Post savedPost = postRepository.save(post);
-      Post newPost =
-              postRepository
-                      .findFirstByOrderByIdDesc()
-                      .orElseThrow(() -> new ApiException(ErrorCode.POST_NOT_FOUND));
-    log.info("Saved post: {}", newPost);
-    log.info("Saved memberships: {}", newPost.getMemberships());
-      for (Membership membership : newPost.getMemberships()) {
-          log.info("Saved coupons: {}", membership.getCoupons());
-      }
-    this.updatePostHistory(newPost);
+    this.updatePostHistory(savedPost);
   }
 
   private void updatePostFields(Post post, PostUpdateRequest request) {
@@ -330,10 +321,9 @@ public class PostService {
   }
 
   private void updatePostHistory(Post post) {
-      log.info("Saved post: {}", post);
-      log.info("Saved memberships: {}", post.getMemberships());
+      log.info("Saved memberships: {}", post.getMemberships().size());
       for (Membership membership : post.getMemberships()) {
-          log.info("Saved coupons: {}", membership.getCoupons());
+          log.info("Saved coupons: {}", membership.getCoupons().size());
       }
     String content = null;
     try {
