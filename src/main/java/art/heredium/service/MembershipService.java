@@ -44,9 +44,9 @@ public class MembershipService {
   }
 
   @Transactional
-  public List<Membership> createMemberships(
+  public List<Long> createMemberships(
       Long postId, List<MembershipCreateRequest> membershipRequests) {
-    final List<Membership> memberships = new ArrayList<>();
+    final List<Long> membershipIds = new ArrayList<>();
     final Post post =
         postRepository
             .findById(postId)
@@ -75,6 +75,7 @@ public class MembershipService {
               .build();
 
       Membership savedMembership = membershipRepository.save(membership);
+      membershipIds.add(savedMembership.getId());
 
       if (StringUtils.isNotEmpty(request.getImageUrl())) {
         // Move membership image to permanent storage and update the imageUrl
@@ -92,10 +93,9 @@ public class MembershipService {
           .forEach(
               couponRequest ->
                   this.couponService.createMembershipCoupon(couponRequest, savedMembership));
-        memberships.add(membershipRepository.save(savedMembership));
     }
 
-    return memberships;
+    return membershipIds;
   }
 
   @Transactional(rollbackFor = Exception.class)
