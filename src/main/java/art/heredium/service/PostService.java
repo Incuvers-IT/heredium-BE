@@ -1,9 +1,6 @@
 package art.heredium.service;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import lombok.RequiredArgsConstructor;
@@ -176,9 +173,10 @@ public class PostService {
             .orElseThrow(() -> new ApiException(ErrorCode.POST_NOT_FOUND));
 
     updatePostFields(post, request);
-    updateMemberships(post, request.getMemberships());
+    List<Membership> memberships = updateMemberships(post, request.getMemberships());
 
     final Post savedPost = postRepository.save(post);
+    savedPost.getMemberships().addAll(memberships);
     this.updatePostHistory(savedPost);
   }
 
@@ -265,8 +263,9 @@ public class PostService {
       post.setCompletedProgramCount(additionalInfo.getCompletedProgramCount());
   }
 
-  private void updateMemberships(Post post, List<PostMembershipUpdateRequest> membershipRequests) {
-    if (membershipRequests == null) return;
+  private List<Membership> updateMemberships(Post post, List<PostMembershipUpdateRequest> membershipRequests) {
+    if (membershipRequests == null) return Collections.emptyList();
+    List<Membership> memberships = new ArrayList<>();
 
     for (PostMembershipUpdateRequest membershipRequest : membershipRequests) {
       if (membershipRequest.getId() != null) {
@@ -279,20 +278,20 @@ public class PostService {
                         new ApiException(
                             ErrorCode.MEMBERSHIP_NOT_FOUND,
                             "membershipId = " + membershipRequest.getId()));
-        updateMembership(membership, membershipRequest);
+        memberships.add(updateMembership(membership, membershipRequest));
       } else {
-        createNewMembership(post, membershipRequest);
+        return createNewMembership(post, membershipRequest);
       }
     }
+    return memberships;
   }
 
-  private void updateMembership(Membership membership, PostMembershipUpdateRequest request) {
+  private Membership updateMembership(Membership membership, PostMembershipUpdateRequest request) {
     if (Boolean.TRUE.equals(request.getIsDeleted())) {
       membership.setIsDeleted(true);
       membership.setIsEnabled(false);
       membership.setIsRegisterMembershipButtonShown(false);
-      membershipRepository.save(membership);
-      return;
+      return membershipRepository.save(membership);
     }
 
     if (request.getName() != null) membership.setName(request.getName());
@@ -313,14 +312,13 @@ public class PostService {
     membershipRepository.save(membership);
 
     updateCoupons(membership, request.getCoupons());
+    return membership;
   }
 
   private void updatePostHistory(Post post) {
     String content = null;
     try {
-       AdminPostDetailsResponse adminPostDetailsResponse = new AdminPostDetailsResponse(post);
-       log.info("Admin post detail response: {}", adminPostDetailsResponse);
-      content = this.objectMapper.writeValueAsString(adminPostDetailsResponse);
+      content = this.objectMapper.writeValueAsString(new AdminPostDetailsResponse(post));
     } catch (JsonProcessingException e) {
       log.info("Failed to deserialize AdminPostDetailsResponse");
     }
@@ -334,7 +332,7 @@ public class PostService {
     savedPostHistory.updateLastModifiedName();
   }
 
-  private void createNewMembership(Post post, PostMembershipUpdateRequest request) {
+  private List<Membership> createNewMembership(Post post, PostMembershipUpdateRequest request) {
     MembershipCreateRequest createRequest = new MembershipCreateRequest();
     createRequest.setName(request.getName());
     createRequest.setPrice(request.getPrice());
@@ -345,7 +343,7 @@ public class PostService {
         request.getIsRegisterMembershipButtonShown() == null
             || request.getIsRegisterMembershipButtonShown());
 
-    membershipService.createMemberships(post.getId(), Arrays.asList(createRequest));
+   return membershipService.createMemberships(post.getId(), Arrays.asList(createRequest));
   }
 
   private List<MembershipCouponCreateRequest> convertToCouponCreateRequests(
