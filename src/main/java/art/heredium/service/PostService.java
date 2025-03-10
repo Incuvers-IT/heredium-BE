@@ -327,11 +327,6 @@ public class PostService {
   }
 
   private void updatePostHistory(Post post) {
-      log.info("Saved post: {}", post);
-      log.info("Saved memberships: {}", post.getMemberships().size());
-      for (Membership membership : post.getMemberships()) {
-          log.info("Saved coupons: {}", membership.getCoupons().size());
-      }
     String content = null;
     try {
       content = this.objectMapper.writeValueAsString(new AdminPostDetailsResponse(post));
