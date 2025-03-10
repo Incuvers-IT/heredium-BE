@@ -1,5 +1,6 @@
 package art.heredium.domain.membership.model.dto.response;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -39,7 +40,9 @@ public class MembershipResponse {
 
   public MembershipResponse(Membership membership) {
     this.coupons =
-        membership.getCoupons().stream().map(CouponResponse::new).collect(Collectors.toList());
+        membership.getCoupons() != null
+            ? membership.getCoupons().stream().map(CouponResponse::new).collect(Collectors.toList())
+            : Collections.emptyList();
     this.name = membership.getName();
     this.period = membership.getPeriod();
     this.membershipId = membership.getId();

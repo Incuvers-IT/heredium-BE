@@ -177,7 +177,12 @@ public class PostService {
 
   @Transactional
   public void updatePost(PostUpdateRequest request) {
-    Post post =
+      try {
+          log.info("Request to update post: {}", objectMapper.writeValueAsString(request));
+      } catch (JsonProcessingException e) {
+          throw new RuntimeException(e);
+      }
+      Post post =
         postRepository
             .findFirstByOrderByIdDesc()
             .orElseThrow(() -> new ApiException(ErrorCode.POST_NOT_FOUND));
