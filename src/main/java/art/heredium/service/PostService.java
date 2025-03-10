@@ -323,6 +323,11 @@ public class PostService {
   private void updatePostHistory(Post post) {
     String content = null;
     try {
+        log.info("Request to update post history: {}", objectMapper.registerModule(new JavaTimeModule()).writeValueAsString(post));
+    } catch (JsonProcessingException e) {
+        log.info("Failed to deserialize Post: {}", e);
+    }
+    try {
       content = this.objectMapper.writeValueAsString(new AdminPostDetailsResponse(post));
     } catch (JsonProcessingException e) {
       log.info("Failed to deserialize AdminPostDetailsResponse");
