@@ -179,7 +179,6 @@ public class PostService {
     updateMemberships(post, request.getMemberships());
 
     final Post savedPost = postRepository.save(post);
-    savedPost.getMemberships().forEach(Membership::getCoupons);
     this.updatePostHistory(savedPost);
   }
 
@@ -319,7 +318,9 @@ public class PostService {
   private void updatePostHistory(Post post) {
     String content = null;
     try {
-      content = this.objectMapper.writeValueAsString(new AdminPostDetailsResponse(post));
+       AdminPostDetailsResponse adminPostDetailsResponse = new AdminPostDetailsResponse(post);
+       log.info("Admin post detail response: {}", adminPostDetailsResponse);
+      content = this.objectMapper.writeValueAsString(adminPostDetailsResponse);
     } catch (JsonProcessingException e) {
       log.info("Failed to deserialize AdminPostDetailsResponse");
     }
