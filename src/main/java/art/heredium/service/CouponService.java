@@ -52,7 +52,7 @@ public class CouponService {
     return createCoupon(request, null, company).getId();
   }
 
-  public Coupon createCoupon(
+  private Coupon createCoupon(
       @NonNull final CouponCreateRequest request,
       @Nullable final Membership membership,
       @Nullable final Company company) {
@@ -107,7 +107,7 @@ public class CouponService {
             .fromSource(fromSource)
             .build();
 
-    Coupon savedCoupon = couponRepository.saveAndFlush(coupon);
+    Coupon savedCoupon = couponRepository.save(coupon);
 
     if (StringUtils.isNotEmpty(request.getImageUrl())) {
       // Move coupon image to permanent storage and update the imageUrl
@@ -115,7 +115,7 @@ public class CouponService {
       String permanentCouponImageUrl =
           Constants.moveImageToNewPlace(this.cloudStorage, request.getImageUrl(), newCouponPath);
       savedCoupon.updateImageUrl(permanentCouponImageUrl);
-      couponRepository.saveAndFlush(savedCoupon);
+      couponRepository.save(savedCoupon);
     }
 
     return savedCoupon;
