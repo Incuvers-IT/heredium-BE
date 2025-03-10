@@ -1,9 +1,12 @@
 package art.heredium.domain.membership.model.dto.response;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import art.heredium.domain.coupon.entity.Coupon;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -12,10 +15,12 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import art.heredium.domain.coupon.model.dto.response.CouponResponse;
 import art.heredium.domain.membership.entity.Membership;
+import lombok.extern.slf4j.Slf4j;
 
 @Setter
 @Getter
 @NoArgsConstructor
+@Slf4j
 public class MembershipResponse {
 
   @JsonProperty("membership_id")
@@ -39,10 +44,9 @@ public class MembershipResponse {
   private Boolean isRegisterMembershipButtonShown;
 
   public MembershipResponse(Membership membership) {
-    this.coupons =
-        membership.getCoupons() != null
-            ? membership.getCoupons().stream().map(CouponResponse::new).collect(Collectors.toList())
-            : Collections.emptyList();
+      log.info("Membership coupons: {}", membership.getCoupons().stream().map(Coupon::getName).collect(Collectors.joining(",")));
+      this.coupons =
+        membership.getCoupons().stream().map(CouponResponse::new).collect(Collectors.toList());
     this.name = membership.getName();
     this.period = membership.getPeriod();
     this.membershipId = membership.getId();
