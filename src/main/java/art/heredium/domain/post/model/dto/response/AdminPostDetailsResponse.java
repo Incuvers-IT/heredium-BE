@@ -6,19 +6,22 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import art.heredium.domain.membership.entity.Membership;
-import lombok.*;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import art.heredium.domain.membership.model.dto.response.MembershipResponse;
 import art.heredium.domain.post.entity.Post;
-import lombok.extern.slf4j.Slf4j;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.NonNull;
+import lombok.Setter;
 
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-@Slf4j
 public class AdminPostDetailsResponse {
   private static final String THUMBNAIL_URL_DELIMITER = ";";
 
@@ -74,7 +77,6 @@ public class AdminPostDetailsResponse {
     this.isEnabled = post.getIsEnabled();
     this.contentDetail = post.getContentDetail();
     this.subTitle = post.getSubTitle();
-    log.info("Memberships: {}", post.getMemberships().stream().map(Membership::getName).collect(Collectors.joining(",")));
     this.memberships =
         post.getMemberships().stream()
             .filter(membership -> !Boolean.TRUE.equals(membership.getIsDeleted()))
