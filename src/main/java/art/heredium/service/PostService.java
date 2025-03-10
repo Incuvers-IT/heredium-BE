@@ -178,8 +178,8 @@ public class PostService {
     updatePostFields(post, request);
     updateMemberships(post, request.getMemberships());
 
-    final Post savedPost = postRepository.saveAndFlush(post);
-    this.updatePostHistory(savedPost);
+    postRepository.saveAndFlush(post);
+    this.updatePostHistory(post);
   }
 
   private void updatePostFields(Post post, PostUpdateRequest request) {
