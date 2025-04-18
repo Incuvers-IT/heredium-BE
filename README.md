@@ -1,4 +1,7 @@
-[Membership - coupon ERD.pdf](https://github.com/user-attachments/files/19808733/Membership.-.coupon.ERD.pdf)# heredium-BE
+# 헤레디움 ERD
+[Membership - coupon ERD.pdf](https://github.com/user-attachments/files/19808735/Membership.-.coupon.ERD.pdf)
+
+# heredium-BE
 
 # Alimtalk template
 
@@ -132,8 +135,3 @@ Example:
 [//]: # "- 사용기한 : yyyy-mm-dd ~ yyyy-mm-dd"
 [//]: # "클래식 음악과 컨템포러리 아트가 함께하는 헤레디움, 다양한 전시와 공연을 만나보세요!"
 [//]: # "위 알림톡은 헤레디움 고객님의 동의에 의해 지급된 쿠폰 발급 메시지입니다."
-
-
-# 헤레디움 ERD
-[Membership - coupon ERD.pdf](https://github.com/user-attachments/files/19808735/Membership.-.coupon.ERD.pdf)
-
