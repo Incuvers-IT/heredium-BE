@@ -122,10 +122,10 @@ compileQuerydsl {
 
 remotes {
     stageServer {
-        host = project.properties["sshHost"]
-        port = project.properties["sshPort"].toInteger()
-        user = project.properties["sshUser"]
-        password = project.properties["sshPassword"]
+        host = project.properties["sshHostStage"]
+        port = project.properties["sshPortStage"].toInteger()
+        user = project.properties["sshUserStage"]
+        password = project.properties["sshPasswordStage"]
         knownHosts = allowAnyHosts
     }
     prodServer {
@@ -137,20 +137,19 @@ remotes {
     }
 }
 
-task scp_stage {
+task scp_stage_jar {
     doLast {
         ssh.run {
             session(remotes.stageServer) {
-                final warPath =   "${project.getRootDir()}${project.properties["sshFromWarPath"]}"
-                final fromWarPath = new File(warPath)
-                final toWarPath = project.properties["sshToWarPath"]
-                println "배포 목록에 올라간 War : ${fromWarPath}"
+                final jarPath = "${project.getRootDir()}${project.properties["sshFromJarPathStage"]}/${project.properties["sshToJarFileStage"]}"
+                final fromJarPath = new File(jarPath)
+                final toJarPath = project.properties["sshToJarPathStage"]
+                println "stage 목록에 올라간 Jar : ${fromJarPath}"
 
-                execute 'sudo systemctl stop tomcat_heredium'
-                remove '${toWarPath}'
-                put from: "${fromWarPath}", into: "${toWarPath}"
-                execute 'sudo systemctl start tomcat_heredium'
-                println "${toWarPath} 로 War 전송 완료"
+                remove "${toJarPath}/${project.properties["sshToJarFileStage"]}"
+                put from: "${fromJarPath}", into: "${toJarPath}/"
+//                execute "sh ${sshToJarPathProd}/restart.sh" //직접실행
+                println "${toJarPath} 로 Jar 전송 완료"
             }
         }
     }
