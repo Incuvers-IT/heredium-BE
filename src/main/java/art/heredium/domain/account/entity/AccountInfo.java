@@ -1,22 +1,5 @@
 package art.heredium.domain.account.entity;
 
-import java.io.Serializable;
-import java.time.LocalDateTime;
-
-import javax.persistence.*;
-
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
-
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
-
-import org.hibernate.annotations.Comment;
-import org.hibernate.annotations.DynamicInsert;
-import org.hibernate.annotations.OnDelete;
-import org.hibernate.annotations.OnDeleteAction;
-
 import art.heredium.core.util.Constants;
 import art.heredium.domain.account.model.dto.request.PostAccountRequest;
 import art.heredium.domain.account.model.dto.request.PostAccountSnsRequest;
@@ -25,6 +8,19 @@ import art.heredium.domain.account.model.dto.request.PutUserAccountRequest;
 import art.heredium.domain.account.type.AuthType;
 import art.heredium.niceId.model.dto.response.PostNiceIdEncryptResponse;
 import art.heredium.oauth.info.OAuth2UserInfo;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
+import org.hibernate.annotations.*;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+
+import javax.persistence.*;
+import javax.persistence.Entity;
+import javax.persistence.Table;
+import java.io.Serializable;
+import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Getter
@@ -75,22 +71,86 @@ public class AccountInfo implements Serializable {
       columnDefinition = "bit(1) DEFAULT false")
   private Boolean isMarketingReceive;
 
+  @Comment("성별 (M: 남성, W: 여성)")
+  @Column(
+          name = "gender",
+          columnDefinition = "enum('M','W')")
+  private String gender;
+
+  @Comment("생년월일 (YYYY-MM-DD)")
+  @Column(name = "birth_date")
+  private String birthDate;
+
+  @Comment("거주지 시/도 코드")
+  @Column(name = "state", length = 30)
+  private String state;
+
+  @Comment("거주지 시/도 코드")
+  @Column(name = "district", length = 30)
+  private String district;
+
+  @Comment("마케팅 동의 팝업 상태 (1: 대기, 0: 처리됨)")
+  @Column(
+          name = "marketing_pending",
+          nullable = false,
+          columnDefinition = "tinyint(1) default 1")
+  private Boolean marketingPending;
+
+  @Comment("마케팅 동의 일시")
+  @Column(name = "marketing_agreed_date")
+  private LocalDateTime marketingAgreedDate;
+
+  @Comment("마케팅 수신동의 예약 알림톡 요청 id")
+  @Type(type = "json")
+  @Column(name = "sms_request_id", columnDefinition = "json")
+  private List<String> smsRequestId;
+
   public AccountInfo(PostAccountRequest dto, PostNiceIdEncryptResponse info, Account account) {
     this.auth = AuthType.USER;
     this.name = info.getName();
     this.phone = info.getMobileNo();
-    this.isLocalResident = dto.getIsLocalResident();
-    this.isMarketingReceive = dto.getIsMarketingReceive();
     this.account = account;
+    this.isLocalResident   = dto.getIsLocalResident();
+    this.marketingPending   = dto.getMarketingPending();
+    this.gender   = dto.getGender();
+    this.birthDate   = dto.getBirthDate();
+    this.state   = dto.getState();
+    this.district   = dto.getDistrict();
+
+    // 마케팅 수신 동의 처리
+    if (Boolean.TRUE.equals(dto.getIsMarketingReceive())) {
+      // 동의 시
+      this.isMarketingReceive = true;
+      this.marketingAgreedDate = Constants.getNow();
+    } else {
+      // 동의 철회 시
+      this.isMarketingReceive = false;
+      this.marketingAgreedDate = null;
+    }
   }
 
   public AccountInfo(PostAccountSnsRequest dto, PostNiceIdEncryptResponse info, Account account) {
     this.auth = AuthType.USER;
     this.name = info.getName();
     this.phone = info.getMobileNo();
-    this.isLocalResident = false;
-    this.isMarketingReceive = dto.getIsMarketingReceive();
+    this.isLocalResident   = dto.getIsLocalResident();
     this.account = account;
+    this.marketingPending   = dto.getMarketingPending();
+    this.gender   = dto.getGender();
+    this.birthDate   = dto.getBirthDate();
+    this.state   = dto.getState();
+    this.district   = dto.getDistrict();
+
+    // 마케팅 수신 동의 처리
+    if (Boolean.TRUE.equals(dto.getIsMarketingReceive())) {
+      // 동의 시
+      this.isMarketingReceive = true;
+      this.marketingAgreedDate = Constants.getNow();
+    } else {
+      // 동의 철회 시
+      this.isMarketingReceive = false;
+      this.marketingAgreedDate = null;
+    }
   }
 
   public void update(PutAdminAccountRequest dto) {
@@ -100,6 +160,26 @@ public class AccountInfo implements Serializable {
   public void update(PutUserAccountRequest dto) {
     this.isLocalResident = dto.getIsLocalResident();
     this.isMarketingReceive = dto.getIsMarketingReceive();
+  }
+
+  public void updateMarketing(PutUserAccountRequest dto) {
+    this.gender             = dto.getGender();
+    this.birthDate          = dto.getBirthDate();
+    this.state              = dto.getState();
+    this.district           = dto.getDistrict();
+    this.marketingPending   = dto.getMarketingPending();
+    this.isLocalResident = dto.getIsLocalResident();
+
+    // 마케팅 수신 동의 처리
+    if (Boolean.TRUE.equals(dto.getIsMarketingReceive())) {
+      // 동의 시
+      this.isMarketingReceive = true;
+      this.marketingAgreedDate = Constants.getNow();
+    } else {
+      // 동의 철회 시
+      this.isMarketingReceive = false;
+      this.marketingAgreedDate = null;
+    }
   }
 
   public void updateLastLoginDate() {
@@ -125,6 +205,7 @@ public class AccountInfo implements Serializable {
     this.name = info.getName();
     this.phone = info.getMobileNo();
     this.isLocalResident = false;
+    this.marketingPending = false;
     this.isMarketingReceive = isMarketingReceive;
     this.account = account;
   }

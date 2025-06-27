@@ -12,6 +12,7 @@ public enum PolicyType implements PersistableEnum<Integer> {
   AGREE(2, "개인정보 수집 및 이용 동의서"),
   REFUND(3, "취소 및 환불 정책"),
   VIDEO(4, "영상정보처리기기 운영 관리방침"),
+  MARKETING(5, "마케팅 활용 동의 및 광고 수신"),
   ;
 
   private int code;

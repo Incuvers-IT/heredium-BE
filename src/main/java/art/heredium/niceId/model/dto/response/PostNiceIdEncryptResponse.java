@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 
+import art.heredium.domain.account.type.GenderType;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -18,7 +19,7 @@ public class PostNiceIdEncryptResponse {
   //    private String dupInfo;                // 중복가입 확인값 (DI_64 byte)
   //    private String connInfo;                // 연계정보 확인값 (CI_88 byte)
   private LocalDate birthDate; // 생년월일(YYYYMMDD)
-  //    private GenderType gender;                // 성별
+  private GenderType gender;                // 성별
   //    private String nationalInfo;            // 내/외국인정보 (개발가이드 참조)
   private String mobileNo; // 휴대폰번호
   //    private String mobileCo;                // 통신사
@@ -31,7 +32,7 @@ public class PostNiceIdEncryptResponse {
     //        this.name_UTF8 = (String) map.get("UTF8_NAME");
     this.birthDate =
         LocalDate.parse((String) map.get("BIRTHDATE"), DateTimeFormatter.ofPattern("yyyyMMdd"));
-    //        this.gender = map.get("GENDER").equals("0") ? GenderType.WOMAN : GenderType.MAN;
+    this.gender = map.get("GENDER").equals("0") ? GenderType.WOMAN : GenderType.MAN;
     //        this.nationalInfo = (String) map.get("NATIONALINFO");
     //        this.dupInfo = (String) map.get("DI");
     //        this.connInfo = (String) map.get("CI");

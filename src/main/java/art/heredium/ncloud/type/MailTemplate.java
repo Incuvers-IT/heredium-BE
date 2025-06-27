@@ -4,7 +4,7 @@ import lombok.Getter;
 
 @Getter
 public enum MailTemplate {
-  SIGN_UP(8154, 8157, "회원가입"),
+  SIGN_UP(8154, 8154, "회원가입"),
   PASSWORD_CHANGE_USER(8119, 7551, "비밀번호 변경(회원)"),
   PASSWORD_CHANGE_ADMIN(8152, 8179, "비밀번호 변경(관리자)"),
   TICKET_ISSUANCE(8120, 7552, "입장권 발급 완료"),

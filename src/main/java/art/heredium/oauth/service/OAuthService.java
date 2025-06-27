@@ -139,22 +139,24 @@ public class OAuthService {
       throw new ApiException(ErrorCode.ALREADY_EXIST_USERNAME);
     }
     Account entity;
-    if (provider == OAuth2Provider.KAKAO) {
-      boolean isAllow;
-      try {
-        KakaoUserTermsResponse kaKaoUserTerms = getKaKaoUserTerms(provider, dto.getToken());
-        isAllow =
-            kaKaoUserTerms.getAllowed_service_terms().stream()
-                .anyMatch(x -> x.getTag().equals("marketing"));
-      } catch (Exception e) {
-        isAllow = false;
-      }
-      entity = new Account(userInfo, info, provider, isAllow);
-    } else if (provider == OAuth2Provider.NAVER) {
-      entity = new Account(userInfo, info, provider, dto.getIsMarketingReceive());
-    } else {
-      entity = new Account(dto, info, userInfo, provider);
-    }
+//    if (provider == OAuth2Provider.KAKAO) {
+//      boolean isAllow;
+//      try {
+//        KakaoUserTermsResponse kaKaoUserTerms = getKaKaoUserTerms(provider, dto.getToken());
+//        isAllow =
+//            kaKaoUserTerms.getAllowed_service_terms().stream()
+//                .anyMatch(x -> x.getTag().equals("marketing"));
+//      } catch (Exception e) {
+//        isAllow = false;
+//      }
+//      entity = new Account(userInfo, info, provider, isAllow);
+//    } else if (provider == OAuth2Provider.NAVER) {
+//      entity = new Account(userInfo, info, provider, dto.getIsMarketingReceive());
+//    } else {
+//      entity = new Account(dto, info, userInfo, provider);
+//    }
+    entity = new Account(dto, info, userInfo, provider);
+
     long age = ChronoUnit.YEARS.between(info.getBirthDate(), Constants.getNow());
     if (age < 14) {
       throw new ApiException(ErrorCode.UNDER_FOURTEEN);
@@ -162,6 +164,12 @@ public class OAuthService {
     if (userInfo.getPhone() != null && !userInfo.getPhone().equals(info.getMobileNo())) {
       throw new ApiException(ErrorCode.NOT_EQ_PHONE);
     }
+
+    // 1. 멤버십 등록
+    // 1-1. 기본 등급 만 19세 이상 회원 Culture Network PASS(CN PASS)
+
+    // 1-2. 학생 전용 등급 만 19세 미만 Culture Network PASS STUDENT(CN PASS STUDENT)
+
     return insertAndLogin(request, response, provider, dto.getToken(), entity);
   }
 
@@ -179,7 +187,14 @@ public class OAuthService {
     params.put("CSTel", herediumProperties.getTel());
     params.put("CSEmail", herediumProperties.getEmail());
     cloudMail.mail(entity.getEmail(), params, MailTemplate.SIGN_UP);
+
+    // 1. 알림톡 발송 :  기존 회원가입 알림톡(템플릿 내용 추가)
     alimTalk.sendAlimTalk(entity.getAccountInfo().getPhone(), params, AlimTalkTemplate.SIGN_UP);
+
+    // 2. 알림톡 발송 : D+7 마케팅 수신 동의를 통한 혜택 알림톡 단건 발송(안내문, 혜택) 회원가입일로부터 7일 이후
+    // 대상 : 마케팅 비동의 대상
+    // 발송 후 account_info - sms_request_id만 update
+    // 예약 발송 삭제 : 발송 전 회원탈퇴 시, 발송 전 마케팅 동의한 회원
     return loginByToken(response, provider, token);
   }
 

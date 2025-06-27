@@ -66,6 +66,11 @@ public class UserAccountController {
     return ResponseEntity.ok(accountService.updateByAccount(dto));
   }
 
+  @PutMapping("/info")
+  public ResponseEntity updateByAccountInfo(@RequestBody @Valid PutUserAccountRequest dto) {
+    return ResponseEntity.ok(accountService.updateByAccountInfo(dto));
+  }
+
   @PutMapping("/local-resident")
   public ResponseEntity updateLocalResident(@RequestParam("enabled") Boolean isEnabled) {
     return ResponseEntity.ok(accountService.updateLocalResident(isEnabled));

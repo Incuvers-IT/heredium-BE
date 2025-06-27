@@ -1,36 +1,5 @@
 package art.heredium.service;
 
-import java.io.IOException;
-import java.math.BigDecimal;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.time.temporal.ChronoUnit;
-import java.util.*;
-import java.util.stream.Collectors;
-
-import javax.servlet.http.HttpServletResponse;
-import javax.validation.Valid;
-import javax.validation.constraints.NotBlank;
-
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
-
-import org.apache.commons.lang3.StringUtils;
-import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.ss.usermodel.Workbook;
-import org.apache.poi.ss.usermodel.WorkbookFactory;
-
 import art.heredium.core.config.error.entity.ApiException;
 import art.heredium.core.config.error.entity.ErrorCode;
 import art.heredium.core.config.properties.AppProperties;
@@ -57,6 +26,29 @@ import art.heredium.ncloud.type.MailTemplate;
 import art.heredium.niceId.model.dto.response.PostNiceIdEncryptResponse;
 import art.heredium.niceId.service.NiceIdService;
 import art.heredium.oauth.provider.OAuth2Provider;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.poi.ss.usermodel.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+
+import javax.servlet.http.HttpServletResponse;
+import javax.validation.Valid;
+import javax.validation.constraints.NotBlank;
+import java.io.IOException;
+import java.math.BigDecimal;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.time.temporal.ChronoUnit;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -109,6 +101,11 @@ public class AccountService {
     Account entity = new Account(dto, info, bCryptPasswordEncoder.encode(dto.getPassword()));
     accountRepository.saveAndFlush(entity);
 
+    // 1. 멤버십 등록
+    // 1-1. 기본 등급 만 19세 이상 회원 Culture Network PASS(CN PASS)
+
+    // 1-2. 학생 전용 등급 만 19세 미만 Culture Network PASS STUDENT(CN PASS STUDENT)
+
     PostLoginResponse res =
         authService.login(response, new PostLoginRequest(dto.getEmail(), dto.getPassword()), false);
 
@@ -118,7 +115,14 @@ public class AccountService {
     params.put("CSTel", herediumProperties.getTel());
     params.put("CSEmail", herediumProperties.getEmail());
     cloudMail.mail(entity.getEmail(), params, MailTemplate.SIGN_UP);
+
+    // 1. 알림톡 발송 :  기존 회원가입 알림톡(템플릿 내용 추가)
     alimTalk.sendAlimTalk(entity.getAccountInfo().getPhone(), params, AlimTalkTemplate.SIGN_UP);
+
+    // 2. 알림톡 발송 : D+7 마케팅 수신 동의를 통한 혜택 알림톡 단건 발송(안내문, 혜택) 회원가입일로부터 7일 이후
+    // 대상 : 마케팅 비동의 대상
+    // 발송 후 account_info - sms_request_id만 update
+    // 예약 발송 삭제 : 발송 전 회원탈퇴 시, 발송 전 마케팅 동의한 회원
     return res;
   }
 
@@ -286,6 +290,18 @@ public class AccountService {
       PostNiceIdEncryptResponse info = niceIdService.decrypt(dto.getEncodeData());
       entity.getAccountInfo().updatePhone(info);
     }
+    return new GetUserAccountInfoResponse(entity, membershipRegistration);
+  }
+
+  public GetUserAccountInfoResponse updateByAccountInfo(PutUserAccountRequest dto) {
+    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
+    Account entity = accountRepository.findById(userPrincipal.getId()).orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND));
+    MembershipRegistration membershipRegistration =
+            membershipRegistrationRepository.findLatestForAccount(entity.getId()).orElse(null);
+
+    entity.getAccountInfo().updateMarketing(dto);
+    
     return new GetUserAccountInfoResponse(entity, membershipRegistration);
   }
 
