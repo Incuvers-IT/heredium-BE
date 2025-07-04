@@ -20,9 +20,6 @@ public class AccountWithMembershipInfoResponseV2 {
   @JsonProperty("payment_status")
   private String paymentStatus;
 
-  @JsonProperty("payment_date")
-  private LocalDateTime paymentDate;
-
   @JsonProperty("start_date")
   private LocalDateTime startDate;
 
@@ -65,7 +62,6 @@ public class AccountWithMembershipInfoResponseV2 {
   public AccountWithMembershipInfoResponseV2(
       final String membershipName,
       final PaymentStatus paymentStatus,
-      final LocalDateTime paymentDate,
       final LocalDateTime startDate,
       final LocalDateTime endDate,
       final Long numberOfUsedExhibitionCoupons,
@@ -81,7 +77,6 @@ public class AccountWithMembershipInfoResponseV2 {
       final Boolean isRefundable) {
     this.membershipName = membershipName;
     this.paymentStatus = paymentStatus != null ? paymentStatus.getDesc() : null;
-    this.paymentDate = paymentDate;
     this.startDate = startDate;
     this.endDate = endDate;
     this.numberOfUsedExhibitionCoupons = numberOfUsedExhibitionCoupons;

@@ -16,18 +16,11 @@ public class PostMembershipUpdateRequest {
 
   private String name;
 
-  private Integer price;
-
   @JsonProperty("image_url")
   private String imageUrl;
 
-  private Long period;
-
   @JsonProperty("is_enabled")
   private Boolean isEnabled;
-
-  @JsonProperty("is_register_membership_button_shown")
-  private Boolean isRegisterMembershipButtonShown;
 
   @JsonProperty("is_deleted")
   private Boolean isDeleted;

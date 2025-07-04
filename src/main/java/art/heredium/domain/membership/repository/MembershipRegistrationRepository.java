@@ -21,7 +21,7 @@ public interface MembershipRegistrationRepository
 
   @Query(
       value =
-          "SELECT mr from MembershipRegistration mr WHERE mr.account.id = :accountId AND mr.expirationDate >= CURRENT_TIMESTAMP"
+          "SELECT mr from MembershipRegistration mr WHERE mr.account.id = :accountId"
               + " AND mr.paymentStatus = art.heredium.domain.membership.entity.PaymentStatus.COMPLETED")
   Optional<MembershipRegistration> findCompletedOneByAccountIdAndNotExpired(
       @Param("accountId") Long accountId);
@@ -38,7 +38,7 @@ public interface MembershipRegistrationRepository
 
   Optional<MembershipRegistration> findTopByAccountOrderByRegistrationDateDesc(Account account);
 
-  Optional<MembershipRegistration> findByPaymentOrderId(String orderId);
+//  Optional<MembershipRegistration> findByPaymentOrderId(String orderId);
 
   List<MembershipRegistration> findByPaymentStatusInAndCreatedDateBefore(
       List<PaymentStatus> paymentStatuses, LocalDateTime dateTime);

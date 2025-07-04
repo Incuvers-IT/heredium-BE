@@ -232,17 +232,17 @@ public class CompanyService {
       final String phone =
           String.format("%11s", getCellValueAsString(row.getCell(1))).replace(" ", "0");
       final String startDate = getCellValueAsString(row.getCell(2));
-      final String price = getCellValueAsString(row.getCell(3));
-      final String paymentDate = getCellValueAsString(row.getCell(4));
-      final String name = getCellValueAsString(row.getCell(5));
+//      final String price = getCellValueAsString(row.getCell(3));
+//      final String paymentDate = getCellValueAsString(row.getCell(4));
+      final String name = getCellValueAsString(row.getCell(3));
       try {
         CompanyMembershipRegistrationRequest request = new CompanyMembershipRegistrationRequest();
         request.setEmail(email);
         request.setPhone(phone);
         request.setName(name);
         request.setStartDate(getCellValueAsLocalDate(row.getCell(2)));
-        request.setPrice(getCellValueAsLong(row.getCell(3)));
-        request.setPaymentDate(getCellValueAsLocalDate(row.getCell(4)));
+//        request.setPrice(getCellValueAsLong(row.getCell(3)));
+//        request.setPaymentDate(getCellValueAsLocalDate(row.getCell(4)));
         final Long registrationHistoryId =
             this.companyMembershipRegistrationHistoryService
                 .createMembershipRegistrationHistory(
@@ -250,8 +250,6 @@ public class CompanyService {
                         .email(email)
                         .phone(phone)
                         .startDate(startDate)
-                        .price(price)
-                        .paymentDate(paymentDate)
                         .build())
                 .getId();
         successfulRequests.put(request, registrationHistoryId);
@@ -262,8 +260,6 @@ public class CompanyService {
                 .email(email)
                 .phone(phone)
                 .startDate(startDate)
-                .price(price)
-                .paymentDate(paymentDate)
                 .status(RegistrationStatus.FAILED)
                 .failedReason(e.getMessage())
                 .build());
@@ -351,9 +347,7 @@ public class CompanyService {
         request.getStartDate().atStartOfDay(),
         request.getStartDate().plusDays(DEFAULT_MEMBERSHIP_PERIOD).atTime(23, 59, 59),
         PaymentStatus.COMPLETED,
-        request.getPaymentDate().atStartOfDay(),
-        RegistrationType.COMPANY,
-        request.getPrice());
+        RegistrationType.COMPANY);
   }
 
   public List<String> getExistingMembershipRegistration(MultipartFile file) {

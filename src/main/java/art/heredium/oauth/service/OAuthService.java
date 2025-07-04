@@ -8,11 +8,18 @@ import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import art.heredium.domain.membership.entity.Membership;
+import art.heredium.domain.membership.entity.MembershipRegistration;
+import art.heredium.domain.membership.entity.PaymentStatus;
+import art.heredium.domain.membership.entity.RegistrationType;
+import art.heredium.domain.membership.repository.MembershipRegistrationRepository;
+import art.heredium.domain.membership.repository.MembershipRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
@@ -47,6 +54,7 @@ import art.heredium.service.LoadUserService;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@Transactional(rollbackFor = Exception.class)
 public class OAuthService {
   private final AuthTokenProvider authTokenProvider;
   private final LoadUserService loadUserService;
@@ -57,6 +65,8 @@ public class OAuthService {
   private final CloudMail cloudMail;
   private final HerediumAlimTalk alimTalk;
   private final NiceIdService niceIdService;
+  private final MembershipRepository membershipRepository;
+  private final MembershipRegistrationRepository membershipRegistrationRepository;
   private final HerediumProperties herediumProperties;
 
   public String getToken(OAuth2Provider provider, String code) {
@@ -127,11 +137,14 @@ public class OAuthService {
         userPrincipal.getIsSleeper() ? userPrincipal.getName() : null);
   }
 
+  @Transactional
   public PostLoginResponse insert(
       HttpServletRequest request,
       HttpServletResponse response,
       OAuth2Provider provider,
       PostAccountSnsRequest dto) {
+
+    // 1. 회원 기본 정보 저장
     OAuth2UserInfo userInfo = getUserInfo(provider, dto.getToken());
     PostNiceIdEncryptResponse info = niceIdService.decrypt(dto.getEncodeData());
     Account account = accountRepository.findBySnsIdAndProviderType(userInfo.getId(), provider);
@@ -165,37 +178,56 @@ public class OAuthService {
       throw new ApiException(ErrorCode.NOT_EQ_PHONE);
     }
 
-    // 1. 멤버십 등록
-    // 1-1. 기본 등급 만 19세 이상 회원 Culture Network PASS(CN PASS)
+    accountRepository.save(entity);
 
-    // 1-2. 학생 전용 등급 만 19세 미만 Culture Network PASS STUDENT(CN PASS STUDENT)
+    // 2. 멤버십 등록
+    // 1) 나이에 따라 code 결정 (19세 미만 → 학생(3), 그 외 → 기본(1))
+    int targetCode = (age < 19) ? 3 : 1;
 
-    return insertAndLogin(request, response, provider, dto.getToken(), entity);
+    // 2) code 로 멤버십 조회
+    Membership membership = membershipRepository
+            .findByCode(targetCode)
+            .orElseThrow(() -> new ApiException(ErrorCode.MEMBERSHIP_NOT_FOUND));
+
+    // (3) MembershipRegistration 생성 및 저장
+    this.membershipRegistrationRepository.save(
+            new MembershipRegistration(
+                    entity,
+                    membership,
+                    RegistrationType.MEMBERSHIP_PACKAGE,
+                    PaymentStatus.COMPLETED));
+
+    // 3. 로그인
+    PostLoginResponse res = loginByToken(response, provider, dto.getToken());
+
+    // 4) 메일·알림톡 발송은 예외 무시
+    try {
+      sendSignupNotifications(entity);
+    } catch (Exception ex) {
+      log.error("회원가입 메일/알림톡 발송 중 오류", ex);
+    }
+
+    return res;
   }
 
-  private PostLoginResponse insertAndLogin(
-      HttpServletRequest request,
-      HttpServletResponse response,
-      OAuth2Provider provider,
-      String token,
-      Account entity) {
-    accountRepository.saveAndFlush(entity);
+  private void sendSignupNotifications(Account entity) {
 
     Map<String, String> params = new HashMap<>();
     params.put("name", entity.getAccountInfo().getName());
     params.put("link", herediumProperties.getDomain());
     params.put("CSTel", herediumProperties.getTel());
     params.put("CSEmail", herediumProperties.getEmail());
+
+    // 1. 메일 발송
     cloudMail.mail(entity.getEmail(), params, MailTemplate.SIGN_UP);
 
-    // 1. 알림톡 발송 :  기존 회원가입 알림톡(템플릿 내용 추가)
+    // 2. 알림톡 발송 :  기존 회원가입 알림톡(템플릿 내용 추가)
     alimTalk.sendAlimTalk(entity.getAccountInfo().getPhone(), params, AlimTalkTemplate.SIGN_UP);
 
     // 2. 알림톡 발송 : D+7 마케팅 수신 동의를 통한 혜택 알림톡 단건 발송(안내문, 혜택) 회원가입일로부터 7일 이후
     // 대상 : 마케팅 비동의 대상
     // 발송 후 account_info - sms_request_id만 update
     // 예약 발송 삭제 : 발송 전 회원탈퇴 시, 발송 전 마케팅 동의한 회원
-    return loginByToken(response, provider, token);
   }
 
   private void updateLoginDate(String userId) {

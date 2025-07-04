@@ -79,15 +79,13 @@ public class MembershipRegistrationService {
         this.accountRepository
             .findById(accountId)
             .orElseThrow(() -> new ApiException(ErrorCode.USER_NOT_FOUND));
-    final String paymentOrderId = UUID.randomUUID().toString();
     final MembershipRegistration membershipRegistration =
         this.membershipRegistrationRepository.save(
             new MembershipRegistration(
                 account,
                 membership,
                 RegistrationType.MEMBERSHIP_PACKAGE,
-                PaymentStatus.PENDING,
-                paymentOrderId));
+                PaymentStatus.COMPLETED));
     return new RegisterMembershipResponse(membershipRegistration);
   }
 }

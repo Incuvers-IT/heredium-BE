@@ -13,15 +13,9 @@ public class RegisterMembershipResponse {
   @JsonProperty("membership_registration_id")
   private long membershipRegistrationId;
 
-  @JsonProperty("amount")
-  private long amount;
-
-  @JsonProperty("payment_order_id")
-  private String paymentOrderId;
-
   public RegisterMembershipResponse(final MembershipRegistration membershipRegistration) {
     this.membershipRegistrationId = membershipRegistration.getId();
-    this.amount = membershipRegistration.getMembership().getPrice();
-    this.paymentOrderId = membershipRegistration.getPaymentOrderId();
+//    this.amount = membershipRegistration.getMembership().getPrice();
+//    this.paymentOrderId = membershipRegistration.getPaymentOrderId();
   }
 }

@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import art.heredium.domain.membership.model.dto.response.ActiveMembershipDetailResponse;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.data.domain.Page;
@@ -72,6 +73,44 @@ public class MembershipRegistrationRepositoryImpl
     return new PageImpl<>(content, pageable, total);
   }
 
+  @Override
+  public Page<ActiveMembershipDetailResponse> getActiveMembershipRegistrations(
+          GetAllActiveMembershipsRequest request, Pageable pageable) {
+
+    QMembershipRegistration membershipRegistration = QMembershipRegistration.membershipRegistration;
+    QMembership membership = QMembership.membership;
+    QAccount account = QAccount.account;
+    QAccountInfo accountInfo = QAccountInfo.accountInfo;
+
+    JPAQuery<ActiveMembershipDetailResponse> query =
+            this.queryActiveMembershipRegistrationsDetail(request);
+
+    // Create a count query
+    JPAQuery<Long> countQuery =
+            queryFactory
+                    .select(account.count())
+                    .from(account)
+                    .innerJoin(account.accountInfo, accountInfo)
+                    .leftJoin(membershipRegistration)
+                    .on(membershipRegistration.account.id.eq(account.id))
+                    .leftJoin(membership)
+                    .on(membershipRegistration.membership.id.eq(membership.id))
+                    .where(
+                            signedUpDateBetween(request.getSignUpDateFrom(), request.getSignUpDateTo()),
+                            isAgreeToReceiveMarketing(request.getIsAgreeToReceiveMarketing()),
+                            textContains(request.getText()),
+                            paymentStatusIn(PaymentStatus.COMPLETED),
+                            isNotExpired(),
+                            account.id.eq(request.getAccountId())
+                    );
+    final long total = Optional.ofNullable(countQuery.fetchOne()).orElse(0L);
+    List<ActiveMembershipDetailResponse> content = new ArrayList<>();
+    if (total != 0) {
+      content = query.offset(pageable.getOffset()).limit(pageable.getPageSize()).fetch();
+    }
+    return new PageImpl<>(content, pageable, total);
+  }
+
   private BooleanExpression paymentStatusIn(PaymentStatus... paymentStatuses) {
     QMembershipRegistration membershipRegistration = QMembershipRegistration.membershipRegistration;
     if (paymentStatuses != null && paymentStatuses.length != 0) {
@@ -110,7 +149,7 @@ public class MembershipRegistrationRepositoryImpl
                 accountInfo.name,
                 accountInfo.phone,
                 membershipRegistration.paymentStatus,
-                membershipRegistration.paymentDate,
+                membershipRegistration.registrationDate,
                 JPAExpressions.select(membershipRegistration.count())
                     .from(membershipRegistration)
                     .where(membershipRegistration.account.eq(account)),
@@ -130,7 +169,61 @@ public class MembershipRegistrationRepositoryImpl
             textContains(request.getText()),
             paymentStatusIn(PaymentStatus.COMPLETED),
             isNotExpired())
-        .orderBy(membershipRegistration.paymentDate.desc());
+        .orderBy(membershipRegistration.registrationDate.desc());
+  }
+
+  private JPAQuery<ActiveMembershipDetailResponse> queryActiveMembershipRegistrationsDetail(
+          final GetAllActiveMembershipsRequest request) {
+    QMembership membership = QMembership.membership;
+    QCompany company = QCompany.company;
+    QAccount account = QAccount.account;
+    QAccountInfo accountInfo = QAccountInfo.accountInfo;
+    QMembershipRegistration membershipRegistration = QMembershipRegistration.membershipRegistration;
+    return queryFactory
+            .select(
+                    Projections.constructor(
+                            ActiveMembershipDetailResponse.class,
+                            Expressions.cases()
+                                    .when(
+                                            membershipRegistration.registrationType.eq(
+                                                    RegistrationType.MEMBERSHIP_PACKAGE))
+                                    .then(membership.name)
+                                    .when(membershipRegistration.registrationType.eq(RegistrationType.COMPANY))
+                                    .then(company.name)
+                                    .otherwise((String) null),
+                            account.id,
+                            account.email,
+                            account.createdDate,
+                            accountInfo.name,
+                            accountInfo.phone,
+                            accountInfo.lastLoginDate,
+                            accountInfo.gender,
+                            accountInfo.birthDate,
+                            accountInfo.isMarketingReceive,
+                            membershipRegistration.paymentStatus,
+                            membershipRegistration.registrationDate,
+                            JPAExpressions.select(membershipRegistration.count())
+                                    .from(membershipRegistration)
+                                    .where(membershipRegistration.account.eq(account)),
+                            countUsedCouponsByType(CouponType.EXHIBITION),
+                            countUsedCouponsByType(CouponType.PROGRAM),
+                            countUsedCouponsByType(CouponType.COFFEE),
+                            accountInfo.isMarketingReceive))
+            .from(account)
+            .innerJoin(account.accountInfo, accountInfo)
+            .leftJoin(membershipRegistration)
+            .on(membershipRegistration.account.eq(account))
+            .leftJoin(membershipRegistration.membership, membership)
+            .leftJoin(membershipRegistration.company, company)
+            .where(
+                    signedUpDateBetween(request.getSignUpDateFrom(), request.getSignUpDateTo()),
+                    isAgreeToReceiveMarketing(request.getIsAgreeToReceiveMarketing()),
+                    textContains(request.getText()),
+                    paymentStatusIn(PaymentStatus.COMPLETED),
+                    isNotExpired(),
+                    account.id.eq(request.getAccountId())
+            )
+            .orderBy(membershipRegistration.registrationDate.desc());
   }
 
   private JPQLQuery<Long> countUsedCouponsByType(final CouponType couponType) {

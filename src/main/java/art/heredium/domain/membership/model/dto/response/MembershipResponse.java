@@ -23,11 +23,10 @@ public class MembershipResponse {
 
   private String name;
 
-  private Long period;
+  @JsonProperty("short_name")
+  private String shortName;
 
   private List<CouponResponse> coupons;
-
-  private Integer price;
 
   @JsonProperty("image_url")
   private String imageUrl;
@@ -35,8 +34,8 @@ public class MembershipResponse {
   @JsonProperty("is_enabled")
   private Boolean isEnabled;
 
-  @JsonProperty("is_register_membership_button_shown")
-  private Boolean isRegisterMembershipButtonShown;
+  @JsonProperty("usage_threshold")
+  private int usageThreshold;
 
   public MembershipResponse(Membership membership) {
     this.coupons =
@@ -44,11 +43,10 @@ public class MembershipResponse {
             ? membership.getCoupons().stream().map(CouponResponse::new).collect(Collectors.toList())
             : Collections.emptyList();
     this.name = membership.getName();
-    this.period = membership.getPeriod();
+    this.shortName = membership.getShortName();
     this.membershipId = membership.getId();
-    this.price = membership.getPrice();
     this.imageUrl = membership.getImageUrl();
     this.isEnabled = membership.getIsEnabled();
-    this.isRegisterMembershipButtonShown = membership.getIsRegisterMembershipButtonShown();
+    this.usageThreshold = membership.getUsageThreshold();
   }
 }

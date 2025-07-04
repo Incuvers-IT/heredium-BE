@@ -14,6 +14,7 @@ import org.hibernate.annotations.TypeDef;
 import art.heredium.domain.common.entity.BaseEntity;
 import art.heredium.domain.company.entity.Company;
 import art.heredium.domain.membership.entity.Membership;
+import org.hibernate.annotations.Where;
 
 @Entity
 @Getter
@@ -24,6 +25,7 @@ import art.heredium.domain.membership.entity.Membership;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @ToString
+@Where(clause = "is_deleted = false")
 public class Coupon extends BaseEntity {
 
   @Id

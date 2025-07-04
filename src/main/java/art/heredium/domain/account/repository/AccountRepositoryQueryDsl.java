@@ -25,11 +25,11 @@ public interface AccountRepositoryQueryDsl {
   Page<AccountWithMembershipInfoResponse> searchWithMembershipInfo(
       GetAccountWithMembershipInfoRequest dto, Pageable pageable);
 
-  Page<AccountWithMembershipInfoResponseV2> searchWithMembershipInfoIncludingTitle(
-      GetAccountWithMembershipInfoRequestV2 request, Pageable pageable);
-
   List<AccountWithMembershipInfoExcelDownloadResponse> listWithMembershipInfoIncludingTitle(
       final GetAccountWithMembershipInfoRequestV2 dto);
+
+  Page<AccountWithMembershipInfoResponseV2> searchWithMembershipInfoIncludingTitle(
+          GetAccountWithMembershipInfoRequestV2 request, Pageable pageable);
 
   List<AccountWithMembershipInfoResponse> listWithMembershipInfo(
       GetAccountWithMembershipInfoRequest dto);

@@ -17,9 +17,9 @@ public class CompanyMembershipRegistrationHistoryCreateRequest {
 
   private String startDate;
 
-  private String price;
+//  private String price;
 
-  private String paymentDate;
+//  private String paymentDate;
 
   private RegistrationStatus status;
 
@@ -32,16 +32,16 @@ public class CompanyMembershipRegistrationHistoryCreateRequest {
       final String email,
       final String phone,
       final String startDate,
-      final String price,
-      final String paymentDate,
+//      final String price,
+//      final String paymentDate,
       final RegistrationStatus status,
       final String failedReason,
       final Account account) {
     this.email = email;
     this.phone = phone;
     this.startDate = startDate;
-    this.price = price;
-    this.paymentDate = paymentDate;
+//    this.price = price;
+//    this.paymentDate = paymentDate;
     this.status = status;
     this.failedReason = failedReason;
     this.account = account;

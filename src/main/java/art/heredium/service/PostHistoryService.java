@@ -2,6 +2,7 @@ package art.heredium.service;
 
 import java.time.LocalDateTime;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -52,7 +53,9 @@ public class PostHistoryService {
             .orElseThrow(
                 () -> new ApiException(ErrorCode.POST_HISTORY_NOT_FOUND, "Post history not found"));
     AdminPostDetailsResponse content = null;
+
     try {
+      // TODO(히스토리):  AdminPostDetailsResponse, postHistory.getPostContent() 형식 수정해야함
       content =
           this.objectMapper.readValue(postHistory.getPostContent(), AdminPostDetailsResponse.class);
     } catch (JsonProcessingException e) {

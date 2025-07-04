@@ -20,16 +20,17 @@ public class MembershipCreateRequest {
 
   @NotBlank private String name;
 
-  @NotNull private Integer price;
-
   @JsonProperty("image_url")
   private String imageUrl;
 
   @JsonProperty("is_enabled")
   private Boolean isEnabled;
 
-  @JsonProperty("is_register_membership_button_shown")
-  private Boolean isRegisterMembershipButtonShown;
+  @JsonProperty("usage_threshold")
+  private int usageThreshold;
+
+  @JsonProperty("short_name")
+  private String shortName;
 
   @NotEmpty @Valid private List<MembershipCouponCreateRequest> coupons;
 }

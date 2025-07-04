@@ -106,7 +106,7 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
             .on(membershipRegistration.account.eq(account))
             .leftJoin(membershipRegistration.membership, membership)
             .where(
-                paymentDateBetween(dto.getPaymentDateFrom(), dto.getPaymentDateTo()),
+                registrationDateBetween(dto.getPaymentDateFrom(), dto.getPaymentDateTo()),
                 paymentStatusIn(dto.getPaymentStatus()),
                 textContains(dto.getText()));
 
@@ -146,8 +146,6 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
                 membershipRegistration
                     .paymentStatus
                     .eq(PaymentStatus.COMPLETED)
-                    .and(membershipRegistration.paymentKey.isNotNull())
-                    .and(membershipRegistration.paymentOrderId.isNotNull())
                     .and(
                         membershipRegistration.registrationType.eq(
                             RegistrationType.MEMBERSHIP_PACKAGE)))
@@ -167,7 +165,6 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
                     .then(company.name)
                     .otherwise((String) null),
                 membershipRegistration.paymentStatus,
-                membershipRegistration.paymentDate,
                 membershipRegistration.registrationDate,
                 membershipRegistration.expirationDate,
                 this.countUsedCouponsByType(CouponType.EXHIBITION),
@@ -178,35 +175,17 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
                 accountInfo.phone,
                 Expressions.numberTemplate(
                     Long.class,
-                    "COALESCE({0}, 0) + COALESCE({1}, 0)",
+                    "COALESCE({0}, 0)",
                     JPAExpressions.select(ticket.price.sum())
-                        .from(ticket)
-                        .where(
-                            ticket
-                                .account
-                                .eq(account)
-                                .and(
+                            .from(ticket)
+                            .where(
+                                ticket.account.eq(account).and(
                                     ticket.state.notIn(
-                                        TicketStateType.USER_REFUND,
-                                        TicketStateType.ADMIN_REFUND))),
-                    Expressions.cases()
-                        .when(
-                            membershipRegistration
-                                .registrationType
-                                .eq(RegistrationType.MEMBERSHIP_PACKAGE)
-                                .and(
-                                    membershipRegistration.paymentStatus.in(
-                                        PaymentStatus.EXPIRED, PaymentStatus.COMPLETED)))
-                        .then(membershipRegistration.membership.price) // Nếu là MEMBERSHIP_PACKAGE
-                        .when(
-                            membershipRegistration
-                                .registrationType
-                                .eq(RegistrationType.COMPANY)
-                                .and(
-                                    membershipRegistration.paymentStatus.in(
-                                        PaymentStatus.EXPIRED, PaymentStatus.COMPLETED)))
-                        .then(membershipRegistration.price.intValue())
-                        .otherwise(0)),
+                                            TicketStateType.USER_REFUND,
+                                            TicketStateType.ADMIN_REFUND)
+                                )
+                            )
+                ),
                 account.id,
                 membershipRegistration.registrationType,
                 membershipRegistration.id,
@@ -218,7 +197,7 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
         .leftJoin(membershipRegistration.membership, membership)
         .leftJoin(membershipRegistration.company, company)
         .where(
-            paymentDateBetween(dto.getPaymentDateFrom(), dto.getPaymentDateTo()),
+            registrationDateBetween(dto.getPaymentDateFrom(), dto.getPaymentDateTo()),
             paymentStatusIn(dto.getPaymentStatus()),
             textContains(dto.getText()))
         .orderBy(membershipRegistration.createdDate.desc());
@@ -635,14 +614,14 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
     return null;
   }
 
-  private BooleanExpression paymentDateBetween(LocalDateTime from, LocalDateTime to) {
+  private BooleanExpression registrationDateBetween(LocalDateTime from, LocalDateTime to) {
     QMembershipRegistration membershipRegistration = QMembershipRegistration.membershipRegistration;
     if (from != null && to != null) {
-      return membershipRegistration.paymentDate.between(from, to);
+      return membershipRegistration.registrationDate.between(from, to);
     } else if (from != null) {
-      return membershipRegistration.paymentDate.goe(from);
+      return membershipRegistration.registrationDate.goe(from);
     } else if (to != null) {
-      return membershipRegistration.paymentDate.loe(to);
+      return membershipRegistration.registrationDate.loe(to);
     }
     return null;
   }
@@ -818,7 +797,6 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
                     .then(company.name)
                     .otherwise((String) null),
                 membershipRegistration.paymentStatus,
-                membershipRegistration.paymentDate,
                 membershipRegistration.registrationDate,
                 membershipRegistration.expirationDate,
                 this.countUsedCouponsByType(CouponType.EXHIBITION),
@@ -829,35 +807,17 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
                 accountInfo.phone,
                 Expressions.numberTemplate(
                     Long.class,
-                    "COALESCE({0}, 0) + COALESCE({1}, 0)",
+                    "COALESCE({0}, 0)",
                     JPAExpressions.select(ticket.price.sum())
-                        .from(ticket)
-                        .where(
-                            ticket
-                                .account
-                                .eq(account)
-                                .and(
-                                    ticket.state.notIn(
-                                        TicketStateType.USER_REFUND,
-                                        TicketStateType.ADMIN_REFUND))),
-                    Expressions.cases()
-                        .when(
-                            membershipRegistration
-                                .registrationType
-                                .eq(RegistrationType.MEMBERSHIP_PACKAGE)
-                                .and(
-                                    membershipRegistration.paymentStatus.in(
-                                        PaymentStatus.EXPIRED, PaymentStatus.COMPLETED)))
-                        .then(membershipRegistration.membership.price) // Nếu là MEMBERSHIP_PACKAGE
-                        .when(
-                            membershipRegistration
-                                .registrationType
-                                .eq(RegistrationType.COMPANY)
-                                .and(
-                                    membershipRegistration.paymentStatus.in(
-                                        PaymentStatus.EXPIRED, PaymentStatus.COMPLETED)))
-                        .then(membershipRegistration.price.intValue())
-                        .otherwise(0)),
+                            .from(ticket)
+                            .where(
+                                ticket.account.eq(account).and(
+                                ticket.state.notIn(
+                                  TicketStateType.USER_REFUND,
+                                  TicketStateType.ADMIN_REFUND)
+                                )
+                            )
+                ),
                 account.createdDate,
                 accountInfo.lastLoginDate,
                 membershipCount,
@@ -872,7 +832,7 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
         .leftJoin(membershipRegistration.membership, membership)
         .leftJoin(membershipRegistration.company, company)
         .where(
-            paymentDateBetween(dto.getPaymentDateFrom(), dto.getPaymentDateTo()),
+            registrationDateBetween(dto.getPaymentDateFrom(), dto.getPaymentDateTo()),
             paymentStatusIn(dto.getPaymentStatus()),
             textContains(dto.getText()))
         .orderBy(membershipRegistration.registrationDate.desc());

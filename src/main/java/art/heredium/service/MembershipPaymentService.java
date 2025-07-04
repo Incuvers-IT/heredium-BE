@@ -1,21 +1,6 @@
 package art.heredium.service;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
-import java.util.*;
-import java.util.stream.Collectors;
-
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import art.heredium.core.config.error.entity.ApiException;
-import art.heredium.core.config.error.entity.DeletedMembershipException;
 import art.heredium.core.config.error.entity.ErrorCode;
 import art.heredium.core.config.properties.HerediumProperties;
 import art.heredium.domain.account.entity.Account;
@@ -24,16 +9,21 @@ import art.heredium.domain.coupon.entity.CouponUsage;
 import art.heredium.domain.membership.entity.Membership;
 import art.heredium.domain.membership.entity.MembershipRegistration;
 import art.heredium.domain.membership.entity.PaymentStatus;
-import art.heredium.domain.membership.model.dto.request.MembershipConfirmPaymentRequest;
-import art.heredium.domain.membership.model.dto.response.MembershipConfirmPaymentResponse;
-import art.heredium.domain.membership.model.dto.response.MembershipRefundResponse;
 import art.heredium.domain.membership.repository.MembershipRegistrationRepository;
-import art.heredium.domain.post.entity.Post;
 import art.heredium.ncloud.bean.HerediumAlimTalk;
 import art.heredium.ncloud.type.AlimTalkTemplate;
-import art.heredium.payment.dto.PaymentsPayRequest;
-import art.heredium.payment.inf.PaymentTicketResponse;
 import art.heredium.payment.type.PaymentType;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -48,110 +38,40 @@ public class MembershipPaymentService {
   private final DateTimeFormatter MEMBERSHIP_DATE_FORMAT =
       DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
-  @Transactional(rollbackFor = Exception.class)
-  public MembershipConfirmPaymentResponse confirmPayment(
-      @NonNull MembershipConfirmPaymentRequest request) {
-    final PaymentsPayRequest payRequest = request.getPayRequest();
-    final String orderId = payRequest.getOrderId();
-    final MembershipRegistration membershipRegistration =
-        this.membershipRegistrationRepository
-            .findByPaymentOrderId(orderId)
-            .orElseThrow(() -> new ApiException(ErrorCode.PAYMENT_ORDER_ID_NOT_FOUND));
-
-    if (Boolean.TRUE.equals(membershipRegistration.getMembership().getIsDeleted())) {
-      throw new DeletedMembershipException(
-          "선택하신 멤버십은 더 이상 유효하지 않은 멤버십입니다. 추가 문의 사항이 있으시면 고객센터로 연락해 주십시오.");
-    }
-    final Membership membership = membershipRegistration.getMembership();
-    if (membership != null) {
-      final Post post = membership.getPost();
-      if (post.getOpenDate() != null && post.getOpenDate().isAfter(LocalDate.now())) {
-        throw new ApiException(ErrorCode.REGISTERING_MEMBERSHIP_IS_NOT_AVAILABLE);
-      }
-    }
-
-    this.updateMembershipRegistrationToSuccess(
-        membershipRegistration, payRequest.getPaymentKey(), payRequest.getType());
-    this.removePendingMembershipRegistrations(membershipRegistration.getAccount().getId());
-    List<CouponUsage> deliveredCoupons = this.deliverCouponsToUser(membershipRegistration);
-
-    PaymentTicketResponse pay =
-        (PaymentTicketResponse) payRequest.getType().pay(payRequest, payRequest.getAmount());
-
-    this.sendMembershipRegistrationMessageToAlimTalk(membershipRegistration, deliveredCoupons);
-
-    return new MembershipConfirmPaymentResponse(pay.getPaymentAmount());
-  }
-
-  @Transactional(rollbackFor = Exception.class)
-  public MembershipRefundResponse refundMembership(final long membershipRegistrationId) {
-    final MembershipRegistration membershipRegistration =
-        this.membershipRegistrationRepository
-            .findById(membershipRegistrationId)
-            .orElseThrow(
-                () ->
-                    new ApiException(
-                        ErrorCode.MEMBERSHIP_REGISTRATION_NOT_FOUND,
-                        String.format(
-                            "Active membership registration of membershipRegistrationId %s not found",
-                            membershipRegistrationId)));
-    this.validateMembershipRegistrationForRefund(membershipRegistration);
-    String paymentKey = membershipRegistration.getPaymentKey();
-    String paymentOrderId = membershipRegistration.getPaymentOrderId();
-    this.couponUsageService.rollbackCouponDistribution(membershipRegistration.getId());
-    membershipRegistration.updatePaymentStatus(PaymentStatus.REFUND);
-    membershipRegistration.updateExpirationDate(LocalDateTime.now());
-    this.membershipRegistrationRepository.save(membershipRegistration);
-    membershipRegistration.getPaymentType().refund(paymentKey, paymentOrderId);
-    return MembershipRefundResponse.builder()
-        .paymentKey(paymentKey)
-        .paymentOrderId(paymentOrderId)
-        .paymentType(membershipRegistration.getPaymentType())
-        .build();
-  }
-
-  private void validateMembershipRegistrationForRefund(
-      @NonNull final MembershipRegistration membershipRegistration) {
-    final PaymentStatus paymentStatus = membershipRegistration.getPaymentStatus();
-    if (paymentStatus == PaymentStatus.PENDING || paymentStatus == PaymentStatus.EXPIRED) {
-      throw new ApiException(
-          ErrorCode.INVALID_MEMBERSHIP_TO_REFUND,
-          String.format("%s 상태의 멤버십은 환불할 수 없습니다.", paymentStatus.getDesc()));
-    }
-    if (paymentStatus == PaymentStatus.REFUND) {
-      throw new ApiException(ErrorCode.INVALID_MEMBERSHIP_TO_REFUND, "이미 환불이 완료된 멤버십입니다.");
-    }
-
-    final PaymentType paymentType = membershipRegistration.getPaymentType();
-    if (paymentType == null) {
-      throw new ApiException(
-          ErrorCode.INVALID_MEMBERSHIP_TO_REFUND,
-          String.format(
-              "Failed to refund membership: paymentType is null, membershipId: %s",
-              membershipRegistration.getId()));
-    }
-    final String paymentKey = membershipRegistration.getPaymentKey();
-    final String paymentOrderId = membershipRegistration.getPaymentOrderId();
-
-    // INICIS and TOSSPAYMENTS require paymentKey
-    if ((paymentType == PaymentType.INICIS || paymentType == PaymentType.TOSSPAYMENTS)
-        && paymentKey == null) {
-      throw new ApiException(
-          ErrorCode.INVALID_MEMBERSHIP_TO_REFUND,
-          String.format(
-              "Failed to refund membership: If paymentType is %s, paymentKey must not be null, membershipId: %s",
-              paymentType, membershipRegistration.getId()));
-    }
-
-    // NICEPAYMENTS requires both paymentKey and paymentOrderId
-    if (paymentType == PaymentType.NICEPAYMENTS && (paymentOrderId == null || paymentKey == null)) {
-      throw new ApiException(
-          ErrorCode.INVALID_MEMBERSHIP_TO_REFUND,
-          String.format(
-              "Failed to refund membership: If paymentType is %s, paymentKey and paymentOrderId must not be null, membershipId: %s",
-              paymentType, membershipRegistration.getId()));
-    }
-  }
+//  @Transactional(rollbackFor = Exception.class)
+//  public MembershipConfirmPaymentResponse confirmPayment(
+//      @NonNull MembershipConfirmPaymentRequest request) {
+//    final PaymentsPayRequest payRequest = request.getPayRequest();
+//    final String orderId = payRequest.getOrderId();
+//    final MembershipRegistration membershipRegistration =
+//        this.membershipRegistrationRepository
+//            .findByPaymentOrderId(orderId)
+//            .orElseThrow(() -> new ApiException(ErrorCode.PAYMENT_ORDER_ID_NOT_FOUND));
+//
+//    if (Boolean.TRUE.equals(membershipRegistration.getMembership().getIsDeleted())) {
+//      throw new DeletedMembershipException(
+//          "선택하신 멤버십은 더 이상 유효하지 않은 멤버십입니다. 추가 문의 사항이 있으시면 고객센터로 연락해 주십시오.");
+//    }
+//    final Membership membership = membershipRegistration.getMembership();
+//    if (membership != null) {
+//      final Post post = membership.getPost();
+//      if (post.getOpenDate() != null && post.getOpenDate().isAfter(LocalDate.now())) {
+//        throw new ApiException(ErrorCode.REGISTERING_MEMBERSHIP_IS_NOT_AVAILABLE);
+//      }
+//    }
+//
+//    this.updateMembershipRegistrationToSuccess(
+//        membershipRegistration, payRequest.getPaymentKey(), payRequest.getType());
+//    this.removePendingMembershipRegistrations(membershipRegistration.getAccount().getId());
+//    List<CouponUsage> deliveredCoupons = this.deliverCouponsToUser(membershipRegistration);
+//
+//    PaymentTicketResponse pay =
+//        (PaymentTicketResponse) payRequest.getType().pay(payRequest, payRequest.getAmount());
+//
+//    this.sendMembershipRegistrationMessageToAlimTalk(membershipRegistration, deliveredCoupons);
+//
+//    return new MembershipConfirmPaymentResponse(pay.getPaymentAmount());
+//  }
 
   private List<CouponUsage> deliverCouponsToUser(
       @NonNull MembershipRegistration membershipRegistration) {
@@ -163,25 +83,24 @@ public class MembershipPaymentService {
     return this.couponUsageService.distributeMembershipAndCompanyCoupons(account, coupons, false);
   }
 
-  private void updateMembershipRegistrationToSuccess(
-      @NonNull MembershipRegistration membershipRegistration,
-      @NonNull String paymentKey,
-      @NonNull PaymentType paymentType) {
-    final LocalDateTime now = LocalDateTime.now();
-    membershipRegistration.updateRegistrationDate(now);
-    membershipRegistration.updateExpirationDate(
-        now.plusDays(
-                Optional.ofNullable(membershipRegistration.getMembership())
-                    .map(Membership::getPeriod)
-                    .orElse(DEFAULT_MEMBERSHIP_PERIOD))
-            .toLocalDate()
-            .atTime(LocalTime.MAX));
-    membershipRegistration.updatePaymentDate(now);
-    membershipRegistration.updatePaymentStatus(PaymentStatus.COMPLETED);
-    membershipRegistration.updatePaymentKey(paymentKey);
-    membershipRegistration.updatePaymentType(paymentType);
-    this.membershipRegistrationRepository.save(membershipRegistration);
-  }
+//  private void updateMembershipRegistrationToSuccess(
+//      @NonNull MembershipRegistration membershipRegistration,
+//      @NonNull String paymentKey,
+//      @NonNull PaymentType paymentType) {
+//    final LocalDateTime now = LocalDateTime.now();
+//    membershipRegistration.updateRegistrationDate(now);
+
+    // TODO(MEMBERSHIP) : 만료일 설정
+//    membershipRegistration.updateExpirationDate(
+//        now.plusDays(
+//                Optional.ofNullable(membershipRegistration.getMembership())
+//                    .map(Membership::getPeriod)
+//                    .orElse(DEFAULT_MEMBERSHIP_PERIOD))
+//            .toLocalDate()
+//            .atTime(LocalTime.MAX));
+//    membershipRegistration.updatePaymentStatus(PaymentStatus.COMPLETED);
+//    this.membershipRegistrationRepository.save(membershipRegistration);
+//  }
 
   private void removePendingMembershipRegistrations(final long accountId) {
     List<Long> pendingMembershipRegistrationIds =

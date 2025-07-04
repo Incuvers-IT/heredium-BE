@@ -51,7 +51,7 @@ public class ActiveMembershipImpl implements CreateBody {
               createString(entity.getName()),
               createString(entity.getPhone()),
               createString(entity.getPaymentStatus()),
-              createString(entity.getPaymentDate().format(dtfd)),
+//              createString(entity.getPaymentDate().format(dtfd)),
               createString(entity.getNumberOfMemberships()),
               createString(entity.getNumberOfExhibitionsUsed()),
               createString(entity.getNumberOfProgramsUsed()),

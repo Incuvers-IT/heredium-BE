@@ -28,6 +28,9 @@ public class MembershipRegistrationResponse {
   @JsonProperty("membership_name")
   private String membershipName;
 
+  @JsonProperty("code")
+  private Integer code;
+
   @JsonProperty("company_name")
   private String companyName;
 
@@ -53,6 +56,9 @@ public class MembershipRegistrationResponse {
     this.companyName =
         membershipRegistration.getCompany() != null
             ? membershipRegistration.getCompany().getName()
+            : null;
+    this.code = membershipRegistration.getMembership() != null
+            ? membershipRegistration.getMembership().getCode()
             : null;
     this.registrationDate = membershipRegistration.getRegistrationDate();
     this.expirationDate = membershipRegistration.getExpirationDate();

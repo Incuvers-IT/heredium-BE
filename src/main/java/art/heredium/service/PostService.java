@@ -290,13 +290,11 @@ public class PostService {
     if (Boolean.TRUE.equals(request.getIsDeleted())) {
       membership.setIsDeleted(true);
       membership.setIsEnabled(false);
-      membership.setIsRegisterMembershipButtonShown(false);
       membershipRepository.save(membership);
       return;
     }
 
     if (request.getName() != null) membership.setName(request.getName());
-    if (request.getPrice() != null) membership.setPrice(request.getPrice());
     if (request.getImageUrl() != null) {
       ValidationUtil.validateImage(this.cloudStorage, request.getImageUrl());
       String newMembershipPath = FilePathType.MEMBERSHIP.getPath() + "/" + membership.getId();
@@ -305,10 +303,7 @@ public class PostService {
               this.cloudStorage, request.getImageUrl(), newMembershipPath);
       membership.setImageUrl(permanentImageUrl);
     }
-    if (request.getPeriod() != null) membership.setPeriod(request.getPeriod());
     if (request.getIsEnabled() != null) membership.setIsEnabled(request.getIsEnabled());
-    if (request.getIsRegisterMembershipButtonShown() != null)
-      membership.setIsRegisterMembershipButtonShown(request.getIsRegisterMembershipButtonShown());
 
     membershipRepository.save(membership);
 
@@ -335,13 +330,9 @@ public class PostService {
   private void createNewMembership(Post post, PostMembershipUpdateRequest request) {
     MembershipCreateRequest createRequest = new MembershipCreateRequest();
     createRequest.setName(request.getName());
-    createRequest.setPrice(request.getPrice());
     createRequest.setImageUrl(request.getImageUrl());
     createRequest.setIsEnabled(request.getIsEnabled() == null || request.getIsEnabled());
     createRequest.setCoupons(convertToCouponCreateRequests(request.getCoupons()));
-    createRequest.setIsRegisterMembershipButtonShown(
-        request.getIsRegisterMembershipButtonShown() == null
-            || request.getIsRegisterMembershipButtonShown());
 
     membershipService.createMemberships(post.getId(), Arrays.asList(createRequest));
   }

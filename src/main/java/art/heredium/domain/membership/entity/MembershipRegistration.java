@@ -19,7 +19,6 @@ import org.hibernate.annotations.TypeDef;
 import art.heredium.domain.account.entity.Account;
 import art.heredium.domain.common.entity.BaseEntity;
 import art.heredium.domain.company.entity.Company;
-import art.heredium.payment.type.PaymentType;
 
 @Entity
 @Getter
@@ -63,27 +62,18 @@ public class MembershipRegistration extends BaseEntity {
   @Enumerated(EnumType.STRING)
   private PaymentStatus paymentStatus;
 
-  @Column(name = "payment_date")
-  private LocalDateTime paymentDate;
-
-  @Column(name = "payment_order_id", length = 36, unique = true, updatable = false)
-  private String paymentOrderId;
-
-  @Column(name = "payment_key", unique = true)
-  private String paymentKey;
-
-  @Column(name = "payment_type")
-  @Convert(converter = PaymentType.Converter.class)
-  private PaymentType paymentType;
-
   @Comment("등록 유형")
   @Column(name = "registration_type", nullable = false)
   @Enumerated(EnumType.STRING)
   private RegistrationType registrationType;
 
-  @Comment("가격")
-  @Column(name = "price")
-  private Long price;
+  @Comment("등록자")
+  @Column(name = "created_name")
+  private String createdName;
+
+  @Comment("수정자")
+  @Column(name = "last_modified_name")
+  private String lastModifiedName;
 
   public MembershipRegistration(
       @NonNull Account account,
@@ -91,17 +81,13 @@ public class MembershipRegistration extends BaseEntity {
       @NonNull LocalDateTime registrationDate,
       @NonNull LocalDateTime expirationDate,
       @NonNull PaymentStatus paymentStatus,
-      @NonNull LocalDateTime paymentDate,
-      @NonNull RegistrationType registrationType,
-      @NonNull Long price) {
+      @NonNull RegistrationType registrationType) {
     this.account = account;
     this.company = company;
     this.registrationDate = registrationDate;
     this.expirationDate = expirationDate;
     this.paymentStatus = paymentStatus;
-    this.paymentDate = paymentDate;
     this.registrationType = registrationType;
-    this.price = price;
     this.uuid = UUID.randomUUID().toString();
   }
 
@@ -109,14 +95,30 @@ public class MembershipRegistration extends BaseEntity {
       @NonNull Account account,
       @NonNull Membership membership,
       @NonNull RegistrationType registrationType,
-      @NonNull PaymentStatus paymentStatus,
-      @NonNull String paymentOrderId) {
+      @NonNull PaymentStatus paymentStatus) {
     this.uuid = UUID.randomUUID().toString();
     this.account = account;
     this.membership = membership;
     this.registrationType = registrationType;
     this.paymentStatus = paymentStatus;
-    this.paymentOrderId = paymentOrderId;
+  }
+
+  public MembershipRegistration(
+          @NonNull Account account,
+          @NonNull Membership membership,
+          @NonNull LocalDateTime registrationDate,
+          @NonNull RegistrationType registrationType,
+          @NonNull PaymentStatus paymentStatus,
+          String createdName,
+          String lastModifiedName) {
+    this.uuid = UUID.randomUUID().toString();
+    this.account = account;
+    this.membership = membership;
+    this.registrationDate = registrationDate;
+    this.registrationType = registrationType;
+    this.paymentStatus = paymentStatus;
+    this.createdName = createdName;
+    this.lastModifiedName = lastModifiedName;
   }
 
   public MembershipRegistration(
@@ -125,9 +127,8 @@ public class MembershipRegistration extends BaseEntity {
       @NonNull LocalDateTime registrationDate,
       @NonNull LocalDateTime expirationDate,
       @NonNull RegistrationType registrationType,
-      @NonNull PaymentStatus paymentStatus,
-      @NonNull LocalDateTime paymentDate,
-      @NonNull String paymentOrderId) {
+      @NonNull PaymentStatus paymentStatus
+  ) {
     this.uuid = UUID.randomUUID().toString();
     this.account = account;
     this.membership = membership;
@@ -135,8 +136,6 @@ public class MembershipRegistration extends BaseEntity {
     this.expirationDate = expirationDate;
     this.registrationType = registrationType;
     this.paymentStatus = paymentStatus;
-    this.paymentDate = paymentDate;
-    this.paymentOrderId = paymentOrderId;
   }
 
   public MembershipRegistration(
@@ -151,7 +150,6 @@ public class MembershipRegistration extends BaseEntity {
     this.registrationDate = registrationDate;
     this.expirationDate = expirationDate;
     this.registrationType = registrationType;
-    // TODO: Add paymentStatus and paymentDate
   }
 
   public void updateRegistrationDate(LocalDateTime registrationDate) {
@@ -164,18 +162,6 @@ public class MembershipRegistration extends BaseEntity {
 
   public void updatePaymentStatus(PaymentStatus paymentStatus) {
     this.paymentStatus = paymentStatus;
-  }
-
-  public void updatePaymentDate(LocalDateTime paymentDate) {
-    this.paymentDate = paymentDate;
-  }
-
-  public void updatePaymentKey(String paymentKey) {
-    this.paymentKey = paymentKey;
-  }
-
-  public void updatePaymentType(PaymentType paymentType) {
-    this.paymentType = paymentType;
   }
 
   public String getMembershipOrCompanyName() {

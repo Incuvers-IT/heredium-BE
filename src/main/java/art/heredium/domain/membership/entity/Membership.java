@@ -57,19 +57,17 @@ public class Membership extends BaseEntity implements Serializable {
   @OrderBy("name ASC")
   private List<Coupon> coupons;
 
+  @Comment("멤버십 코드 (1:BASIC, 2:UPGRADE, 3:STUDENT)")
+  @Column(name = "code")
+  private Integer code;
+
   @Comment("멤버십명")
   @Column(name = "name", nullable = false)
   private String name;
 
-  @Comment("멤버십기간 (일)")
-  @Column(name = "membership_period", nullable = false)
-  @Min(1)
-  private Long period;
-
-  @Comment("가격")
-  @Column(name = "price", nullable = false)
-  @Min(1)
-  private Integer price;
+  @Comment("약칭")
+  @Column(name = "short_name")
+  private String shortName;
 
   @Comment("가능")
   @Column(name = "is_enabled", nullable = false)
@@ -79,13 +77,13 @@ public class Membership extends BaseEntity implements Serializable {
   @Column(name = "image_url")
   private String imageUrl;
 
-  @Comment("가입하기 버튼 활성화 여부")
-  @Column(name = "is_register_membership_button_shown", nullable = false)
-  private Boolean isRegisterMembershipButtonShown;
-
   @Comment("삭제 여부")
   @Column(name = "is_deleted", nullable = false)
   private Boolean isDeleted;
+
+  @Comment("이용실적(최소 기준)")
+  @Column(name = "usage_threshold", nullable = false)
+  private int usageThreshold;
 
   public void updateIsEnabled(boolean isEnabled) {
     this.isEnabled = isEnabled;
@@ -97,20 +95,20 @@ public class Membership extends BaseEntity implements Serializable {
 
   @Builder
   public Membership(
-      String name,
-      Long period,
-      Integer price,
-      Boolean isEnabled,
-      String imageUrl,
-      Post post,
-      Boolean isRegisterMembershipButtonShown) {
+          String name,
+          String shortName,
+          Integer code,
+          Boolean isEnabled,
+          String imageUrl,
+          Post post,
+          int usageThreshold) {
     this.name = name;
-    this.period = period;
-    this.price = price;
+    this.shortName = shortName;
+    this.code = code;
     this.isEnabled = isEnabled;
     this.imageUrl = imageUrl;
     this.post = post;
-    this.isRegisterMembershipButtonShown = isRegisterMembershipButtonShown;
     this.isDeleted = false;
+    this.usageThreshold = usageThreshold;
   }
 }

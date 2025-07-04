@@ -11,7 +11,7 @@ import art.heredium.domain.membership.entity.PaymentStatus;
 
 @Getter
 @NoArgsConstructor
-public class ActiveMembershipRegistrationsResponse {
+public class ActiveMembershipDetailResponse {
 
   @JsonProperty("membership_name")
   private String membershipOrCompanyName;
@@ -22,16 +22,31 @@ public class ActiveMembershipRegistrationsResponse {
   @JsonProperty("email")
   private String email;
 
+  @JsonProperty("createdDate")
+  private LocalDateTime createdDate;
+
   @JsonProperty("name")
   private String name;
 
   @JsonProperty("phone")
   private String phone;
 
+  @JsonProperty("lastLoginDate")
+  private LocalDateTime lastLoginDate;
+
+  @JsonProperty("gender")
+  private String gender;
+
+  @JsonProperty("birthDate")
+  private String birthDate;
+
+  @JsonProperty("isMarketingReceive")
+  private Boolean isMarketingReceive;
+
   @JsonProperty("payment_status")
   private String paymentStatus;
 
-  @JsonProperty("registration_date")
+  @JsonProperty("registrationDate")
   private LocalDateTime registrationDate;
 
   @JsonProperty("number_of_memberships")
@@ -49,24 +64,34 @@ public class ActiveMembershipRegistrationsResponse {
   @JsonProperty("is_agree_to_receive_marketing")
   private Boolean isAgreeToReceiveMarketing;
 
-  public ActiveMembershipRegistrationsResponse(
-      final String membershipOrCompanyName,
-      final Long accountId,
-      final String email,
-      final String name,
-      final String phone,
-      final PaymentStatus paymentStatus,
-      final LocalDateTime registrationDate,
-      final Long numberOfMemberships,
-      final Long numberOfExhibitionsUsed,
-      final Long numberOfProgramsUsed,
-      final Long numberOfCoffeeUsed,
-      final Boolean isAgreeToReceiveMarketing) {
+  public ActiveMembershipDetailResponse(
+          final String membershipOrCompanyName,
+          final Long accountId,
+          final String email,
+          final LocalDateTime createdDate,
+          final String name,
+          final String phone,
+          final LocalDateTime lastLoginDate,
+          final String gender,
+          final String birthDate,
+          final Boolean isMarketingReceive,
+          final PaymentStatus paymentStatus,
+          final LocalDateTime registrationDate,
+          final Long numberOfMemberships,
+          final Long numberOfExhibitionsUsed,
+          final Long numberOfProgramsUsed,
+          final Long numberOfCoffeeUsed,
+          final Boolean isAgreeToReceiveMarketing) {
     this.membershipOrCompanyName = membershipOrCompanyName;
     this.accountId = accountId;
     this.email = email;
+    this.createdDate = createdDate;
     this.name = name;
     this.phone = phone;
+    this.lastLoginDate = lastLoginDate;
+    this.gender = gender;
+    this.birthDate = birthDate;
+    this.isMarketingReceive = isMarketingReceive;
     this.paymentStatus = paymentStatus != null ? paymentStatus.getDesc() : null;
     this.registrationDate = registrationDate;
     this.numberOfMemberships = numberOfMemberships;

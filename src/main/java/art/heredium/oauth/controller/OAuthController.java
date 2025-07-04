@@ -46,7 +46,7 @@ public class OAuthController {
   }
 
   @PostMapping("/{provider}")
-  public ResponseEntity login(
+  public ResponseEntity<?> login(
       HttpServletResponse response,
       @PathVariable(value = "provider") OAuth2Provider provider,
       @RequestParam(value = "code") String code) {
@@ -54,7 +54,7 @@ public class OAuthController {
   }
 
   @PostMapping("/{provider}/sign-up")
-  public ResponseEntity signUp(
+  public ResponseEntity<?> signUp(
       HttpServletRequest request,
       HttpServletResponse response,
       @PathVariable(value = "provider") OAuth2Provider provider,

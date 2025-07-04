@@ -14,4 +14,6 @@ public interface MembershipRepository extends JpaRepository<Membership, Long> {
 
   @Query("SELECT mr FROM Membership mr WHERE mr.post.id = :post_id AND mr.isEnabled IS TRUE")
   List<Membership> findByPostIdAndIsEnabledTrue(@Param("post_id") long postId);
+
+  Optional<Membership> findByCode(Integer code);
 }

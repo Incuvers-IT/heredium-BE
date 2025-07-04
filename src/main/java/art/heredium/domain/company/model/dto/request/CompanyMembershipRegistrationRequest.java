@@ -20,7 +20,7 @@ public class CompanyMembershipRegistrationRequest {
 
   @NotNull private LocalDate startDate;
 
-  @NotNull @Positive private Long price;
+//  @NotNull @Positive private Long price;
 
-  @NotNull private LocalDate paymentDate;
+//  @NotNull private LocalDate paymentDate;
 }
