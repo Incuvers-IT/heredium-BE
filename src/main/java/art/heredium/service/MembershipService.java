@@ -144,8 +144,6 @@ public class MembershipService {
   @Transactional
   public boolean createMembership(MembershipCreateRequest request) {
 
-//    ValidationUtil.validateImage(this.cloudStorage, request.getImageUrl());
-
     Post post = postRepository.findById(1L)
             .orElseThrow(() -> new ApiException(ErrorCode.POST_NOT_FOUND));
 
@@ -162,6 +160,7 @@ public class MembershipService {
     Membership savedMembership = membershipRepository.save(membership);
 
     if (StringUtils.isNotEmpty(request.getImageUrl())) {
+      ValidationUtil.validateImage(this.cloudStorage, request.getImageUrl());
       // Move membership image to permanent storage and update the imageUrl
       String newMembershipPath =
               FilePathType.MEMBERSHIP.getPath() + "/" + savedMembership.getId();
@@ -171,8 +170,7 @@ public class MembershipService {
       savedMembership.updateImageUrl(permanentImageUrl);
       membershipRepository.saveAndFlush(savedMembership);
     }
-    
-    // TODO: 쿠폰 정보 추가
+
     request
         .getCoupons()
         .forEach(
@@ -211,7 +209,7 @@ public class MembershipService {
     }
 
     if (request.getImageUrl() != null) {
-//      ValidationUtil.validateImage(cloudStorage, request.getImageUrl());
+      ValidationUtil.validateImage(cloudStorage, request.getImageUrl());
       String newPath = FilePathType.MEMBERSHIP.getPath() + "/" + m.getId();
       String url = Constants.moveImageToNewPlace(
               cloudStorage, request.getImageUrl(), newPath);

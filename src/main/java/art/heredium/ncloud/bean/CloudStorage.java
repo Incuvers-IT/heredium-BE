@@ -1,5 +1,22 @@
 package art.heredium.ncloud.bean;
 
+import art.heredium.core.config.error.entity.ApiException;
+import art.heredium.core.config.error.entity.ErrorCode;
+import art.heredium.domain.common.model.Storage;
+import art.heredium.domain.common.type.FilePathType;
+import com.amazonaws.SdkClientException;
+import com.amazonaws.auth.AWSStaticCredentialsProvider;
+import com.amazonaws.auth.BasicAWSCredentials;
+import com.amazonaws.client.builder.AwsClientBuilder;
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.AmazonS3ClientBuilder;
+import com.amazonaws.services.s3.model.*;
+import com.amazonaws.util.IOUtils;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+import org.springframework.web.multipart.MultipartFile;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -10,26 +27,6 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
-
-import lombok.extern.slf4j.Slf4j;
-
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
-import org.springframework.web.multipart.MultipartFile;
-
-import com.amazonaws.SdkClientException;
-import com.amazonaws.auth.AWSStaticCredentialsProvider;
-import com.amazonaws.auth.BasicAWSCredentials;
-import com.amazonaws.client.builder.AwsClientBuilder;
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.AmazonS3ClientBuilder;
-import com.amazonaws.services.s3.model.*;
-import com.amazonaws.util.IOUtils;
-
-import art.heredium.core.config.error.entity.ApiException;
-import art.heredium.core.config.error.entity.ErrorCode;
-import art.heredium.domain.common.model.Storage;
-import art.heredium.domain.common.type.FilePathType;
 
 @Slf4j
 @Component
@@ -180,10 +177,11 @@ public class CloudStorage {
 
   public void move(String oldPath, String newPath) {
     AmazonS3 s3 = getSession();
+    // 1) 객체 복사
     s3.copyObject(BUCKET, oldPath, BUCKET, newPath);
-    //    s3.setObjectAcl(BUCKET, newPath, CannedAccessControlList.PublicRead);
-
-    // Delete the old object
+    // 2) 퍼블릭 읽기 ACL 강제 설정
+    s3.setObjectAcl(BUCKET, newPath, CannedAccessControlList.PublicRead);
+    // 3) 원본 삭제
     delete(oldPath);
   }
 
