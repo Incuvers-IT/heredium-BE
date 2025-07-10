@@ -112,4 +112,6 @@ public class AdminMembershipController {
     MembershipResponse detail = membershipService.getMembershipDetail(membershipId);
     return ResponseEntity.ok(detail);
   }
+
+
 }

@@ -63,8 +63,7 @@ public class MembershipRegistrationRepositoryImpl
                 signedUpDateBetween(request.getSignUpDateFrom(), request.getSignUpDateTo()),
                 isAgreeToReceiveMarketing(request.getIsAgreeToReceiveMarketing()),
                 textContains(request.getText()),
-                paymentStatusIn(PaymentStatus.COMPLETED),
-                isNotExpired());
+                paymentStatusIn(PaymentStatus.COMPLETED));
     final long total = Optional.ofNullable(countQuery.fetchOne()).orElse(0L);
     List<ActiveMembershipRegistrationsResponse> content = new ArrayList<>();
     if (total != 0) {
@@ -100,7 +99,6 @@ public class MembershipRegistrationRepositoryImpl
                             isAgreeToReceiveMarketing(request.getIsAgreeToReceiveMarketing()),
                             textContains(request.getText()),
                             paymentStatusIn(PaymentStatus.COMPLETED),
-                            isNotExpired(),
                             account.id.eq(request.getAccountId())
                     );
     final long total = Optional.ofNullable(countQuery.fetchOne()).orElse(0L);
@@ -167,8 +165,7 @@ public class MembershipRegistrationRepositoryImpl
             signedUpDateBetween(request.getSignUpDateFrom(), request.getSignUpDateTo()),
             isAgreeToReceiveMarketing(request.getIsAgreeToReceiveMarketing()),
             textContains(request.getText()),
-            paymentStatusIn(PaymentStatus.COMPLETED),
-            isNotExpired())
+            paymentStatusIn(PaymentStatus.COMPLETED))
         .orderBy(membershipRegistration.registrationDate.desc());
   }
 
@@ -220,7 +217,6 @@ public class MembershipRegistrationRepositoryImpl
                     isAgreeToReceiveMarketing(request.getIsAgreeToReceiveMarketing()),
                     textContains(request.getText()),
                     paymentStatusIn(PaymentStatus.COMPLETED),
-                    isNotExpired(),
                     account.id.eq(request.getAccountId())
             )
             .orderBy(membershipRegistration.registrationDate.desc());
@@ -241,6 +237,7 @@ public class MembershipRegistrationRepositoryImpl
                 .and(coupon.couponType.eq(couponType)));
   }
 
+  // 해신: 만료일 체크 로직
   private BooleanExpression isNotExpired() {
     QMembershipRegistration membershipRegistration = QMembershipRegistration.membershipRegistration;
     DateTimeExpression<LocalDateTime> now =
