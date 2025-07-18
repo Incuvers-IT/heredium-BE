@@ -1,6 +1,7 @@
 package art.heredium.domain.coupon.model.dto.response;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -45,6 +46,18 @@ public class CouponResponse {
   @JsonProperty("end_date")
   private LocalDateTime endDate;
 
+  @JsonProperty("is_recurring")
+  private Boolean isRecurring;
+
+  @JsonProperty("recipient_type")
+  private List<Short> recipientType;
+
+  @JsonProperty("send_day_of_month")
+  private Integer sendDayOfMonth;
+
+  @JsonProperty("marketing_consent_benefit")
+  private Boolean marketingConsentBenefit;
+
   public CouponResponse(Coupon coupon) {
     this.couponId = coupon.getId();
     this.name = coupon.getName();
@@ -56,5 +69,9 @@ public class CouponResponse {
     this.numberOfUses = coupon.getNumberOfUses();
     this.startDate = coupon.getStartedDate();
     this.endDate = coupon.getEndedDate();
+    this.isRecurring = coupon.getIsRecurring();
+    this.recipientType = coupon.getRecipientType();
+    this.sendDayOfMonth = coupon.getSendDayOfMonth();
+    this.marketingConsentBenefit = coupon.getMarketingConsentBenefit();
   }
 }

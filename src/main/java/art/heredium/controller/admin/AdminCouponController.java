@@ -1,5 +1,6 @@
 package art.heredium.controller.admin;
 
+import art.heredium.domain.coupon.model.dto.request.RecurringCouponCreateRequest;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.http.ResponseEntity;
@@ -12,6 +13,8 @@ import art.heredium.domain.coupon.model.dto.response.CouponUsageCheckResponse;
 import art.heredium.domain.coupon.model.dto.response.CouponUsageResponse;
 import art.heredium.service.CouponService;
 import art.heredium.service.CouponUsageService;
+
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -36,7 +39,7 @@ public class AdminCouponController {
 
   @PostMapping("/non-membership")
   public ResponseEntity<CouponResponse> createNonMembershipCoupon(
-      @RequestBody final NonMembershipCouponCreateRequest request) {
+      @RequestBody final RecurringCouponCreateRequest request) {
     return ResponseEntity.ok(this.couponService.createNonMembershipCoupon(request));
   }
 
@@ -59,4 +62,23 @@ public class AdminCouponController {
     return ResponseEntity.ok(
         this.couponUsageService.checkActiveMembershipCouponUsage(membershipRegistrationId));
   }
+
+  @GetMapping("/all")
+  public ResponseEntity<List<CouponResponse>> getAllCoupons() {
+    return ResponseEntity.ok(this.couponService.getAllCoupons());
+  }
+
+  @DeleteMapping("/{couponId}")
+  public ResponseEntity<Void> deleteCoupon(@PathVariable Long couponId) {
+    couponService.deleteCoupon(couponId);
+    return ResponseEntity.noContent().build();
+  }
+
+  @PutMapping("/{coupon-id}")
+  public ResponseEntity<CouponResponse> updateCoupon(
+          @PathVariable("coupon-id") long couponId,
+          @RequestBody RecurringCouponCreateRequest request) {
+    return ResponseEntity.ok(this.couponService.updateCoupon(couponId, request));
+  }
+
 }

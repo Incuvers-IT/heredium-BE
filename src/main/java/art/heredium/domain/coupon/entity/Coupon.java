@@ -1,20 +1,19 @@
 package art.heredium.domain.coupon.entity;
 
-import java.time.LocalDateTime;
-
-import javax.persistence.*;
-
-import lombok.*;
-
-import com.vladmihalcea.hibernate.type.json.JsonStringType;
-import org.hibernate.annotations.Comment;
-import org.hibernate.annotations.DynamicInsert;
-import org.hibernate.annotations.TypeDef;
-
 import art.heredium.domain.common.entity.BaseEntity;
 import art.heredium.domain.company.entity.Company;
 import art.heredium.domain.membership.entity.Membership;
+import com.vladmihalcea.hibernate.type.json.JsonStringType;
+import lombok.*;
+import org.hibernate.annotations.Comment;
+import org.hibernate.annotations.DynamicInsert;
+import org.hibernate.annotations.TypeDef;
 import org.hibernate.annotations.Where;
+import org.hibernate.annotations.Type;
+
+import javax.persistence.*;
+import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Getter
@@ -85,6 +84,19 @@ public class Coupon extends BaseEntity {
   @Column(name = "is_deleted", nullable = false)
   private boolean isDeleted;
 
+  @Column(name = "is_recurring")
+  private Boolean isRecurring;
+
+  @Type(type = "json")
+  @Column(name = "recipient_type", columnDefinition = "json")
+  private List<Short> recipientType;
+
+  @Column(name = "send_day_of_month")
+  private Integer sendDayOfMonth;
+
+  @Column(name = "marketing_consent_benefit")
+  private Boolean marketingConsentBenefit;
+
   @Builder
   public Coupon(
       String name,
@@ -98,7 +110,12 @@ public class Coupon extends BaseEntity {
       Company company,
       Long numberOfUses,
       Boolean isPermanent,
-      CouponSource fromSource) {
+      CouponSource fromSource,
+      Boolean isRecurring,
+      List<Short> recipientType,
+      Integer sendDayOfMonth,
+      Boolean marketingConsentBenefit
+      ) {
     this.name = name;
     this.couponType = couponType;
     this.discountPercent = discountPercent;
@@ -111,10 +128,18 @@ public class Coupon extends BaseEntity {
     this.numberOfUses = numberOfUses;
     this.isPermanent = isPermanent;
     this.fromSource = fromSource;
+    this.isRecurring = isRecurring;
+    this.recipientType = recipientType;
+    this.sendDayOfMonth = sendDayOfMonth;
+    this.marketingConsentBenefit = marketingConsentBenefit;
     this.isDeleted = false;
   }
 
   public void updateImageUrl(String imageUrl) {
     this.imageUrl = imageUrl;
+  }
+
+  public void markDeleted() {
+    this.isDeleted = true;
   }
 }

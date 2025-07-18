@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -93,13 +94,13 @@ public class CouponUsageService {
     List<CouponUsage> couponUsages = new ArrayList<>();
     coupons.forEach(
         coupon -> {
-          if (coupon.getFromSource() == CouponSource.ADMIN_SITE) {
-            throw new ApiException(
-                ErrorCode.INVALID_COUPON_TO_ASSIGN,
-                String.format(
-                    "Error while assigning coupon: %s: This coupon is not membership coupon",
-                    coupon.getName()));
-          }
+//          if (coupon.getFromSource() == CouponSource.ADMIN_SITE) {
+//            throw new ApiException(
+//                ErrorCode.INVALID_COUPON_TO_ASSIGN,
+//                String.format(
+//                    "Error while assigning coupon: %s: This coupon is not membership coupon",
+//                    coupon.getName()));
+//          }
           couponUsages.addAll(
               this.assignCouponToAccounts(
                   coupon,
@@ -157,89 +158,108 @@ public class CouponUsageService {
   }
 
   private List<CouponUsage> assignCouponToAccounts(
-      final Coupon coupon,
-      @NonNull final List<Long> accountIds,
-      @NonNull final CouponSource source,
-      final boolean sendAlimtalk) {
+          final Coupon coupon,
+          @NonNull final List<Long> accountIds,
+          @NonNull final CouponSource source,
+          final boolean sendAlimtalk) {
+
+    // 1) 기본 정보 추출
     long numberOfUses = Optional.ofNullable(coupon.getNumberOfUses()).orElse(1L);
     boolean isPermanentCoupon = Boolean.TRUE.equals(coupon.getIsPermanent());
-    List<CouponUsage> couponUsages = new ArrayList<>();
+    boolean isRecurring = Boolean.TRUE.equals(coupon.getIsRecurring())
+            && coupon.getPeriodInDays() != null;
+    boolean isMarketingBenefit = Boolean.TRUE.equals(coupon.getMarketingConsentBenefit());
+    Integer periodInDays = coupon.getPeriodInDays(); // may be null
+
+    // 2) 계정 조회 및 검증
     Set<Long> accountIdSet = new HashSet<>(accountIds);
-    Map<Long, Account> accountMap =
-        this.accountRepository.findByIdIn(accountIdSet).stream()
-            .collect(Collectors.toMap(Account::getId, account -> account));
-    if (accountMap.entrySet().size() != accountIdSet.size()) {
+    Map<Long, Account> accountMap = accountRepository.findByIdIn(accountIdSet).stream()
+            .collect(Collectors.toMap(Account::getId, Function.identity()));
+    if (accountMap.size() != accountIdSet.size()) {
       throw new ApiException(ErrorCode.USER_NOT_FOUND);
     }
 
     LocalDateTime now = LocalDateTime.now();
+    List<CouponUsage> couponUsages = new ArrayList<>();
     Map<Account, CouponUsage> accountsToSendAlimTalk = new HashMap<>();
 
-    accountMap.forEach(
-        (accountId, account) -> {
-          LocalDateTime couponStartedDate;
-          LocalDateTime couponEndedDate;
-          MembershipRegistration membershipRegistration = null;
-          if (source == CouponSource.MEMBERSHIP_PACKAGE || source == CouponSource.COMPANY) {
-            membershipRegistration = this.findMembershipRegistration(account);
-          }
-          if (source == CouponSource.MEMBERSHIP_PACKAGE) {
-            couponStartedDate = now;
-            couponEndedDate =
-                couponStartedDate
-                    .plusDays(coupon.getPeriodInDays())
-                    .toLocalDate()
-                    .atTime(LocalTime.MAX);
-          } else if (source == CouponSource.ADMIN_SITE) {
-            couponStartedDate = coupon.getStartedDate();
-            couponEndedDate = coupon.getEndedDate().toLocalDate().atTime(LocalTime.MAX);
-          } else if (source == CouponSource.COMPANY) {
-            couponStartedDate = membershipRegistration.getRegistrationDate();
-            couponEndedDate =
-                couponStartedDate
-                    .plusDays(coupon.getPeriodInDays())
-                    .toLocalDate()
-                    .atTime(LocalTime.MAX);
-          } else {
-            throw new ApiException(ErrorCode.INVALID_COUPON_SOURCE);
-          }
+    // 3) 각 계정별 쿠폰 사용내역 생성
+    accountMap.forEach((accountId, account) -> {
+      LocalDateTime startDateTime;
+      LocalDateTime endDateTime;
+      MembershipRegistration mr = null;
 
-          if (isPermanentCoupon) {
-            CouponUsage couponUsage =
-                new CouponUsage(
-                    coupon,
-                    account,
-                    membershipRegistration,
-                    couponStartedDate,
-                    couponEndedDate,
-                    true,
-                    0L);
-            couponUsages.add(couponUsage);
-          } else {
-            for (int i = 0; i < numberOfUses; i++) {
-              CouponUsage couponUsage =
-                  new CouponUsage(
-                      coupon,
-                      account,
-                      membershipRegistration,
-                      couponStartedDate,
-                      couponEndedDate,
-                      false,
-                      0L);
-              couponUsages.add(couponUsage);
-            }
+      // 회원권/회사 출처일 때만 등록정보 조회
+      if (source == CouponSource.MEMBERSHIP_PACKAGE || source == CouponSource.COMPANY) {
+        mr = findMembershipRegistration(account);
+        if (mr == null) {
+          throw new ApiException(ErrorCode.USER_NOT_FOUND);
+        }
+      }
+
+      if (isRecurring || isMarketingBenefit) {
+        // ▶ 정기발송 경로 (periodInDays 기준)
+        // 시작일 설정
+        if (source == CouponSource.MEMBERSHIP_PACKAGE) {
+          startDateTime = now;
+        } else if (source == CouponSource.COMPANY) {
+          startDateTime = mr.getRegistrationDate();
+        } else if (source == CouponSource.ADMIN_SITE) {
+          startDateTime = now;
+        } else {
+          throw new ApiException(ErrorCode.INVALID_COUPON_SOURCE);
+        }
+        // 종료일 = 시작일 + periodInDays (하루 끝 시각)
+        endDateTime = startDateTime
+                .plusDays(periodInDays)
+                .toLocalDate()
+                .atTime(LocalTime.MAX);
+
+      } else {
+        // ▶ 수동발송 경로 (start/end 필드 기준)
+        if (coupon.getStartedDate() == null || coupon.getEndedDate() == null) {
+          throw new ApiException(ErrorCode.INVALID_COUPON_PERIOD);
+        }
+        startDateTime = coupon.getStartedDate();
+        endDateTime = coupon.getEndedDate()
+                .toLocalDate()
+                .atTime(LocalTime.MAX);
+      }
+
+      // 4) CouponUsage 인스턴스 생성
+      if (isPermanentCoupon) {
+        // 상시할인 한 번만
+        CouponUsage usage = new CouponUsage(
+                coupon, account, mr,
+                startDateTime, endDateTime,
+                true, 0L);
+        couponUsages.add(usage);
+        accountsToSendAlimTalk.put(account, usage);
+
+      } else {
+        // 횟수만큼 반복 생성
+        for (int i = 0; i < numberOfUses; i++) {
+          CouponUsage usage = new CouponUsage(
+                  coupon, account, mr,
+                  startDateTime, endDateTime,
+                  false, 0L);
+          couponUsages.add(usage);
+          if (i == 0) { // 첫 건만 알림 맵에 등록
+            accountsToSendAlimTalk.put(account, usage);
           }
-          if (!couponUsages.isEmpty()) {
-            // Each account can only be assigned one coupon type
-            accountsToSendAlimTalk.put(account, couponUsages.get(0));
-          }
-        });
-    if (sendAlimtalk) {
-      this.sendCouponDeliveredMessageToAlimTalk(accountsToSendAlimTalk);
+        }
+      }
+    });
+
+    // 5) 알림톡 발송
+    if (sendAlimtalk && !accountsToSendAlimTalk.isEmpty()) {
+      sendCouponDeliveredMessageToAlimTalk(accountsToSendAlimTalk);
     }
 
-    return this.couponUsageRepository.saveAll(couponUsages);
+    // 6) DB 저장
+    return couponUsageRepository.saveAll(couponUsages);
   }
+
 
   @NonNull
   private MembershipRegistration findMembershipRegistration(@NonNull final Account account) {

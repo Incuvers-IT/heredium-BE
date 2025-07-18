@@ -13,11 +13,13 @@ public class PutUserAccountRequest {
   private String password;
   @NotNull private Boolean isLocalResident;
   @NotNull private Boolean isMarketingReceive;
+  @NotNull private Boolean additionalInfoAgreed;
   private String encodeData;
-
+  private String phone;
   private String gender;         // "M" 또는 "F"
   private String birthDate;      // 1990-01-01
   private String state;          // 대전광역시
   private String district;       // 동구
+  private String job;            // 직업
   @NotNull private Boolean marketingPending;  // 0: false, 1: true(defualt)
 }

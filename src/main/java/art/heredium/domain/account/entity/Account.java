@@ -86,7 +86,7 @@ public class Account implements Serializable {
   }
 
   public Account(
-      PostAccountSnsRequest dto,
+          PostAccountRequest dto,
       PostNiceIdEncryptResponse info,
       OAuth2UserInfo userInfo,
       OAuth2Provider provider) {

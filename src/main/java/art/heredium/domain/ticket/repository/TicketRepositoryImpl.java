@@ -59,7 +59,9 @@ public class TicketRepositoryImpl implements TicketRepositoryQueryDsl {
                 ticket.account.id.in(
                     JPAExpressions.select(membershipRegistration.account.id)
                         .from(membershipRegistration)
-                        .where(membershipRegistration.expirationDate.goe(LocalDateTime.now()))));
+//                        .where(membershipRegistration.expirationDate.goe(LocalDateTime.now()))
+                )
+            );
       } else {
         // Tickets associated with accounts without membership, or non-users, or neither
         whereClause.and(
@@ -115,7 +117,8 @@ public class TicketRepositoryImpl implements TicketRepositoryQueryDsl {
                 ticket.account.id.in(
                     JPAExpressions.select(membershipRegistration.account.id)
                         .from(membershipRegistration)
-                        .where(membershipRegistration.expirationDate.goe(LocalDateTime.now()))));
+//                        .where(membershipRegistration.expirationDate.goe(LocalDateTime.now()))
+                ));
       } else {
         whereClause.and(
             ticket

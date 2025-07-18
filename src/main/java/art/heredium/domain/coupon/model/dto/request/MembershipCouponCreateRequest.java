@@ -14,6 +14,6 @@ public class MembershipCouponCreateRequest extends CouponCreateRequest {
 
   @JsonProperty("period_in_days")
   @NotNull
-  @Min(1)
+  @Min(0)
   private Integer periodInDays;
 }

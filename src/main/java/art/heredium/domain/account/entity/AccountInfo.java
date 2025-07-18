@@ -12,6 +12,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
+import org.apache.commons.lang3.StringUtils;
 import org.hibernate.annotations.*;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
@@ -105,6 +106,14 @@ public class AccountInfo implements Serializable {
   @Column(name = "sms_request_id", columnDefinition = "json")
   private List<String> smsRequestId;
 
+  @Comment("직업 (자유 입력)")
+  @Column(name = "job", length = 50)
+  private String job;
+
+  @Comment("추가 개인정보 수집 및 이용 동의 여부")
+  @Column(name = "additional_info_agreed", nullable = false, columnDefinition = "tinyint(1) default 0")
+  private Boolean additionalInfoAgreed;
+
   public AccountInfo(PostAccountRequest dto, PostNiceIdEncryptResponse info, Account account) {
     this.auth = AuthType.USER;
     this.name = info.getName();
@@ -114,18 +123,32 @@ public class AccountInfo implements Serializable {
     this.marketingPending   = dto.getMarketingPending();
     this.gender   = dto.getGender();
     this.birthDate   = dto.getBirthDate();
-    this.state   = dto.getState();
-    this.district   = dto.getDistrict();
 
-    // 마케팅 수신 동의 처리
-    if (Boolean.TRUE.equals(dto.getIsMarketingReceive())) {
-      // 동의 시
-      this.isMarketingReceive = true;
-      this.marketingAgreedDate = Constants.getNow();
+    // 5가지 항목이 모두 입력/동의되었는지 확인
+    boolean hasJob            = StringUtils.isNotBlank(dto.getJob());
+    boolean hasState          = StringUtils.isNotBlank(dto.getState());
+    boolean hasDistrict       = StringUtils.isNotBlank(dto.getDistrict());
+    boolean hasAdditionalInfo = Boolean.TRUE.equals(dto.getAdditionalInfoAgreed());
+    boolean hasMarketing      = Boolean.TRUE.equals(dto.getIsMarketingReceive());
+
+    boolean fullConsent = hasJob && hasState && hasDistrict && hasAdditionalInfo && hasMarketing;
+
+    // (2) 전체 동의일 때만 값을 저장, 아니면 모두 기본값으로
+    if (fullConsent) {
+      this.job                    = dto.getJob();
+      this.state                  = dto.getState();
+      this.district               = dto.getDistrict();
+      this.additionalInfoAgreed   = true;
+      this.isMarketingReceive     = true;
+      this.marketingAgreedDate    = Constants.getNow();
     } else {
-      // 동의 철회 시
-      this.isMarketingReceive = false;
-      this.marketingAgreedDate = null;
+      // 저장하지 않음(또는 false/null)
+      this.job                    = null;
+      this.state                  = null;
+      this.district               = null;
+      this.additionalInfoAgreed   = false;
+      this.isMarketingReceive     = false;
+      this.marketingAgreedDate    = null;
     }
   }
 
@@ -140,6 +163,8 @@ public class AccountInfo implements Serializable {
     this.birthDate   = dto.getBirthDate();
     this.state   = dto.getState();
     this.district   = dto.getDistrict();
+    this.job = dto.getJob();
+    this.additionalInfoAgreed = dto.getAdditionalInfoAgreed();
 
     // 마케팅 수신 동의 처리
     if (Boolean.TRUE.equals(dto.getIsMarketingReceive())) {
@@ -163,12 +188,12 @@ public class AccountInfo implements Serializable {
   }
 
   public void updateMarketing(PutUserAccountRequest dto) {
-    this.gender             = dto.getGender();
-    this.birthDate          = dto.getBirthDate();
+    this.job                = dto.getJob();
     this.state              = dto.getState();
     this.district           = dto.getDistrict();
     this.marketingPending   = dto.getMarketingPending();
     this.isLocalResident = dto.getIsLocalResident();
+    this.additionalInfoAgreed = dto.getAdditionalInfoAgreed();
 
     // 마케팅 수신 동의 처리
     if (Boolean.TRUE.equals(dto.getIsMarketingReceive())) {
@@ -180,6 +205,12 @@ public class AccountInfo implements Serializable {
       this.isMarketingReceive = false;
       this.marketingAgreedDate = null;
     }
+  }
+
+  public void updatePhoneVerification(PutUserAccountRequest dto) {
+    this.phone             = dto.getPhone();
+    this.gender             = dto.getGender();
+    this.birthDate          = dto.getBirthDate();
   }
 
   public void updateLastLoginDate() {

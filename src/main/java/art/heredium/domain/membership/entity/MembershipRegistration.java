@@ -5,11 +5,7 @@ import java.util.UUID;
 
 import javax.persistence.*;
 
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.NonNull;
-import lombok.ToString;
+import lombok.*;
 
 import com.vladmihalcea.hibernate.type.json.JsonStringType;
 import org.hibernate.annotations.Comment;
@@ -21,6 +17,7 @@ import art.heredium.domain.common.entity.BaseEntity;
 import art.heredium.domain.company.entity.Company;
 
 @Entity
+@Setter
 @Getter
 @Table(name = "membership_registration")
 @DynamicInsert

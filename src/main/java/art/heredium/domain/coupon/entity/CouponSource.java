@@ -1,13 +1,10 @@
 package art.heredium.domain.coupon.entity;
 
+import art.heredium.domain.coupon.model.dto.request.*;
 import lombok.Getter;
 
 import art.heredium.core.config.error.entity.ApiException;
 import art.heredium.core.config.error.entity.ErrorCode;
-import art.heredium.domain.coupon.model.dto.request.CompanyCouponCreateRequest;
-import art.heredium.domain.coupon.model.dto.request.CouponCreateRequest;
-import art.heredium.domain.coupon.model.dto.request.MembershipCouponCreateRequest;
-import art.heredium.domain.coupon.model.dto.request.NonMembershipCouponCreateRequest;
 
 @Getter
 public enum CouponSource {
@@ -28,6 +25,8 @@ public enum CouponSource {
       return MEMBERSHIP_PACKAGE;
     } else if (request instanceof NonMembershipCouponCreateRequest) {
       return ADMIN_SITE;
+    } else if (request instanceof RecurringCouponCreateRequest) {
+      return ADMIN_SITE; // 또는 필요시 새로운 ENUM 타입 추가
     } else {
       // This case will never happen
       throw new ApiException(

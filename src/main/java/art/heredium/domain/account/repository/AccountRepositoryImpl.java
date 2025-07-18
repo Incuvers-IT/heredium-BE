@@ -564,7 +564,7 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
             membershipRegistration
                 .account
                 .eq(account)
-                .and(membershipRegistration.expirationDate.goe(currentDate))
+//                .and(membershipRegistration.expirationDate.goe(currentDate))
                 .and(membershipRegistration.paymentStatus.eq(PaymentStatus.COMPLETED)))
         .leftJoin(membershipRegistration.membership, membership)
         .leftJoin(membershipRegistration.company, company)
@@ -691,7 +691,7 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
               membershipRegistration
                   .account
                   .eq(account)
-                  .and(membershipRegistration.expirationDate.goe(currentDate))
+//                  .and(membershipRegistration.expirationDate.goe(currentDate))
                   .and(membershipRegistration.paymentStatus.eq(PaymentStatus.COMPLETED)))
           .exists();
     }
@@ -752,7 +752,7 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
             qMembershipRegistration
                 .account
                 .eq(account)
-                .and(qMembershipRegistration.expirationDate.goe(LocalDateTime.now()))
+//                .and(qMembershipRegistration.expirationDate.goe(LocalDateTime.now()))
                 .and(qMembershipRegistration.paymentStatus.eq(PaymentStatus.COMPLETED)))
         .leftJoin(qMembershipRegistration.membership, qMembership)
         .leftJoin(qMembershipRegistration.company, qCompany)

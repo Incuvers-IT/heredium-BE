@@ -14,6 +14,10 @@ import art.heredium.domain.account.model.dto.request.*;
 import art.heredium.domain.account.model.dto.response.*;
 import art.heredium.domain.account.repository.AccountInfoRepository;
 import art.heredium.domain.account.repository.AccountRepository;
+import art.heredium.domain.coupon.entity.Coupon;
+import art.heredium.domain.coupon.entity.CouponUsage;
+import art.heredium.domain.coupon.repository.CouponRepository;
+import art.heredium.domain.coupon.repository.CouponUsageRepository;
 import art.heredium.domain.membership.entity.Membership;
 import art.heredium.domain.membership.entity.MembershipRegistration;
 import art.heredium.domain.membership.entity.PaymentStatus;
@@ -29,13 +33,16 @@ import art.heredium.ncloud.type.AlimTalkTemplate;
 import art.heredium.ncloud.type.MailTemplate;
 import art.heredium.niceId.model.dto.response.PostNiceIdEncryptResponse;
 import art.heredium.niceId.service.NiceIdService;
+import art.heredium.oauth.info.OAuth2UserInfo;
 import art.heredium.oauth.provider.OAuth2Provider;
+import art.heredium.oauth.service.OAuthService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.ss.usermodel.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -50,7 +57,9 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -75,6 +84,9 @@ public class AccountService {
   private final HerediumProperties herediumProperties;
   private final MembershipRepository membershipRepository;
   private final MembershipRegistrationRepository membershipRegistrationRepository;
+  private final CouponRepository couponRepository;
+  private final CouponUsageService couponUsageService;
+  private final OAuthService oAuthService;
 
   public GetUserAccountResponse get(String password) {
     Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -98,20 +110,73 @@ public class AccountService {
   @Transactional
   public PostLoginResponse insert(HttpServletResponse response, PostAccountRequest dto) {
 
-    // 1. 회원 기본 정보 저장
-    if (isExistEmail(dto.getEmail())) {
-      throw new ApiException(ErrorCode.DUPLICATE_EMAIL);
+    Account entity;
+    PostNiceIdEncryptResponse info;
+
+    // 1) 이메일 가입 vs 소셜 가입 분기
+    if (dto.getSnsType() != null && dto.getSnsId() != null) {
+
+      // (a) 토큰으로 OAuth2UserInfo 추출
+      OAuth2Provider provider = OAuth2Provider.valueOf(dto.getSnsType().toUpperCase());
+      OAuth2UserInfo userInfo = oAuthService.getUserInfo(provider, dto.getSnsId());
+
+      // (b) 이미 등록된 SNS 사용자인지 체크
+      Account account = accountRepository.findBySnsIdAndProviderType(userInfo.getId(), provider);
+      if (account != null) {
+        throw new ApiException(ErrorCode.ALREADY_EXIST_USERNAME);
+      }
+
+      // (c) 나이·본인인증 체크
+      info = niceIdService.decrypt(dto.getEncodeData());
+      long age = ChronoUnit.YEARS.between(info.getBirthDate(), Constants.getNow());
+      if (age < 14) {
+        throw new ApiException(ErrorCode.UNDER_FOURTEEN);
+      }
+      if (userInfo.getPhone() != null && !userInfo.getPhone().equals(info.getMobileNo())) {
+        throw new ApiException(ErrorCode.NOT_EQ_PHONE);
+      }
+
+      entity = new Account(dto, info, userInfo, provider);
+
+    }else{
+
+      // 1. 회원 기본 정보 저장
+      if (isExistEmail(dto.getEmail())) {
+        throw new ApiException(ErrorCode.DUPLICATE_EMAIL);
+      }
+      info = niceIdService.decrypt(dto.getEncodeData());
+      long age = ChronoUnit.YEARS.between(info.getBirthDate(), Constants.getNow());
+      if (age < 14) {
+        throw new ApiException(ErrorCode.UNDER_FOURTEEN);
+      }
+      entity = new Account(dto, info, bCryptPasswordEncoder.encode(dto.getPassword()));
+
     }
-    PostNiceIdEncryptResponse info = niceIdService.decrypt(dto.getEncodeData());
-    long age = ChronoUnit.YEARS.between(info.getBirthDate(), Constants.getNow());
-    if (age < 14) {
-      throw new ApiException(ErrorCode.UNDER_FOURTEEN);
-    }
-    Account entity = new Account(dto, info, bCryptPasswordEncoder.encode(dto.getPassword()));
+
     accountRepository.save(entity);
 
-    // 2. 멤버십 등록
+    // 2. 공통로직 - 여기서 마케팅 쿠폰 발급 조건 확인 및 발급
+    boolean hasJob            = StringUtils.isNotBlank(dto.getJob());
+    boolean hasState          = StringUtils.isNotBlank(dto.getState());
+    boolean hasDistrict       = StringUtils.isNotBlank(dto.getDistrict());
+    boolean hasAdditionalInfo = Boolean.TRUE.equals(dto.getAdditionalInfoAgreed());
+    boolean hasMarketing      = Boolean.TRUE.equals(dto.getIsMarketingReceive());
+
+    if (hasJob && hasState && hasDistrict && hasAdditionalInfo && hasMarketing) {
+      // a) 마케팅 동의 혜택용 쿠폰 조회
+      List<Coupon> coupons = couponRepository.findByMarketingConsentBenefitTrue();
+
+      // b) 쿠폰 사용내역 생성/저장 (sendAlimtalk 여부는 false 로 설정)
+      couponUsageService.distributeMembershipAndCompanyCoupons(
+              entity,
+              coupons,
+              false
+      );
+    }
+
+    // 3. 멤버십 등록
     // 1) 나이에 따라 code 결정 (19세 미만 → 학생(3), 그 외 → 기본(1))
+    long age = ChronoUnit.YEARS.between(info.getBirthDate(), Constants.getNow());
     int targetCode = (age < 19) ? 3 : 1;
 
     // 2) code 로 멤버십 조회
@@ -130,18 +195,26 @@ public class AccountService {
                     "system",
                     "system"));
 
-    // 3. 로그인
-    PostLoginResponse res =
-        authService.login(response, new PostLoginRequest(dto.getEmail(), dto.getPassword()), false);
 
-    // 4) 메일·알림톡 발송은 예외 무시
+    // 5) 로그인 (공통)
+    PostLoginResponse loginRes;
+
+    if (dto.getSnsType() != null) {
+      // 소셜 로그인
+      OAuth2Provider provider = OAuth2Provider.valueOf(dto.getSnsType().toUpperCase());
+      loginRes = oAuthService.loginByToken(response, provider, dto.getSnsId());
+    } else {
+      // 이메일 로그인
+      loginRes = authService.login(response, new PostLoginRequest(dto.getEmail(), dto.getPassword()), false);
+    }
+
     try {
-      sendSignupNotifications(entity);
+//      sendSignupNotifications(entity);
     } catch (Exception ex) {
       log.error("회원가입 메일/알림톡 발송 중 오류", ex);
     }
 
-    return res;
+    return loginRes;
   }
 
   private void sendSignupNotifications(Account entity) {
@@ -330,14 +403,96 @@ public class AccountService {
     return new GetUserAccountInfoResponse(entity, membershipRegistration);
   }
 
+  @Transactional
   public GetUserAccountInfoResponse updateByAccountInfo(PutUserAccountRequest dto) {
+    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
+    Account entity = accountRepository.findById(userPrincipal.getId()).orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND));
+
+    String rawGender = dto.getGender();
+
+    if (rawGender != null && !rawGender.isEmpty()) {
+      char g = Character.toUpperCase(rawGender.charAt(0));  // 'M' 또는 'W'
+      if (g == 'M' || g == 'W') {
+        dto.setGender(String.valueOf(g));
+      } else {
+        // 예외 처리: 예상치 못한 값이 넘어오면 기본 'M' 으로 처리하거나 예외 던지기
+        dto.setGender("M");
+      }
+    }
+
+    entity.getAccountInfo().updatePhoneVerification(dto);
+
+    LocalDate birthDate = LocalDate.parse(dto.getBirthDate());
+    long age = ChronoUnit.YEARS.between(birthDate, Constants.getNow());
+
+    if (age < 14) {
+      throw new ApiException(ErrorCode.UNDER_FOURTEEN);
+    }
+
+    // 1) 나이에 따라 code 결정 (19세 미만 → 학생(3), 그 외 → 기본(1))
+    int targetCode = (age < 19) ? 3 : 1;
+
+    // 2) code 로 멤버십 조회
+    Membership membership = membershipRepository
+            .findByCode(targetCode)
+            .orElseThrow(() -> new ApiException(ErrorCode.MEMBERSHIP_NOT_FOUND));
+
+    // 3) 기존 registration 조회 (가장 최신)
+    Optional<MembershipRegistration> optReg =
+            membershipRegistrationRepository.findLatestForAccount(entity.getId());
+
+    MembershipRegistration reg;
+
+    if (optReg.isPresent()) {
+      // ── 업데이트 모드 ───────────────────────────
+      reg = optReg.get();
+      reg.setMembership(membership);
+      reg.setRegistrationType(RegistrationType.MEMBERSHIP_PACKAGE);
+      reg.setPaymentStatus(PaymentStatus.COMPLETED);
+    } else {
+      // ── 신규등록 모드 ───────────────────────────
+      reg = new MembershipRegistration(
+              entity,
+              membership,
+              LocalDateTime.now(),
+              RegistrationType.MEMBERSHIP_PACKAGE,
+              PaymentStatus.COMPLETED,
+              "system",
+              "system"
+      );
+    }
+
+    // 3) 저장 (JPA가 id 유무로 insert/update 결정)
+    membershipRegistrationRepository.save(reg);
+
+    return new GetUserAccountInfoResponse(entity, reg);
+  }
+
+  @Transactional
+  public GetUserAccountInfoResponse updateByMarketing(PutUserAccountRequest dto) {
+    // 1) 로그인한 회원 조회
     Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
     UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
     Account entity = accountRepository.findById(userPrincipal.getId()).orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND));
     MembershipRegistration membershipRegistration =
             membershipRegistrationRepository.findLatestForAccount(entity.getId()).orElse(null);
 
+    // 2) 마케팅 동의 정보 업데이트
     entity.getAccountInfo().updateMarketing(dto);
+
+    // 3) 마케팅 수신 동의한 경우에만 쿠폰 발급 처리
+    if (Boolean.TRUE.equals(dto.getIsMarketingReceive())) {
+      // a) 마케팅 동의 혜택용 쿠폰 조회
+      List<Coupon> coupons = couponRepository.findByMarketingConsentBenefitTrue();
+
+      // b) 쿠폰 사용내역 생성/저장 (sendAlimtalk 여부는 false 로 설정)
+      couponUsageService.distributeMembershipAndCompanyCoupons(
+              entity,
+              coupons,
+              false
+      );
+    }
 
     return new GetUserAccountInfoResponse(entity, membershipRegistration);
   }

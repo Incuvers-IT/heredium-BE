@@ -14,8 +14,10 @@ public class PostAccountSnsRequest {
   @NotNull private Boolean isLocalResident;
   @NotNull private Boolean isMarketingReceive;
   @NotNull private Boolean marketingPending;
+  @NotNull private Boolean additionalInfoAgreed;
   private String gender;
   private String birthDate;
   private String state;
   private String district;
+  private String job;
 }

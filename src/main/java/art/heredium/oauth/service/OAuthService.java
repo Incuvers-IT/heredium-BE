@@ -1,5 +1,6 @@
 package art.heredium.oauth.service;
 
+import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.HashMap;
@@ -145,13 +146,13 @@ public class OAuthService {
       PostAccountSnsRequest dto) {
 
     // 1. 회원 기본 정보 저장
-    OAuth2UserInfo userInfo = getUserInfo(provider, dto.getToken());
-    PostNiceIdEncryptResponse info = niceIdService.decrypt(dto.getEncodeData());
-    Account account = accountRepository.findBySnsIdAndProviderType(userInfo.getId(), provider);
-    if (account != null) {
-      throw new ApiException(ErrorCode.ALREADY_EXIST_USERNAME);
-    }
-    Account entity;
+//    OAuth2UserInfo userInfo = getUserInfo(provider, dto.getToken());
+//    PostNiceIdEncryptResponse info = niceIdService.decrypt(dto.getEncodeData());
+//    Account account = accountRepository.findBySnsIdAndProviderType(userInfo.getId(), provider);
+//    if (account != null) {
+//      throw new ApiException(ErrorCode.ALREADY_EXIST_USERNAME);
+//    }
+//    Account entity;
 //    if (provider == OAuth2Provider.KAKAO) {
 //      boolean isAllow;
 //      try {
@@ -168,46 +169,50 @@ public class OAuthService {
 //    } else {
 //      entity = new Account(dto, info, userInfo, provider);
 //    }
-    entity = new Account(dto, info, userInfo, provider);
-
-    long age = ChronoUnit.YEARS.between(info.getBirthDate(), Constants.getNow());
-    if (age < 14) {
-      throw new ApiException(ErrorCode.UNDER_FOURTEEN);
-    }
-    if (userInfo.getPhone() != null && !userInfo.getPhone().equals(info.getMobileNo())) {
-      throw new ApiException(ErrorCode.NOT_EQ_PHONE);
-    }
-
-    accountRepository.save(entity);
+//    entity = new Account(dto, info, userInfo, provider);
+//
+//    long age = ChronoUnit.YEARS.between(info.getBirthDate(), Constants.getNow());
+//    if (age < 14) {
+//      throw new ApiException(ErrorCode.UNDER_FOURTEEN);
+//    }
+//    if (userInfo.getPhone() != null && !userInfo.getPhone().equals(info.getMobileNo())) {
+//      throw new ApiException(ErrorCode.NOT_EQ_PHONE);
+//    }
+//
+//    accountRepository.save(entity);
 
     // 2. 멤버십 등록
     // 1) 나이에 따라 code 결정 (19세 미만 → 학생(3), 그 외 → 기본(1))
-    int targetCode = (age < 19) ? 3 : 1;
+//    int targetCode = (age < 19) ? 3 : 1;
 
     // 2) code 로 멤버십 조회
-    Membership membership = membershipRepository
-            .findByCode(targetCode)
-            .orElseThrow(() -> new ApiException(ErrorCode.MEMBERSHIP_NOT_FOUND));
+//    Membership membership = membershipRepository
+//            .findByCode(targetCode)
+//            .orElseThrow(() -> new ApiException(ErrorCode.MEMBERSHIP_NOT_FOUND));
 
     // (3) MembershipRegistration 생성 및 저장
-    this.membershipRegistrationRepository.save(
-            new MembershipRegistration(
-                    entity,
-                    membership,
-                    RegistrationType.MEMBERSHIP_PACKAGE,
-                    PaymentStatus.COMPLETED));
+//    this.membershipRegistrationRepository.save(
+//            new MembershipRegistration(
+//                    entity,
+//                    membership,
+//                    LocalDateTime.now(),
+//                    RegistrationType.MEMBERSHIP_PACKAGE,
+//                    PaymentStatus.COMPLETED,
+//                    "system",
+//                    "system"));
 
     // 3. 로그인
-    PostLoginResponse res = loginByToken(response, provider, dto.getToken());
+//    PostLoginResponse res = loginByToken(response, provider, dto.getToken());
 
     // 4) 메일·알림톡 발송은 예외 무시
-    try {
-      sendSignupNotifications(entity);
-    } catch (Exception ex) {
-      log.error("회원가입 메일/알림톡 발송 중 오류", ex);
-    }
+//    try {
+//      sendSignupNotifications(entity);
+//    } catch (Exception ex) {
+//      log.error("회원가입 메일/알림톡 발송 중 오류", ex);
+//    }
 
-    return res;
+//    return res;
+    return null;
   }
 
   private void sendSignupNotifications(Account entity) {
@@ -242,7 +247,7 @@ public class OAuthService {
             });
   }
 
-  private OAuth2UserInfo getUserInfo(OAuth2Provider provider, String token) {
+  public OAuth2UserInfo getUserInfo(OAuth2Provider provider, String token) {
 
     if (provider == OAuth2Provider.APPLE) {
       Map<String, Object> userId =

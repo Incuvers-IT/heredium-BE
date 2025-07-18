@@ -166,6 +166,37 @@ public class Scheduler {
     }
   }
 
+
+// 매월 X일 오전 10시에만 실제 발송
+  @Async
+  @Scheduled(cron = "0 0 10 * * *")
+  @Transactional(rollbackFor = Exception.class)
+  public void couponDailyAt10() {
+    LocalDate today = LocalDate.now();
+    int dom = today.getDayOfMonth();
+
+    // 1) 오늘 발송 대상 쿠폰 조회
+//    List<Coupon> toSend = couponRepo.findAllByIsRecurringTrueAndScheduleDay(dom);
+
+    // 2) 각 쿠폰별 대상 회원 필터링 & 발송
+//    for (Coupon c : toSend) {
+//      List<User> targets = fetchTargets(c.getRecipientType(), c.isMarketingBenefit());
+//      notifier.sendCoupon(c, targets);
+//    }
+  }
+
+//  private List<User> fetchTargets(String recipientType, boolean marketingBenefit) {
+//    switch (recipientType) {
+//      case "ALL":
+//        return userRepo.findAllActive();
+//      case "MARKETING_ONLY":
+//        return userRepo.findAllByMarketingConsentTrue();
+//      // 필요시 MEMBERSHIP 등 추가 분기...
+//      default:
+//        return Collections.emptyList();
+//    }
+//  }
+
   @Async
   @Transactional(propagation = Propagation.NEVER)
   public void sendExpiredMembershipNotifications(List<MembershipRegistration> expiredMemberships) {

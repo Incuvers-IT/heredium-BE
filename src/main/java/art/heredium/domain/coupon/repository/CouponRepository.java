@@ -15,6 +15,11 @@ import art.heredium.domain.coupon.entity.Coupon;
 public interface CouponRepository extends JpaRepository<Coupon, Long> {
   List<Coupon> findByCompanyAndIsDeletedFalse(Company company);
 
+  /**
+   * 마케팅 동의 시 발급해 주어야 할 혜택용 쿠폰만 조회
+   */
+  List<Coupon> findByMarketingConsentBenefitTrue();
+
   @Modifying
   @Query("DELETE FROM Coupon c WHERE c.company.id = :companyId")
   void deleteByCompanyId(@Param("companyId") Long companyId);
