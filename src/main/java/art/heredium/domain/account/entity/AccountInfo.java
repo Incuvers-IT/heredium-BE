@@ -119,7 +119,6 @@ public class AccountInfo implements Serializable {
     this.name = info.getName();
     this.phone = info.getMobileNo();
     this.account = account;
-    this.isLocalResident   = dto.getIsLocalResident();
     this.marketingPending   = dto.getMarketingPending();
     this.gender   = dto.getGender();
     this.birthDate   = dto.getBirthDate();
@@ -141,6 +140,7 @@ public class AccountInfo implements Serializable {
       this.additionalInfoAgreed   = true;
       this.isMarketingReceive     = true;
       this.marketingAgreedDate    = Constants.getNow();
+      this.isLocalResident   = dto.getIsLocalResident();
     } else {
       // 저장하지 않음(또는 false/null)
       this.job                    = null;
@@ -149,6 +149,7 @@ public class AccountInfo implements Serializable {
       this.additionalInfoAgreed   = false;
       this.isMarketingReceive     = false;
       this.marketingAgreedDate    = null;
+      this.isLocalResident        = false;
     }
   }
 
@@ -183,8 +184,32 @@ public class AccountInfo implements Serializable {
   }
 
   public void update(PutUserAccountRequest dto) {
-    this.isLocalResident = dto.getIsLocalResident();
-    this.isMarketingReceive = dto.getIsMarketingReceive();
+    // 1) 동의 기반 필드: 모든 추가 정보가 채워지고 동의가 true일 때만 저장
+    boolean hasJob          = StringUtils.isNotBlank(dto.getJob());
+    boolean hasState        = StringUtils.isNotBlank(dto.getState());
+    boolean hasDistrict     = StringUtils.isNotBlank(dto.getDistrict());
+    boolean hasAdditional   = Boolean.TRUE.equals(dto.getAdditionalInfoAgreed());
+    boolean hasMarketing    = Boolean.TRUE.equals(dto.getIsMarketingReceive());
+
+    boolean fullConsent = hasJob && hasState && hasDistrict && hasAdditional && hasMarketing;
+
+    if (fullConsent) {
+      this.job                  = dto.getJob();
+      this.state                = dto.getState();
+      this.district             = dto.getDistrict();
+      this.additionalInfoAgreed = true;
+      this.isMarketingReceive   = true;
+      this.marketingAgreedDate  = LocalDateTime.now();
+      this.isLocalResident     = dto.getIsLocalResident();
+    } else {
+      // 하나라도 빠졌으면 모두 초기화
+      this.job                  = null;
+      this.state                = null;
+      this.district             = null;
+      this.additionalInfoAgreed = false;
+      this.isMarketingReceive   = false;
+      this.isLocalResident     = false;
+    }
   }
 
   public void updateMarketing(PutUserAccountRequest dto) {

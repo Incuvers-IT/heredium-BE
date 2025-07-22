@@ -22,4 +22,5 @@ public class PutUserAccountRequest {
   private String district;       // 동구
   private String job;            // 직업
   @NotNull private Boolean marketingPending;  // 0: false, 1: true(defualt)
+  private String marketingAgreedDate;
 }

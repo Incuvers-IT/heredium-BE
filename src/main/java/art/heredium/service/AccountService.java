@@ -170,7 +170,7 @@ public class AccountService {
       couponUsageService.distributeMembershipAndCompanyCoupons(
               entity,
               coupons,
-              false
+              true
       );
     }
 
@@ -209,7 +209,7 @@ public class AccountService {
     }
 
     try {
-//      sendSignupNotifications(entity);
+      sendSignupNotifications(entity);
     } catch (Exception ex) {
       log.error("회원가입 메일/알림톡 발송 중 오류", ex);
     }
@@ -382,6 +382,31 @@ public class AccountService {
     if (entity == null) {
       throw new ApiException(ErrorCode.NOT_FOUND);
     }
+  
+    // 첫 동의건에 대한 처리
+    LocalDateTime prevAgreeDate = entity.getAccountInfo().getMarketingAgreedDate();
+    
+    // 마케팅 쿠폰 발급 조건 확인 및 발급
+    boolean hasJob            = StringUtils.isNotBlank(dto.getJob());
+    boolean hasState          = StringUtils.isNotBlank(dto.getState());
+    boolean hasDistrict       = StringUtils.isNotBlank(dto.getDistrict());
+    boolean hasAdditionalInfo = Boolean.TRUE.equals(dto.getAdditionalInfoAgreed());
+    boolean hasMarketing      = Boolean.TRUE.equals(dto.getIsMarketingReceive());
+
+    List<Coupon> coupons = Collections.emptyList();
+
+    // dto.getMarketingAgreedDate() 정보가 없을 경우 첫 동의건만 쿠폰발급
+    if (prevAgreeDate == null && hasJob && hasState && hasDistrict && hasAdditionalInfo && hasMarketing ) {
+      // a) 마케팅 동의 혜택용 쿠폰 조회
+      coupons = couponRepository.findByMarketingConsentBenefitTrue();
+
+      // b) 쿠폰 사용내역 생성/저장 (sendAlimtalk 여부는 false 로 설정)
+      couponUsageService.distributeMembershipAndCompanyCoupons(
+              entity,
+              coupons,
+              true
+      );
+    }
 
     if (entity.getProviderType() == OAuth2Provider.EMAIL) {
       if (dto.getEmail() != null) {
@@ -396,11 +421,13 @@ public class AccountService {
     }
     entity.getAccountInfo().update(dto);
 
+    // 전화번호 변경 (encodeData 로직)
     if (dto.getEncodeData() != null) {
       PostNiceIdEncryptResponse info = niceIdService.decrypt(dto.getEncodeData());
       entity.getAccountInfo().updatePhone(info);
     }
-    return new GetUserAccountInfoResponse(entity, membershipRegistration);
+
+    return new GetUserAccountInfoResponse(entity, membershipRegistration, coupons);
   }
 
   @Transactional
@@ -471,6 +498,7 @@ public class AccountService {
 
   @Transactional
   public GetUserAccountInfoResponse updateByMarketing(PutUserAccountRequest dto) {
+
     // 1) 로그인한 회원 조회
     Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
     UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
@@ -478,23 +506,36 @@ public class AccountService {
     MembershipRegistration membershipRegistration =
             membershipRegistrationRepository.findLatestForAccount(entity.getId()).orElse(null);
 
-    // 2) 마케팅 동의 정보 업데이트
-    entity.getAccountInfo().updateMarketing(dto);
+    // 첫 동의건에 대한 처리
+    LocalDateTime prevAgreeDate = entity.getAccountInfo().getMarketingAgreedDate();
 
-    // 3) 마케팅 수신 동의한 경우에만 쿠폰 발급 처리
-    if (Boolean.TRUE.equals(dto.getIsMarketingReceive())) {
+    // 마케팅 쿠폰 발급 조건 확인 및 발급
+    boolean hasJob            = StringUtils.isNotBlank(dto.getJob());
+    boolean hasState          = StringUtils.isNotBlank(dto.getState());
+    boolean hasDistrict       = StringUtils.isNotBlank(dto.getDistrict());
+    boolean hasAdditionalInfo = Boolean.TRUE.equals(dto.getAdditionalInfoAgreed());
+    boolean hasMarketing      = Boolean.TRUE.equals(dto.getIsMarketingReceive());
+
+    List<Coupon> coupons = Collections.emptyList();
+
+    // 마케팅 수신 동의한 경우에만 쿠폰 발급 처리
+    // dto.getMarketingAgreedDate() 정보가 없을 경우 첫 동의건만 쿠폰발급
+    if (prevAgreeDate == null && hasJob && hasState && hasDistrict && hasAdditionalInfo && hasMarketing ) {
       // a) 마케팅 동의 혜택용 쿠폰 조회
-      List<Coupon> coupons = couponRepository.findByMarketingConsentBenefitTrue();
+      coupons = couponRepository.findByMarketingConsentBenefitTrue();
 
       // b) 쿠폰 사용내역 생성/저장 (sendAlimtalk 여부는 false 로 설정)
       couponUsageService.distributeMembershipAndCompanyCoupons(
               entity,
               coupons,
-              false
+              true
       );
     }
 
-    return new GetUserAccountInfoResponse(entity, membershipRegistration);
+    // 2) 마케팅 동의 정보 업데이트
+    entity.getAccountInfo().updateMarketing(dto);
+
+    return new GetUserAccountInfoResponse(entity, membershipRegistration, coupons);
   }
 
   public boolean delete(@Valid @NotBlank String password) {
