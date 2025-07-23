@@ -57,4 +57,10 @@ public class MembershipMileageResponse {
 
   @JsonProperty("title")
   private String title;                // 카테고리 제목
+
+  @JsonProperty("remark")
+  private String remark;              // 비고
+
+  @JsonProperty("relatedMileageId")
+  private Long relatedMileageId;      // 취소 연관 마일리지ID
 }

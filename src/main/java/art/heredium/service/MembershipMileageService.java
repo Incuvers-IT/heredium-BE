@@ -54,11 +54,11 @@ public class MembershipMileageService {
   }
 
   @Transactional
-  public void refundMileage(Long originalId) {
+  public void refundMileage(Long originalId, String reason) {
     MembershipMileage orig = membershipMileageRepository.findById(originalId)
             .orElseThrow(() -> new EntityNotFoundException("Original mileage not found: " + originalId));
 
-    // 2) 원본을 '환불완료(4)' 로 마킹
+    // 2) 원본을 '취소(4)' 로 마킹
     orig.setType(4);
     membershipMileageRepository.save(orig);
 
@@ -75,6 +75,8 @@ public class MembershipMileageService {
             .mileageAmount(-orig.getMileageAmount())
             // 만료일은 환불엔 의미가 없으므로 null 로 두거나 원본과 동일하게
             .expirationDate(null)
+            .remark(reason)
+            .relatedMileage(orig)
             .build();
 
     membershipMileageRepository.save(refund);

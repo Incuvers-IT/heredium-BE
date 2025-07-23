@@ -23,5 +23,8 @@ public class MembershipUpdateCouponRequest {
   @JsonProperty("usage_threshold")
   private Integer usageThreshold;
 
+  @JsonProperty("short_name")
+  private String shortName;
+
   private List<MembershipCouponUpdateRequest> coupons;
 }

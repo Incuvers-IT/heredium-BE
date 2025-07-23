@@ -224,6 +224,8 @@ public class MembershipService {
       m.setUsageThreshold(request.getUsageThreshold());
     }
 
+    m.setShortName(request.getShortName());
+
     membershipRepository.save(m);
 
     // 3) 쿠폰들 업데이트

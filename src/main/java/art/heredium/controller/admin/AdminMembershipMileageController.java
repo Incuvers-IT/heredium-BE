@@ -4,10 +4,7 @@ import art.heredium.core.annotation.ManagerPermission;
 import art.heredium.domain.coffee.repository.CoffeeRepository;
 import art.heredium.domain.exhibition.repository.ExhibitionRepository;
 import art.heredium.domain.membership.entity.MembershipMileage;
-import art.heredium.domain.membership.model.dto.request.GetAllActiveMembershipsRequest;
-import art.heredium.domain.membership.model.dto.request.MembershipCreateRequest;
-import art.heredium.domain.membership.model.dto.request.MembershipMileageCreateRequest;
-import art.heredium.domain.membership.model.dto.request.MembershipUpdateCouponRequest;
+import art.heredium.domain.membership.model.dto.request.*;
 import art.heredium.domain.membership.model.dto.response.*;
 import art.heredium.domain.program.repository.ProgramRepository;
 import art.heredium.service.MembershipMileageService;
@@ -84,7 +81,7 @@ public class AdminMembershipMileageController {
    */
   @PostMapping("/{id}/refund")
   @ResponseStatus(HttpStatus.CREATED)
-  public void refundMileage(@PathVariable Long id) {
-    membershipMileageService.refundMileage(id);
+  public void refundMileage(@PathVariable Long id, @RequestBody RefundRequest request) {
+    membershipMileageService.refundMileage(id, request.getReason());
   }
 }
