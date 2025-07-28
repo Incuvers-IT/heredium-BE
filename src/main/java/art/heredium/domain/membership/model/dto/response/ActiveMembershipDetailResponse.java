@@ -64,6 +64,9 @@ public class ActiveMembershipDetailResponse {
   @JsonProperty("is_agree_to_receive_marketing")
   private Boolean isAgreeToReceiveMarketing;
 
+  @JsonProperty("code")
+  private Integer code;
+
   public ActiveMembershipDetailResponse(
           final String membershipOrCompanyName,
           final Long accountId,
@@ -81,7 +84,9 @@ public class ActiveMembershipDetailResponse {
           final Long numberOfExhibitionsUsed,
           final Long numberOfProgramsUsed,
           final Long numberOfCoffeeUsed,
-          final Boolean isAgreeToReceiveMarketing) {
+          final Boolean isAgreeToReceiveMarketing,
+          final Integer code
+  ) {
     this.membershipOrCompanyName = membershipOrCompanyName;
     this.accountId = accountId;
     this.email = email;
@@ -99,5 +104,6 @@ public class ActiveMembershipDetailResponse {
     this.numberOfProgramsUsed = numberOfProgramsUsed;
     this.numberOfCoffeeUsed = numberOfCoffeeUsed;
     this.isAgreeToReceiveMarketing = isAgreeToReceiveMarketing;
+    this.code = code;
   }
 }

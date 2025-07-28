@@ -34,12 +34,17 @@ public enum AlimTalkTemplate {
       "쿠폰발행",
       "@heredium",
       "HEREDIUM027",
-      "@spadecompany",
-      ""), // Replaced for COUPON_HAS_BEEN_DELIVERED
+      "@heredium",
+      "HEREDIUM027"), // Replaced for COUPON_HAS_BEEN_DELIVERED
   NON_MEMBERSHIP_COUPON_HAS_BEEN_USED(
       "", "@heredium", "HEREDIUM023", "@spadecompany", ""), // dev templateCode has not been created
   WITH_MEMBERSHIP_COUPON_HAS_BEEN_USED(
       "", "@heredium", "HEREDIUM024", "@spadecompany", ""), // dev templateCode has not been created
+  TIER_UPGRADE(
+          "멤버십 변경 안내", "@heredium", "HEREDIUM030", "@heredium", "HEREDIUM030"),
+  MEMBERSHIP_EXPIRY_REMINDER(
+          "멤버십 만료 안내", "@heredium", "HEREDIUM032", "@heredium", "HEREDIUM032")
+
   ;
 
   private String prodPlusFriendId;

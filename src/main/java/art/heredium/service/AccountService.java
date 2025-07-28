@@ -176,6 +176,9 @@ public class AccountService {
 
     // 3. 멤버십 등록
     // 1) 나이에 따라 code 결정 (19세 미만 → 학생(3), 그 외 → 기본(1))
+    // TODO: 테스트 삭제예정
+    info.setBirthDate(LocalDate.of(2006, 7, 25));
+
     long age = ChronoUnit.YEARS.between(info.getBirthDate(), Constants.getNow());
     int targetCode = (age < 19) ? 3 : 1;
 
@@ -184,17 +187,34 @@ public class AccountService {
             .findByCode(targetCode)
             .orElseThrow(() -> new ApiException(ErrorCode.MEMBERSHIP_NOT_FOUND));
 
-    // (3) MembershipRegistration 생성 및 저장
-    this.membershipRegistrationRepository.save(
+    // 3) 만료일 계산 (19세 미만일 때만)
+    LocalDateTime expirationDate = null;
+
+    if (targetCode == 3) {
+      // 생일 만 19세 되는 날 00:00 → 그 전날 23:59:59
+      expirationDate = info.getBirthDate()
+              .plusYears(19)
+              .atTime(23, 59, 59);
+    }
+
+    // 4) MembershipRegistration 생성 및 저장
+    MembershipRegistration registration =
             new MembershipRegistration(
                     entity,
                     membership,
                     LocalDateTime.now(),
                     RegistrationType.MEMBERSHIP_PACKAGE,
                     PaymentStatus.COMPLETED,
-                    "system",
-                    "system"));
+                    "SYSTEM",
+                    "SYSTEM"
+            );
 
+    // 만료일 setter
+    if (expirationDate != null) {
+      registration.setExpirationDate(expirationDate);
+    }
+
+    membershipRegistrationRepository.save(registration);
 
     // 5) 로그인 (공통)
     PostLoginResponse loginRes;
@@ -450,6 +470,8 @@ public class AccountService {
 
     entity.getAccountInfo().updatePhoneVerification(dto);
 
+    // TODO: 테스트 삭제예정
+    dto.setBirthDate("2006-07-25");
     LocalDate birthDate = LocalDate.parse(dto.getBirthDate());
     long age = ChronoUnit.YEARS.between(birthDate, Constants.getNow());
 
@@ -469,6 +491,16 @@ public class AccountService {
     Optional<MembershipRegistration> optReg =
             membershipRegistrationRepository.findLatestForAccount(entity.getId());
 
+    // 4) 만료일 계산 (학생 등급일 때만)
+    LocalDateTime expirationDate = null;
+    if (targetCode == 3) {
+      // 만 19세 되는 날 00:00 에 minusSeconds(1) → 전날 23:59:59
+      expirationDate = birthDate
+              .plusYears(19)
+              .atStartOfDay()
+              .minusSeconds(1);
+    }
+
     MembershipRegistration reg;
 
     if (optReg.isPresent()) {
@@ -485,10 +517,12 @@ public class AccountService {
               LocalDateTime.now(),
               RegistrationType.MEMBERSHIP_PACKAGE,
               PaymentStatus.COMPLETED,
-              "system",
-              "system"
+              "SYSTEM",
+              "SYSTEM"
       );
     }
+
+    reg.setExpirationDate(expirationDate);
 
     // 3) 저장 (JPA가 id 유무로 insert/update 결정)
     membershipRegistrationRepository.save(reg);

@@ -6,8 +6,51 @@ import art.heredium.domain.membership.model.dto.response.MembershipMileageRespon
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+
+import java.time.LocalDateTime;
+import java.util.List;
 
 public interface MembershipMileageRepository extends JpaRepository<MembershipMileage, Long> {
   Page<MembershipMileageResponse> getMembershipsMileageList(
           GetAllActiveMembershipsRequest request, Pageable pageable);
+
+  /**
+   * accountId에 대해 type=0(적립)이고,
+   * expirationDate가 없거나 현재 시각 이후인(만료되지 않은) 마일리지 합계를 반환.
+   */
+  @Query(
+          "SELECT COALESCE(SUM(m.mileageAmount), 0) " +
+                  "FROM MembershipMileage m " +
+                  "WHERE m.account.id = :accountId " +
+                  "  AND m.type = 0 " +
+                  "  AND m.relatedMileage IS NULL "
+
+  )
+  long sumActiveMileageByAccount(@Param("accountId") Long accountId);
+
+  /**
+   * type=0(적립) 이면서 expirationDate < now 인 엔트리만 JPQL로 조회
+   */
+  @Query("SELECT m FROM MembershipMileage m " +
+          " WHERE m.type = :type " +
+          "   AND m.expirationDate < :now")
+  List<MembershipMileage> findExpiredByTypeAndExpirationDateBefore(
+          @Param("type") int type,
+          @Param("now") LocalDateTime now
+  );
+
+  /**
+   * 계정(account.id)과 이벤트 타입(type)으로 조회하여
+   * expirationDate 오름차순으로 정렬된 리스트를 반환합니다.
+   *
+   * @param accountId 계정 ID
+   * @param type      이벤트 타입 (0: 적립, 1: 승급, ...)
+   * @return expirationDate ASC 정렬된 마일리지 목록
+   */
+  List<MembershipMileage> findByAccountIdAndTypeOrderByExpirationDateAsc(
+          Long accountId,
+          Integer type
+  );
 }

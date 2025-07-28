@@ -222,7 +222,9 @@ public class MembershipRegistrationRepositoryImpl
                             countUsedCouponsByType(CouponType.EXHIBITION),
                             countUsedCouponsByType(CouponType.PROGRAM),
                             countUsedCouponsByType(CouponType.COFFEE),
-                            accountInfo.isMarketingReceive))
+                            accountInfo.isMarketingReceive,
+                            membership.code
+                    ))
             .from(account)
             .innerJoin(account.accountInfo, accountInfo)
             .leftJoin(membershipRegistration)

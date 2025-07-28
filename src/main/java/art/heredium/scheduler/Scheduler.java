@@ -9,8 +9,14 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
+import art.heredium.domain.membership.entity.Membership;
+import art.heredium.domain.membership.entity.MembershipMileage;
+import art.heredium.domain.membership.repository.MembershipMileageRepository;
+import art.heredium.domain.membership.repository.MembershipRepository;
+import art.heredium.service.MembershipMileageService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -62,6 +68,9 @@ public class Scheduler {
   private final AccountInfoRepository accountInfoRepository;
   private final SleeperInfoRepository sleeperInfoRepository;
   private final MembershipRegistrationRepository membershipRegistrationRepository;
+  private final MembershipRepository membershipRepository;
+  private final MembershipMileageRepository mileageRepository;
+  private final MembershipMileageService mileageService;
   private final HerediumProperties herediumProperties;
   private final int accountSleepDay = 365;
   private final int accountTerminateDay = 365 * 2;
@@ -196,6 +205,300 @@ public class Scheduler {
 //        return Collections.emptyList();
 //    }
 //  }
+
+  // —————————————————————————————————————————————
+  // 0시: 만료/승급/예정체크/마일리지소멸
+  // —————————————————————————————————————————————
+  @Async
+//  @Scheduled(cron = "0 * * * * *")
+//   @Scheduled(cron = "0 0 0 * * ?")
+  // @Scheduled(cron = "0 */3 * * * *")
+  @Transactional(rollbackFor = Exception.class)
+  public void runMidnightTasks() {
+
+    // 1) 만료된 2·3등급 처리 (강등/유지)
+    processExpiredTier2And3();
+
+    // 2) 1→2승급 로직 (필요시 예약 알림)
+    upgradeToMembership2();
+
+    // 3) 만료 전 3·2·1개월 알림톡 예약
+    scheduleTierExpiryAlimTalk();
+
+    // 4) 마일리지 소멸
+    expireMileagePoints();
+  }
+
+  /**
+   * 2·3등급 만료 대상 조회 후 처리:
+   *  - 2등급이면서 마일리지 ≥ 기준점수: 만료일만 1년 연장 (Retention)
+   *  - 그 외(3등급 또는 2등급이지만 마일리지 부족): 1등급으로 강등
+   */
+  private void processExpiredTier2And3() {
+    LocalDateTime now = LocalDateTime.now();
+
+    // 1) 만료된 2·3등급 조회
+    List<MembershipRegistration> expired = membershipRegistrationRepository.demoteExpiredToBasic(
+            Arrays.asList(2, 3), now);
+    if (expired.isEmpty()) {
+      log.info("No expired tier-2/3 registrations to process");
+      return;
+    }
+
+    // 2) 기본 엔티티 미리 로드
+    Membership tier1 = membershipRepository.findByCode(1)
+            .orElseThrow(() -> new IllegalStateException("Tier1 membership not found"));
+    Membership tier2 = membershipRepository.findByCode(2)
+            .orElseThrow(() -> new IllegalStateException("Membership tier 2 not found"));
+
+    // 3) Retention(유지) 만료일: 1년 뒤 23:59:59
+    LocalDateTime retentionExpiry = now.plusYears(1)
+            .withHour(23).withMinute(59).withSecond(59);
+
+    // 4) 2등급 Retention 기준 마일리지
+    int retentionThreshold = tier2.getUsageThreshold();
+
+    // 5) 분기별 대상 리스트
+    List<MembershipRegistration> retentionList    = new ArrayList<>();
+    List<MembershipRegistration> demotedFrom2List = new ArrayList<>();
+    List<MembershipRegistration> demotedFrom3List = new ArrayList<>();
+
+    for (MembershipRegistration reg : expired) {
+      int originalCode = reg.getMembership().getCode();
+      long mileageSum  = mileageRepository.sumActiveMileageByAccount(reg.getAccount().getId());
+
+      if (originalCode == 2) {
+        if (mileageSum >= retentionThreshold) {
+          // → Retention: 2→2
+          reg.setExpirationDate(retentionExpiry);
+          reg.setLastModifiedName("SYSTEM");
+          retentionList.add(reg);
+          log.info("Retention extended for account {} (mileage={})",
+                  reg.getAccount().getId(), mileageSum);
+        } else {
+          // → Demote: 2→1
+          reg.setMembership(tier1);
+          reg.setExpirationDate(null);
+          reg.setLastModifiedName("SYSTEM");
+          demotedFrom2List.add(reg);
+          log.info("Demoted from 2→1 for account {}", reg.getAccount().getId());
+        }
+      }
+      else if (originalCode == 3) {
+        // → Demote: 3→1
+        reg.setMembership(tier1);
+        reg.setExpirationDate(null);
+        reg.setLastModifiedName("SYSTEM");
+        demotedFrom3List.add(reg);
+        log.info("Demoted from 3→1 for account {}", reg.getAccount().getId());
+      }
+    }
+
+    // 6) 일괄 저장
+    membershipRegistrationRepository.saveAll(expired);
+
+    // 7) Retention 대상 마일리지 차감
+    String tier2Name = tier2.getName();
+    for (MembershipRegistration reg : retentionList) {
+      mileageService.createLinkedUpgradeMileage(
+              reg.getAccount().getId(),
+              retentionThreshold,
+              tier2Name
+      );
+      log.info("Deducted {} mileage for retention on account {}",
+              retentionThreshold, reg.getAccount().getId());
+    }
+
+    // 8) (필요시) 알림톡 발송 로직 호출
+    // sendRetentionAlimTalk(retentionList);
+    // sendDemoteAlimTalk(demotedFrom2List, 2);
+    // sendDemoteAlimTalk(demotedFrom3List, 3);
+  }
+
+  /**
+   * 매일 자정에 실행되는 멤버십 승급 로직:
+   *  - 1등급 중 마일리지 ≥ 기준점수: 2등급으로 승급, 만료일 1년 연장
+   *  - 승급 시 마일리지 차감 및 알림톡 예약
+   */
+  private void upgradeToMembership2() {
+    // 1) 멤버십2 정보 조회
+    Membership tier2 = membershipRepository.findByCode(2)
+            .orElseThrow(() -> new IllegalStateException("Membership tier 2 not found"));
+    int requiredScore = tier2.getUsageThreshold();
+    String tier2Name  = tier2.getName();
+
+    // 2) 1등급 중 승급 대상 조회
+    LocalDateTime now = LocalDateTime.now();
+    List<MembershipRegistration> candidates =
+            membershipRegistrationRepository.findTier1WithMinMileage(requiredScore);
+    if (candidates.isEmpty()) {
+      log.info("No tier1 candidates for upgrade (score ≥ {})", requiredScore);
+      return;
+    }
+
+    // 3) 새 만료일: 1년 뒤 같은 날 23:59:59
+    LocalDateTime newExpiry = LocalDate.now().plusYears(1).atTime(23, 59, 59);
+
+    // 4) 후보별 처리
+    for (MembershipRegistration reg : candidates) {
+      // (1) 등급·만료일 변경
+      reg.setMembership(tier2);
+      reg.setExpirationDate(newExpiry);
+      reg.setLastModifiedName("SYSTEM");
+      membershipRegistrationRepository.save(reg);
+
+      // (2) 마일리지 차감 이벤트 기록
+      mileageService.createLinkedUpgradeMileage(
+              reg.getAccount().getId(),
+              requiredScore,
+              tier2Name
+      );
+
+      // (3) 예약 알림톡 변수 준비 및 전송
+      LocalDate today = LocalDate.now();
+      Map<String,String> params = new HashMap<>();
+      params.put("name",           reg.getAccount().getAccountInfo().getName());
+      params.put("membershipName", tier2Name);
+      params.put("month",          String.valueOf(today.getMonthValue()));    // #{month} → 7
+      params.put("day",            String.valueOf(today.getDayOfMonth()));     // #{day}   → 28
+      params.put("CSTel",          herediumProperties.getTel());
+      params.put("CSEmail",        herediumProperties.getEmail());
+
+      //      LocalDateTime reserveTime = LocalDate.now()      // 오늘 날짜
+      //                                 .atTime(10, 0);  // 오전 10시 00분
+
+      LocalDateTime reserveTime = now.plusMinutes(11).truncatedTo(ChronoUnit.SECONDS);
+      alimTalk.sendAlimTalk(
+              reg.getAccount().getAccountInfo().getPhone(),
+              params,
+              AlimTalkTemplate.TIER_UPGRADE,
+              reserveTime
+      );
+      log.info("Scheduled TIER_UPGRADE AlimTalk [accountId={}, reserveTime={}]",
+              reg.getAccount().getId(), reserveTime);
+    }
+  }
+
+  /**
+   * 만료 전 3·2·1개월 알림톡 예약 (멤버십2 한정, 마일리지 부족 회원만)
+   *
+   *  - 오늘 기준으로 만료일까지 3·2·1개월 남은 멤버십 조회
+   *  - 멤버십2(code=2)만 대상으로, 현 마일리지 < 이용실적 기준(예:70)
+   *  - 남은 마일리지(필요 점수 – 현 마일리지) 값을 #{mileage} 변수로 보내기
+   */
+  private void scheduleTierExpiryAlimTalk() {
+    LocalDateTime now = LocalDateTime.now();                      // 지금 시각(예: 2025‑07‑25T00:00)
+    DateTimeFormatter isoDate = DateTimeFormatter.ISO_DATE;
+
+    // 2등급 엔티티 + 기준 마일리지
+    Membership tier2 = membershipRepository.findByCode(2)
+            .orElseThrow(() -> new IllegalStateException("Tier2 not found"));
+    int threshold = tier2.getUsageThreshold();                    // 예: 70점
+
+    // “몇 개월 전” 리스트
+    int[] monthsList = {3, 2, 1};
+
+    for (int monthsBefore : monthsList) {
+      // 1) ‘N개월 후 같은 날짜’ 범위 계산
+      LocalDateTime targetStart = now
+              .plusMonths(monthsBefore)
+              .withHour(0).withMinute(0).withSecond(0).withNano(0);
+      LocalDateTime targetEnd   = targetStart.plusDays(1).minusSeconds(1);
+      LocalDate  targetDay      = targetStart.toLocalDate();
+
+      // 2) DB에서 한번에 조회: 만료일 between targetStart / targetEnd,
+      //    paymentStatus=ACTIVE, membership.code=2, AND mileage < threshold
+      List<MembershipRegistration> toNotify =
+              membershipRegistrationRepository.findTier2ExpiringWithMileageBelow(
+                      targetStart, targetEnd, threshold);
+
+      if (toNotify.isEmpty()) {
+        log.info("{}-month expiry (tier2, mileage: no targets on {}",
+                monthsBefore, targetDay);
+        continue;
+      }
+
+      // 3) 예약 발송 시간: targetDay 오전 10시
+//      LocalDateTime reserveTime = targetDay.atTime(10, 0);
+
+      // 3) 테스트용 예약 발송 시간: 지금부터 11분 뒤
+      LocalDateTime reserveTime = LocalDateTime.now()
+              .plusMinutes(11)
+              .truncatedTo(ChronoUnit.SECONDS);
+
+      // 4) 알림톡 메시지 빌드
+      List<NCloudBizAlimTalkMessage> batch = toNotify.stream()
+              .map(reg -> {
+                String name     = reg.getAccount().getAccountInfo().getName();
+                String endDate  = reg.getExpirationDate().format(isoDate);
+                long   used     = mileageRepository.sumActiveMileageByAccount(
+                        reg.getAccount().getId());
+                long   remaining = threshold - used;
+
+                Map<String,String> vars = new HashMap<>();
+                vars.put("name",           name);
+                vars.put("membershipName", tier2.getName());
+                vars.put("endDate",        endDate);
+                vars.put("mileage",        String.valueOf(remaining));
+
+                return new NCloudBizAlimTalkMessageBuilder()
+                        .to(reg.getAccount().getAccountInfo().getPhone())
+                        .title(AlimTalkTemplate.MEMBERSHIP_EXPIRY_REMINDER.getTitle())
+                        .variables(vars)
+                        .failOver(new NCloudBizAlimTalkFailOverConfig())
+                        .build();
+              })
+              .collect(Collectors.toList());
+
+      log.info("Prepared {}-month tier2 expiry reminders: {} messages",
+              monthsBefore, batch.size());
+
+      // 5) 일괄 예약 발송
+      alimTalk.sendAlimTalk(
+              batch,
+              AlimTalkTemplate.MEMBERSHIP_EXPIRY_REMINDER,
+              reserveTime
+      );
+      log.info("Scheduled {} expiry reminders for {} at 10:00",
+              batch.size(), targetDay);
+    }
+  }
+
+  /**
+   * 만료된 적립 마일리지를 찾아 소멸 처리하고, 차감 이력을 생성합니다.
+   *
+   * 흐름:
+   *  1) type=0(적립) 이면서 expirationDate < now 인 엔트리 조회
+   *  2) 조회된 엔트리들의 type → 5(소멸완료) 로 업데이트
+   *  3) 각 엔트리에 대해 type=2(소멸) 차감 이력 생성
+   */
+  private void expireMileagePoints() {
+    LocalDateTime now = LocalDateTime.now();
+
+    // 1) 마일리지 type=0(적립) 이면서 expirationDate가 지난 엔트리 조회
+    List<MembershipMileage> toExpire =
+            mileageRepository.findExpiredByTypeAndExpirationDateBefore(0, now);
+    if (toExpire.isEmpty()) {
+      log.info("No mileage entries to expire at {}", now);
+      return;
+    }
+
+    // 2) 기존 엔트리들 type → 5 소멸완료(유효기간 경과)로 업데이트
+    toExpire.forEach(m -> m.setType(4));
+    mileageRepository.saveAll(toExpire);
+    log.info("Marked {} mileage entries as expired", toExpire.size());
+
+    // 3) 소멸(유효기간 경과) (type=2) 이력 추가
+    toExpire.forEach(original  -> {
+      mileageService.createAdjustmentMileage(
+              original,
+              2,
+              "만료 마일리지 차감"
+      );
+    });
+
+    log.info("Created {} expiry deduction entries", toExpire.size());
+  }
 
   @Async
   @Transactional(propagation = Propagation.NEVER)

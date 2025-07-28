@@ -56,6 +56,72 @@ public interface MembershipRegistrationRepository
           PaymentStatus paymentStatus,
           LocalDateTime date);
 
+  /**
+   * code=1(기본) 이면서 완료(COMPLETED) 상태인 모든 최신 등록 건 조회
+   */
+  @Query(
+          "select mr " +
+          "from MembershipRegistration mr " +
+          "join mr.membership m " +
+          "where m.code = :code " +
+          " and mr.paymentStatus = art.heredium.domain.membership.entity.PaymentStatus.COMPLETED " +
+          " and mr.account.id > 4999"
+  )
+  List<MembershipRegistration> findCompletedByMembershipCode(@Param("code") int code);
+
+  @Query(
+          "select mr " +
+          "from MembershipRegistration mr " +
+          "join mr.membership m " +
+          "where m.code = 1 " +
+          "  and mr.paymentStatus = art.heredium.domain.membership.entity.PaymentStatus.COMPLETED " +
+          "  and (select coalesce(sum(mm.mileageAmount), 0) " +
+          "         from MembershipMileage mm " +
+          "        where mm.account     = mr.account " +
+          "          and mm.type        = 0" +
+          "          AND mm.relatedMileage IS NULL " +
+          "      ) >= :threshold"
+  )
+  List<MembershipRegistration> findTier1WithMinMileage(
+          @Param("threshold") long threshold
+  );
+
+  /**
+   * 2·3등급(membership.code)이면서, expirationDate가 now 이전인 레코드를 조회
+   *
+   * @param codes 조회할 등급 코드 리스트 (예: List.of(2,3))
+   * @param now   비교 기준일시
+   * @return 만료된 2·3등급 MembershipRegistration 목록
+   */
+  @Query("SELECT mr FROM MembershipRegistration mr " +
+          "WHERE mr.membership.code IN :codes " +
+          "  AND mr.expirationDate < :now")
+  List<MembershipRegistration> demoteExpiredToBasic(
+          @Param("codes") List<Integer> codes,
+          @Param("now") LocalDateTime now
+  );
+
+  /**
+   * 만료일 between start/end, paymentStatus=ACTIVE, membership.code=2 이면서
+   * sum(mm.mileageAmount) < threshold 인 레코드만 조회
+   */
+  @Query(
+          "SELECT mr " +
+                  "  FROM MembershipRegistration mr " +
+                  "  LEFT JOIN MembershipMileage mm ON mm.account.id = mr.account.id " +
+                  "   AND mm.type       = 0 " +
+                  "   AND mm.relatedMileage IS NULL " +
+                  " WHERE mr.membership.code      = 2 " +
+                  "   AND mr.expirationDate BETWEEN :start AND :end " +
+                  " GROUP BY mr " +
+                  "HAVING COALESCE(SUM(mm.mileageAmount), 0) < :threshold"
+  )
+  List<MembershipRegistration> findTier2ExpiringWithMileageBelow(
+          @Param("start")     LocalDateTime start,
+          @Param("end")       LocalDateTime end,
+          @Param("threshold") long threshold
+  );
+
   @Modifying
   @Query("DELETE FROM MembershipRegistration mr WHERE mr.company.id = :companyId")
   void deleteAllByCompanyId(@Param("companyId") Long companyId);

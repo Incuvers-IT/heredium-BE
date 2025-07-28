@@ -60,15 +60,22 @@ public class MembershipMileage extends BaseEntity implements Serializable {
   private Integer mileageAmount;
 
   @Comment("비고(취소사유)")
-  @Column(name = "remark", length = 255, nullable = false)
+  @Column(name = "remark", length = 255)
   private String remark;
 
   @Comment("연결 마일리지(취소된 원본 참조)")
   @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "related_mileage_id", nullable = false)
+  @JoinColumn(name = "related_mileage_id")
   private MembershipMileage relatedMileage;
 
   @Comment("유효기간 만료일 (type=0 적립 시 계산)")
   @Column(name = "expiration_date")
   private LocalDateTime expirationDate;
+
+  @Column(name = "created_name", nullable = false, length = 10)
+  private String createdName;
+
+  @Column(name = "last_modified_name", nullable = false, length = 10)
+  private String lastModifiedName;
+
 }
