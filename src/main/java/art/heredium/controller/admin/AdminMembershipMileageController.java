@@ -17,7 +17,9 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @RestController
@@ -81,7 +83,23 @@ public class AdminMembershipMileageController {
    */
   @PostMapping("/{id}/refund")
   @ResponseStatus(HttpStatus.CREATED)
-  public void refundMileage(@PathVariable Long id, @RequestBody RefundRequest request) {
-    membershipMileageService.refundMileage(id, request.getReason());
+  public void refundMileage(@PathVariable Long id, @RequestBody RefundRequest request,
+                            @RequestParam(value = "upgradeCancel", required = false, defaultValue = "false") boolean upgradeCancel) {
+    membershipMileageService.refundMileage(id, request.getReason(), upgradeCancel);
+  }
+
+
+  @PostMapping("/cancel/check")
+  public ResponseEntity<Map<String, Boolean>> checkCancel(
+          @RequestBody @Valid CancelCheckRequest req
+  ) {
+    boolean canCancel = membershipMileageService.canCancelUpgrade(
+            req.getAccountId(),
+            req.getRelatedMileageId(),
+            req.getMileageAmount()
+    );
+    Map<String, Boolean> result = new HashMap<>();
+    result.put("canCancel", canCancel);
+    return ResponseEntity.ok(result);
   }
 }

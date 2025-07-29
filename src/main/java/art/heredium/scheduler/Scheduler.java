@@ -115,29 +115,29 @@ public class Scheduler {
     this.membershipRegistrationRepository.deleteAllById(redundantMembershipRegistrationIds);
   }
 
-  @Async
-  @Scheduled(cron = "0 0 0 * * ?") // Run at midnight every day
-  @Transactional(rollbackFor = Exception.class)
-  public void updateExpiredMemberships() {
-    try {
-      List<MembershipRegistration> expiredMemberships =
-          membershipRegistrationRepository.findByExpirationDateBeforeAndPaymentStatusNotIn(
-              LocalDateTime.now(), Arrays.asList(PaymentStatus.EXPIRED, PaymentStatus.REFUND));
-
-      expiredMemberships.forEach(
-          membership -> {
-            membership.updatePaymentStatus(PaymentStatus.EXPIRED);
-            membershipRegistrationRepository.save(membership);
-          });
-
-      if (!expiredMemberships.isEmpty()) {
-        log.info("Updated {} expired memberships", expiredMemberships.size());
-        sendExpiredMembershipNotifications(expiredMemberships);
-      }
-    } catch (Exception e) {
-      log.error("Error updating expired memberships", e);
-    }
-  }
+//  @Async
+//  @Scheduled(cron = "0 0 0 * * ?") // Run at midnight every day
+//  @Transactional(rollbackFor = Exception.class)
+//  public void updateExpiredMemberships() {
+//    try {
+//      List<MembershipRegistration> expiredMemberships =
+//          membershipRegistrationRepository.findByExpirationDateBeforeAndPaymentStatusNotIn(
+//              LocalDateTime.now(), Arrays.asList(PaymentStatus.EXPIRED, PaymentStatus.REFUND));
+//
+//      expiredMemberships.forEach(
+//          membership -> {
+//            membership.updatePaymentStatus(PaymentStatus.EXPIRED);
+//            membershipRegistrationRepository.save(membership);
+//          });
+//
+//      if (!expiredMemberships.isEmpty()) {
+//        log.info("Updated {} expired memberships", expiredMemberships.size());
+//        sendExpiredMembershipNotifications(expiredMemberships);
+//      }
+//    } catch (Exception e) {
+//      log.error("Error updating expired memberships", e);
+//    }
+//  }
 
   @Async
   @Scheduled(cron = "0 0 2 * * ?") // Every day at 2am
@@ -209,26 +209,6 @@ public class Scheduler {
   // —————————————————————————————————————————————
   // 0시: 만료/승급/예정체크/마일리지소멸
   // —————————————————————————————————————————————
-  @Async
-//  @Scheduled(cron = "0 * * * * *")
-//   @Scheduled(cron = "0 0 0 * * ?")
-  // @Scheduled(cron = "0 */3 * * * *")
-  @Transactional(rollbackFor = Exception.class)
-  public void runMidnightTasks() {
-
-    // 1) 만료된 2·3등급 처리 (강등/유지)
-    processExpiredTier2And3();
-
-    // 2) 1→2승급 로직 (필요시 예약 알림)
-    upgradeToMembership2();
-
-    // 3) 만료 전 3·2·1개월 알림톡 예약
-    scheduleTierExpiryAlimTalk();
-
-    // 4) 마일리지 소멸
-    expireMileagePoints();
-  }
-
   /**
    * 2·3등급 만료 대상 조회 후 처리:
    *  - 2등급이면서 마일리지 ≥ 기준점수: 만료일만 1년 연장 (Retention)
@@ -341,6 +321,11 @@ public class Scheduler {
 
     // 4) 후보별 처리
     for (MembershipRegistration reg : candidates) {
+
+      // (2) 실제 남은 마일리지 합계 조회
+      long totalRemaining = mileageRepository
+              .sumActiveMileageByAccount(reg.getAccount().getId());
+
       // (1) 등급·만료일 변경
       reg.setMembership(tier2);
       reg.setExpirationDate(newExpiry);
@@ -350,7 +335,7 @@ public class Scheduler {
       // (2) 마일리지 차감 이벤트 기록
       mileageService.createLinkedUpgradeMileage(
               reg.getAccount().getId(),
-              requiredScore,
+              (int) totalRemaining,
               tier2Name
       );
 
@@ -464,9 +449,27 @@ public class Scheduler {
     }
   }
 
+  @Async
+  @Scheduled(cron = "0 0 0 * * ?")
+  //  @Scheduled(cron = "0 * * * * *")
+  @Transactional(rollbackFor = Exception.class)
+  public void runMidnightTasks() {
+
+    // 1) 만료된 2·3등급 처리 (강등/유지)
+    processExpiredTier2And3();
+
+    // 2) 1→2승급 로직 (필요시 예약 알림)
+    upgradeToMembership2();
+
+    // 3) 만료 전 3·2·1개월 알림톡 예약
+    scheduleTierExpiryAlimTalk();
+
+    // 4) 마일리지 소멸
+    expireMileagePoints();
+  }
+
   /**
    * 만료된 적립 마일리지를 찾아 소멸 처리하고, 차감 이력을 생성합니다.
-   *
    * 흐름:
    *  1) type=0(적립) 이면서 expirationDate < now 인 엔트리 조회
    *  2) 조회된 엔트리들의 type → 5(소멸완료) 로 업데이트
@@ -483,7 +486,7 @@ public class Scheduler {
       return;
     }
 
-    // 2) 기존 엔트리들 type → 5 소멸완료(유효기간 경과)로 업데이트
+    // 2) 기존 엔트리들 type → 4 소멸완료(유효기간 경과)로 업데이트
     toExpire.forEach(m -> m.setType(4));
     mileageRepository.saveAll(toExpire);
     log.info("Marked {} mileage entries as expired", toExpire.size());

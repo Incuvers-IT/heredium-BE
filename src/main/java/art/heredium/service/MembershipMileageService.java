@@ -2,15 +2,22 @@ package art.heredium.service;
 
 import art.heredium.core.util.Constants;
 import art.heredium.domain.account.entity.Account;
+import art.heredium.domain.account.entity.UserPrincipal;
 import art.heredium.domain.account.repository.AccountRepository;
+import art.heredium.domain.membership.entity.Membership;
 import art.heredium.domain.membership.entity.MembershipMileage;
+import art.heredium.domain.membership.entity.MembershipRegistration;
 import art.heredium.domain.membership.model.dto.request.GetAllActiveMembershipsRequest;
 import art.heredium.domain.membership.model.dto.request.MembershipMileageCreateRequest;
 import art.heredium.domain.membership.model.dto.response.MembershipMileageResponse;
 import art.heredium.domain.membership.repository.MembershipMileageRepository;
+import art.heredium.domain.membership.repository.MembershipRegistrationRepository;
+import art.heredium.domain.membership.repository.MembershipRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,7 +30,9 @@ import java.util.List;
 @Transactional(rollbackFor = Exception.class)
 public class MembershipMileageService {
 
+  private final MembershipRepository membershipRepository;
   private final MembershipMileageRepository membershipMileageRepository;
+  private final MembershipRegistrationRepository registrationRepo;
   private final AccountRepository accountRepo;
 
   public Page<MembershipMileageResponse> getMembershipsMileageList(
@@ -39,6 +48,10 @@ public class MembershipMileageService {
 
     LocalDateTime now = Constants.getNow();
 
+    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    UserPrincipal principal = (UserPrincipal) authentication.getPrincipal();
+    String currentUser = (principal != null ? principal.getName() : "SYSTEM");
+
     MembershipMileage mm = MembershipMileage.builder()
             .account(account)
             .type(0)  // 0: 적립
@@ -49,21 +62,76 @@ public class MembershipMileageService {
             .serialNumber(req.getSerialNumber())
             .mileageAmount(req.getMileageAmount())
             .expirationDate(now.plusYears(3)) // 필요 시 만료일 계산
+            .createdName(currentUser)
+            .lastModifiedName(currentUser)
             .build();
     // 만료일 계산 등 추가 로직이 있으면 여기에
     membershipMileageRepository.save(mm);
   }
 
   @Transactional
-  public void refundMileage(Long originalId, String reason) {
+  public void refundMileage(Long originalId, String reason, boolean upgradeCancel) {
+
+    // 로그인 사용자명 조회 (null이면 SYSTEM)
+    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    UserPrincipal principal = (UserPrincipal) authentication.getPrincipal();
+    String currentUser = (principal != null ? principal.getName() : "SYSTEM");
+
+    // 0) 원본 마일리지 엔티티 조회 (존재하지 않으면 404)
     MembershipMileage orig = membershipMileageRepository.findById(originalId)
             .orElseThrow(() -> new EntityNotFoundException("Original mileage not found: " + originalId));
 
-    // 2) 원본을 '소멸완료(취소)' 로 마킹
+    // 1) 'upgradeCancel' 플래그가 true인 경우: 승급 취소 흐름
+    if (upgradeCancel) {
+      Long accountId = orig.getAccount().getId();
+
+      // 1‑a) Tier2 멤버십 가입 여부 확인
+      if (registrationRepo.existsByAccountIdAndMembershipCode(accountId, 2)) {
+        // 1‑b) 실제 최신 가입 정보 조회
+        MembershipRegistration reg = registrationRepo
+                .findLatestForAccount(accountId)
+                .orElseThrow(() -> new EntityNotFoundException("No registration found"));
+
+        // 1‑c) Tier1(기본, code=1)으로 다운그레이드 후 만료일 해제
+        Membership basic = membershipRepository.findByCode(1)
+                .orElseThrow(() -> new EntityNotFoundException("Basic membership not found"));
+
+        reg.setMembership(basic);
+        reg.setExpirationDate(null);
+        reg.setLastModifiedName(currentUser);
+        registrationRepo.save(reg);
+      }
+
+      // 1‑d) 기존의 summary(relatedMileage) 자식 레코드들 연결 해제
+      MembershipMileage summary = orig.getRelatedMileage();
+      if (summary != null) {
+        membershipMileageRepository.markCancelledById(summary.getId(), "승급 취소", currentUser);
+
+        membershipMileageRepository
+          .findByRelatedMileageId(summary.getId())
+          .forEach(child -> {
+            child.setRelatedMileage(null);
+            membershipMileageRepository.save(child);
+          });
+      }
+
+    }else{
+      // 2) 일반 환불(취소) 흐름: summary(요약) 마일리지 회복
+      MembershipMileage summary = orig.getRelatedMileage();
+      if (summary != null) {
+        int restored = summary.getMileageAmount() + orig.getMileageAmount();
+        summary.setMileageAmount(restored);
+        membershipMileageRepository.save(summary);
+      }
+    }
+
+    // 4) 원본 엔티티를 '취소 완료(type=5)'로 마킹 및 연관 해제
     orig.setType(5);
+    orig.setRelatedMileage(null);
+    orig.setLastModifiedName(currentUser);
     membershipMileageRepository.save(orig);
 
-    // 3) 소멸(유효기간 경과) (type=2) 이력 추가
+    // 5) 차감(취소) Adjustment 레코드 생성 (type=3)
     createAdjustmentMileage(
             orig,
             3,  // 3: 소멸(취소)
@@ -193,9 +261,37 @@ public class MembershipMileageService {
             .relatedMileage(original)      // 원본 참조
             .build();
 
-    adj.setCreatedName("SYSTEM");
-    adj.setLastModifiedName("SYSTEM");
+    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    UserPrincipal principal = (UserPrincipal) authentication.getPrincipal();
+    String currentUser = (principal != null ? principal.getName() : "SYSTEM");
+
+    adj.setCreatedName(currentUser);
+    adj.setLastModifiedName(currentUser);
 
     membershipMileageRepository.save(adj);
+  }
+
+  /**
+   * 승급 취소 가능 여부 체크
+   */
+  public boolean canCancelUpgrade(Long accountId, Long relatedMileageId, int mileageAmount) {
+    // 1) Tier2(code=2) 멤버십 등록 여부
+    // 1) 실제 “멤버십 가입” 테이블에서 Tier2(code=2) 가입 여부 확인
+    if (!registrationRepo.existsByAccountIdAndMembershipCode(accountId, 2)) {
+      return false;
+    }
+
+    // 2) 관련된 모든 차감·환불 등 이력 합계
+    Integer sum = membershipMileageRepository.sumByRelatedMileageId(relatedMileageId);
+    if (sum == null) sum = 0;
+
+    // 3) Tier2 멤버십의 usageThreshold 조회
+    Membership tier2 = membershipRepository
+            .findByCode(2)
+            .orElseThrow(() -> new EntityNotFoundException("Tier2 멤버십 없음"));
+    int threshold = tier2.getUsageThreshold();
+
+    // 4) threshold > (sum - 현재 선택 항목)
+    return threshold > (sum - mileageAmount);
   }
 }

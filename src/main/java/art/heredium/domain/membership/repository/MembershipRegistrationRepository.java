@@ -125,4 +125,19 @@ public interface MembershipRegistrationRepository
   @Modifying
   @Query("DELETE FROM MembershipRegistration mr WHERE mr.company.id = :companyId")
   void deleteAllByCompanyId(@Param("companyId") Long companyId);
+
+  /**
+   * account.id, membership.code 기준으로 가입 여부 확인
+   */
+  @Query(
+          "SELECT CASE WHEN COUNT(mr) > 0 THEN true ELSE false END " +
+                  "FROM MembershipRegistration mr " +
+                  "JOIN mr.membership m " +
+                  "WHERE mr.account.id = :accountId " +
+                  "  AND m.code        = :membershipCode"
+  )
+  boolean existsByAccountIdAndMembershipCode(
+          @Param("accountId") Long accountId,
+          @Param("membershipCode") int membershipCode
+  );
 }
