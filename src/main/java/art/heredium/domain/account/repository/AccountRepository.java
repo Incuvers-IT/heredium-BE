@@ -80,4 +80,11 @@ public interface AccountRepository extends JpaRepository<Account, Long>, Account
       nativeQuery = true)
   Optional<Account> findLatestLoginAccountByEmailAndPhoneAndName(
       @Param("email") String email, @Param("phone") String phone, @Param("name") String name);
+
+  /** 마케팅 수신 동의(true)한 회원만 조회 */
+  List<Account> findByAccountInfo_IsMarketingReceiveTrue();
+
+  /** 마케팅 수신 미동의(false)한 회원만 조회 */
+  List<Account> findByAccountInfo_IsMarketingReceiveFalse();
+
 }

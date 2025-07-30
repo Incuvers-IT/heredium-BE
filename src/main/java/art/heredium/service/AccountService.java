@@ -170,15 +170,13 @@ public class AccountService {
       couponUsageService.distributeMembershipAndCompanyCoupons(
               entity,
               coupons,
-              true
+              true,
+              null
       );
     }
 
     // 3. 멤버십 등록
     // 1) 나이에 따라 code 결정 (19세 미만 → 학생(3), 그 외 → 기본(1))
-    // TODO: 테스트 삭제예정
-    info.setBirthDate(LocalDate.of(2006, 7, 25));
-
     long age = ChronoUnit.YEARS.between(info.getBirthDate(), Constants.getNow());
     int targetCode = (age < 19) ? 3 : 1;
 
@@ -424,7 +422,8 @@ public class AccountService {
       couponUsageService.distributeMembershipAndCompanyCoupons(
               entity,
               coupons,
-              true
+              true,
+              null
       );
     }
 
@@ -470,8 +469,6 @@ public class AccountService {
 
     entity.getAccountInfo().updatePhoneVerification(dto);
 
-    // TODO: 테스트 삭제예정
-    dto.setBirthDate("2006-07-25");
     LocalDate birthDate = LocalDate.parse(dto.getBirthDate());
     long age = ChronoUnit.YEARS.between(birthDate, Constants.getNow());
 
@@ -562,7 +559,8 @@ public class AccountService {
       couponUsageService.distributeMembershipAndCompanyCoupons(
               entity,
               coupons,
-              true
+              true,
+              null
       );
     }
 

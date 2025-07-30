@@ -85,12 +85,18 @@ public class CouponUsageService {
               "Error while assigning coupon: %s: This coupon is membership coupon",
               coupon.getName()));
     }
-    this.assignCouponToAccounts(coupon, accountIds, CouponSource.ADMIN_SITE, true);
+    this.assignCouponToAccounts(coupon, accountIds, CouponSource.ADMIN_SITE, true, null);
   }
 
+  /**
+   * @param account       쿠폰을 받을 계정
+   * @param coupons       발급할 쿠폰 리스트
+   * @param sendAlimtalk  알림톡 발송 여부
+   * @param reserveTime   null 이면 즉시 발송, null이 아니면 해당 시각으로 예약 발송
+   */
   @Transactional(rollbackFor = Exception.class)
   public List<CouponUsage> distributeMembershipAndCompanyCoupons(
-      @NonNull Account account, @NonNull List<Coupon> coupons, boolean sendAlimtalk) {
+      @NonNull Account account, @NonNull List<Coupon> coupons, boolean sendAlimtalk, LocalDateTime reserveTime) {
     List<CouponUsage> couponUsages = new ArrayList<>();
     coupons.forEach(
         coupon -> {
@@ -106,7 +112,9 @@ public class CouponUsageService {
                   coupon,
                   Stream.of(account.getId()).collect(Collectors.toList()),
                   coupon.getFromSource(),
-                  sendAlimtalk));
+                  sendAlimtalk,
+                  reserveTime
+              ));
         });
     return this.couponUsageRepository.saveAll(couponUsages);
   }
@@ -157,11 +165,20 @@ public class CouponUsageService {
     return couponUsage;
   }
 
+  /**
+   * @param coupon          발급할 쿠폰
+   * @param accountIds      발급 대상 계정 ID 목록
+   * @param source          쿠폰 출처
+   * @param sendAlimtalk    알림톡 발송 여부
+   * @param reserveTime     null → 즉시, 아니면 예약 시각
+   */
   private List<CouponUsage> assignCouponToAccounts(
           final Coupon coupon,
           @NonNull final List<Long> accountIds,
           @NonNull final CouponSource source,
-          final boolean sendAlimtalk) {
+          final boolean sendAlimtalk,
+          LocalDateTime reserveTime
+  ) {
 
     // 1) 기본 정보 추출
     long numberOfUses = Optional.ofNullable(coupon.getNumberOfUses()).orElse(1L);
@@ -253,7 +270,7 @@ public class CouponUsageService {
 
     // 5) 알림톡 발송
     if (sendAlimtalk && !accountsToSendAlimTalk.isEmpty()) {
-      sendCouponDeliveredMessageToAlimTalk(accountsToSendAlimTalk);
+      sendCouponDeliveredMessageToAlimTalk(accountsToSendAlimTalk, reserveTime);
     }
 
     // 6) DB 저장
@@ -273,42 +290,49 @@ public class CouponUsageService {
   }
 
   private void sendCouponDeliveredMessageToAlimTalk(
-      final Map<Account, CouponUsage> accountsToSendAlimTalk) {
+      final Map<Account, CouponUsage> accountsToSendAlimTalk, LocalDateTime reserveTime) {
     log.info("Start sendCouponDeliveredMessageToAlimTalk {}", accountsToSendAlimTalk);
+
     Map<String, Map<String, String>> phonesAndMessagesToSendAlimTalk = new HashMap<>();
+    accountsToSendAlimTalk.forEach((account, coupon) -> {
+      Map<String, String> variables = new HashMap<>();
+      variables.put("accountName", account.getAccountInfo().getName());
+      variables.put("couponType",  coupon.getCoupon().getCouponType().getDesc());
+      variables.put("couponName",  coupon.getCoupon().getName());
+      variables.put("discountPercent",
+              coupon.getCoupon().getDiscountPercent() != 100
+                      ? coupon.getCoupon().getDiscountPercent() + "%"
+                      : "무료"
+      );
+      variables.put("couponStartDate",
+              coupon.getDeliveredDate().format(COUPON_DATE_FORMAT)
+      );
+      variables.put("couponEndDate",
+              coupon.getExpirationDate().format(COUPON_DATE_FORMAT)
+      );
+      variables.put("numberOfUses",
+              coupon.isPermanent()
+                      ? "상시할인"
+                      : coupon.getCoupon().getNumberOfUses() + "회"
+      );
+      variables.put("CSTel",   herediumProperties.getTel());
+      variables.put("CSEmail", herediumProperties.getEmail());
+      phonesAndMessagesToSendAlimTalk.put(
+              account.getAccountInfo().getPhone(),
+              variables
+      );
+    });
+
     try {
-      accountsToSendAlimTalk.forEach(
-          (account, coupon) -> {
-            final Map<String, String> variables = new HashMap<>();
-            variables.put("accountName", account.getAccountInfo().getName());
-            variables.put("couponType", coupon.getCoupon().getCouponType().getDesc());
-            variables.put("couponName", coupon.getCoupon().getName());
-            variables.put(
-                "discountPercent",
-                coupon.getCoupon().getDiscountPercent() != 100
-                    ? coupon.getCoupon().getDiscountPercent() + "%"
-                    : "무료");
-            variables.put(
-                "couponStartDate",
-                coupon.getDeliveredDate().format(COUPON_DATE_FORMAT)); // No need to show time
-            variables.put(
-                "couponEndDate",
-                coupon.getExpirationDate().format(COUPON_DATE_FORMAT)); // No need to show time
-            variables.put(
-                "numberOfUses",
-                coupon.isPermanent() ? "상시할인" : coupon.getCoupon().getNumberOfUses() + "회");
-            variables.put("CSTel", herediumProperties.getTel());
-            variables.put("CSEmail", herediumProperties.getEmail());
-            phonesAndMessagesToSendAlimTalk.put(account.getAccountInfo().getPhone(), variables);
-          });
-      this.alimTalk.sendAlimTalkWithoutTitle(
-          phonesAndMessagesToSendAlimTalk, AlimTalkTemplate.COUPON_HAS_BEEN_ISSUED_V4);
+      // single call handles both immediate (reserveTime==null) and scheduled
+      alimTalk.sendAlimTalkWithoutTitle(
+              phonesAndMessagesToSendAlimTalk,
+              AlimTalkTemplate.COUPON_HAS_BEEN_ISSUED_V4,
+              reserveTime
+      );
     } catch (Exception e) {
-      log.warn(
-          "Sending message to AlimTalk failed: {}, message params: {}",
-          e.getMessage(),
-          phonesAndMessagesToSendAlimTalk,
-          e);
+      log.warn("Sending message to AlimTalk failed: {}, params: {}",
+              e.getMessage(), phonesAndMessagesToSendAlimTalk, e);
     } finally {
       log.info("End sendCouponDeliveredMessageToAlimTalk");
     }

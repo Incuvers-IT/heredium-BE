@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import art.heredium.domain.membership.model.dto.response.MembershipResponse;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.stereotype.Service;
@@ -29,6 +30,8 @@ import art.heredium.domain.membership.repository.MembershipRegistrationRepositor
 import art.heredium.domain.membership.repository.MembershipRepository;
 import art.heredium.domain.post.entity.Post;
 import art.heredium.domain.post.repository.PostRepository;
+
+import javax.persistence.EntityNotFoundException;
 
 import static art.heredium.core.config.error.entity.ErrorCode.ANONYMOUS_USER;
 
@@ -87,5 +90,18 @@ public class MembershipRegistrationService {
                 RegistrationType.MEMBERSHIP_PACKAGE,
                 PaymentStatus.COMPLETED));
     return new RegisterMembershipResponse(membershipRegistration);
+  }
+
+  /**
+   * code 값으로 멤버십 정보를 조회해서 DTO로 반환
+   */
+  /**
+   * code 값으로 멤버십 정보를 조회해서 MembershipResponse로 반환
+   */
+  public MembershipResponse getMembershipByCode(int code) {
+    Membership membership = membershipRepository
+            .findByCode(code)
+            .orElseThrow(() -> new EntityNotFoundException("Membership not found for code=" + code));
+    return new MembershipResponse(membership);
   }
 }

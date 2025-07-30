@@ -1,32 +1,5 @@
 package art.heredium.scheduler;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.attribute.BasicFileAttributes;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
-import java.util.*;
-import java.util.logging.Logger;
-import java.util.stream.Collectors;
-
-import art.heredium.domain.membership.entity.Membership;
-import art.heredium.domain.membership.entity.MembershipMileage;
-import art.heredium.domain.membership.repository.MembershipMileageRepository;
-import art.heredium.domain.membership.repository.MembershipRepository;
-import art.heredium.service.MembershipMileageService;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.scheduling.annotation.Async;
-import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
-
 import art.heredium.core.config.properties.HerediumProperties;
 import art.heredium.core.util.Constants;
 import art.heredium.domain.account.entity.Account;
@@ -37,9 +10,15 @@ import art.heredium.domain.account.repository.AccountInfoRepository;
 import art.heredium.domain.account.repository.AccountRepository;
 import art.heredium.domain.account.repository.NonUserRepository;
 import art.heredium.domain.account.repository.SleeperInfoRepository;
+import art.heredium.domain.coupon.entity.Coupon;
+import art.heredium.domain.coupon.repository.CouponRepository;
+import art.heredium.domain.membership.entity.Membership;
+import art.heredium.domain.membership.entity.MembershipMileage;
 import art.heredium.domain.membership.entity.MembershipRegistration;
 import art.heredium.domain.membership.entity.PaymentStatus;
+import art.heredium.domain.membership.repository.MembershipMileageRepository;
 import art.heredium.domain.membership.repository.MembershipRegistrationRepository;
+import art.heredium.domain.membership.repository.MembershipRepository;
 import art.heredium.domain.ticket.repository.TicketRepository;
 import art.heredium.ncloud.bean.CloudMail;
 import art.heredium.ncloud.bean.CloudStorage;
@@ -50,6 +29,31 @@ import art.heredium.ncloud.service.sens.biz.model.ncloud.NCloudBizAlimTalkFailOv
 import art.heredium.ncloud.service.sens.biz.model.ncloud.NCloudBizAlimTalkMessage;
 import art.heredium.ncloud.type.AlimTalkTemplate;
 import art.heredium.ncloud.type.MailTemplate;
+import art.heredium.service.CouponUsageService;
+import art.heredium.service.MembershipMileageService;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.env.Profiles;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.core.env.Environment;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Component
@@ -59,6 +63,7 @@ public class Scheduler {
   @Value("${log.config.path}")
   private String logsPath;
 
+  private final Environment env;
   private final CloudMail cloudMail;
   private final HerediumAlimTalk alimTalk;
   private final CloudStorage cloudStorage;
@@ -71,7 +76,9 @@ public class Scheduler {
   private final MembershipRepository membershipRepository;
   private final MembershipMileageRepository mileageRepository;
   private final MembershipMileageService mileageService;
+  private final CouponUsageService couponUsageService;
   private final HerediumProperties herediumProperties;
+  private final CouponRepository couponRepository;
   private final int accountSleepDay = 365;
   private final int accountTerminateDay = 365 * 2;
   private final int accountMailSendDay = 30;
@@ -176,35 +183,106 @@ public class Scheduler {
   }
 
 
-// 매월 X일 오전 10시에만 실제 발송
+  /**
+   * 스케줄러 매일 01시에 동작
+   * 매월 지정일 오전 10시에 정기발송(예약알림톡) 쿠폰 알림톡을 발송합니다.
+   */
   @Async
-  @Scheduled(cron = "0 0 10 * * *")
   @Transactional(rollbackFor = Exception.class)
+//  @Scheduled(cron = "0 0 1 * * ?")
+//  @Scheduled(cron = "0 * * * * *")
   public void couponDailyAt10() {
     LocalDate today = LocalDate.now();
-    int dom = today.getDayOfMonth();
+    int dayOfMonth = today.getDayOfMonth();
 
     // 1) 오늘 발송 대상 쿠폰 조회
-//    List<Coupon> toSend = couponRepo.findAllByIsRecurringTrueAndScheduleDay(dom);
+    List<Coupon> toSend = couponRepository
+            .findByIsRecurringTrueAndSendDayOfMonthExcludingDefault(dayOfMonth);
 
-    // 2) 각 쿠폰별 대상 회원 필터링 & 발송
-//    for (Coupon c : toSend) {
-//      List<User> targets = fetchTargets(c.getRecipientType(), c.isMarketingBenefit());
-//      notifier.sendCoupon(c, targets);
-//    }
+    if (toSend.isEmpty()) {
+      log.info(">>> couponDailyAt10: 발송 대상 쿠폰 없음 (day={})", dayOfMonth);
+      return;
+    }
+
+    ObjectMapper mapper = new ObjectMapper();
+    for (Coupon coupon : toSend) {
+
+      // 2) recipientType JSON → List<Integer>
+      @SuppressWarnings("unchecked")
+      List<Short> rawTypes = (List<Short>) coupon.getRecipientType();
+
+      List<Integer> types = mapper.convertValue(
+              rawTypes,
+              new TypeReference<List<Integer>>() {}
+      );
+
+      // 3) 중복 없이 한꺼번에 모을 Set
+      Set<Account> recipients = new HashSet<>();
+
+      for (Integer t : types) {
+        switch (t) {
+          case 1:
+            // 마케팅 동의 고객
+            recipients.addAll(
+                    accountRepository.findByAccountInfo_IsMarketingReceiveTrue()
+            );
+            break;
+          case 2:
+            // 마케팅 비동의 고객
+            recipients.addAll(
+                    accountRepository.findByAccountInfo_IsMarketingReceiveFalse()
+            );
+            break;
+
+          case 6: case 7: case 8:
+            // 멤버십(CN PASS 1,2,3) 가입 회원
+            int membershipCode = (t == 6 ? 1 : t == 7 ? 2 : 3);
+            List<MembershipRegistration> regs =
+                    membershipRegistrationRepository
+                            .findByMembershipCode(membershipCode);
+            regs.forEach(reg -> recipients.add(reg.getAccount()));
+            break;
+
+          default:
+            log.warn("Unknown recipientType {} for coupon {}", t, coupon.getId());
+        }
+      }
+
+      if (recipients.isEmpty()) {
+        log.info(">>> couponDailyAt10: coupon {} 대상 회원 없음", coupon.getId());
+        continue;
+      }
+
+      if (env.acceptsProfiles(Profiles.of("stage", "local"))) {
+        recipients.removeIf(account -> account.getId() < 5000);
+      }
+
+      // (필요하시다면) 다시 빈 집합 체크
+      if (recipients.isEmpty()) {
+        log.info(">>> couponDailyAt10: coupon {} (5000번 이하 계정 모두 제외)", coupon.getId());
+        continue;
+      }
+
+      // 4) 예약 발송 또는 쿠폰 지급
+//      LocalDateTime reserveTime = today.atTime(10, 0);
+      LocalDateTime reserveTime = LocalDateTime.now().plusMinutes(11).truncatedTo(ChronoUnit.SECONDS);
+
+      for (Account recipient : recipients) {
+        // 단일 쿠폰을 한 번에 발급하도록 리스트로 포장
+        List<Coupon> singleCouponList = Collections.singletonList(coupon);
+
+        couponUsageService.distributeMembershipAndCompanyCoupons(
+                recipient,         // Account
+                singleCouponList,  // List<Coupon> (이번 루프의 단일 쿠폰)
+                true,               // 알림톡 발송
+                reserveTime
+        );
+      }
+
+      log.info(">>> couponDailyAt10: coupon {} scheduled to {} accounts",
+              coupon.getId(), recipients.size());
+    }
   }
-
-//  private List<User> fetchTargets(String recipientType, boolean marketingBenefit) {
-//    switch (recipientType) {
-//      case "ALL":
-//        return userRepo.findAllActive();
-//      case "MARKETING_ONLY":
-//        return userRepo.findAllByMarketingConsentTrue();
-//      // 필요시 MEMBERSHIP 등 추가 분기...
-//      default:
-//        return Collections.emptyList();
-//    }
-//  }
 
   // —————————————————————————————————————————————
   // 0시: 만료/승급/예정체크/마일리지소멸
@@ -349,10 +427,9 @@ public class Scheduler {
       params.put("CSTel",          herediumProperties.getTel());
       params.put("CSEmail",        herediumProperties.getEmail());
 
-      //      LocalDateTime reserveTime = LocalDate.now()      // 오늘 날짜
-      //                                 .atTime(10, 0);  // 오전 10시 00분
+      LocalDateTime reserveTime = LocalDate.now().atTime(10, 0);  // 오전 10시 00분
 
-      LocalDateTime reserveTime = now.plusMinutes(11).truncatedTo(ChronoUnit.SECONDS);
+//    LocalDateTime reserveTime = now.plusMinutes(11).truncatedTo(ChronoUnit.SECONDS);
       alimTalk.sendAlimTalk(
               reg.getAccount().getAccountInfo().getPhone(),
               params,
@@ -404,12 +481,12 @@ public class Scheduler {
       }
 
       // 3) 예약 발송 시간: targetDay 오전 10시
-//      LocalDateTime reserveTime = targetDay.atTime(10, 0);
+      LocalDateTime reserveTime = targetDay.atTime(10, 0);
 
       // 3) 테스트용 예약 발송 시간: 지금부터 11분 뒤
-      LocalDateTime reserveTime = LocalDateTime.now()
-              .plusMinutes(11)
-              .truncatedTo(ChronoUnit.SECONDS);
+//      LocalDateTime reserveTime = LocalDateTime.now()
+//              .plusMinutes(11)
+//              .truncatedTo(ChronoUnit.SECONDS);
 
       // 4) 알림톡 메시지 빌드
       List<NCloudBizAlimTalkMessage> batch = toNotify.stream()
@@ -450,8 +527,10 @@ public class Scheduler {
   }
 
   @Async
-  @Scheduled(cron = "0 0 0 * * ?")
-  //  @Scheduled(cron = "0 * * * * *")
+  // 매일 자정 00시 00분 00초에 실행
+//  @Scheduled(cron = "0 0 0 * * ?")
+  // 매분 0초마다 실행 (즉, 매 분 정각에 실행)
+//  @Scheduled(cron = "0 * * * * *")
   @Transactional(rollbackFor = Exception.class)
   public void runMidnightTasks() {
 
@@ -499,7 +578,9 @@ public class Scheduler {
               "만료 마일리지 차감"
       );
     });
-
+    
+    // 마일리지 만료에 대한 알림톡 필요할지 작성
+    
     log.info("Created {} expiry deduction entries", toExpire.size());
   }
 

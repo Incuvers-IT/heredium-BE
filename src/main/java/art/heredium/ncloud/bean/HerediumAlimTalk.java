@@ -109,7 +109,7 @@ public class HerediumAlimTalk {
   }
 
   public List<String> sendAlimTalkWithoutTitle(
-      Map<String, Map<String, String>> phonesAndMessagesToSendAlimTalk, AlimTalkTemplate template) {
+      Map<String, Map<String, String>> phonesAndMessagesToSendAlimTalk, AlimTalkTemplate template, LocalDateTime reserveTime) {
     List<NCloudBizAlimTalkMessage> messages =
         phonesAndMessagesToSendAlimTalk.entrySet().stream()
             .map(
@@ -120,7 +120,7 @@ public class HerediumAlimTalk {
                         .failOver(new NCloudBizAlimTalkFailOverConfig())
                         .build())
             .collect(Collectors.toList());
-    return sendAlimTalk(messages, template, null);
+    return sendAlimTalk(messages, template, reserveTime);
   }
 
   public List<String> sendAlimTalkWithoutTitle(

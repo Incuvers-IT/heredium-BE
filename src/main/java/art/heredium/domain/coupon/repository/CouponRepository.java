@@ -17,10 +17,23 @@ public interface CouponRepository extends JpaRepository<Coupon, Long> {
 
   /**
    * 마케팅 동의 시 발급해 주어야 할 혜택용 쿠폰만 조회
+   * MySQL 5.7+ 확인
    */
   List<Coupon> findByMarketingConsentBenefitTrue();
 
   @Modifying
   @Query("DELETE FROM Coupon c WHERE c.company.id = :companyId")
   void deleteByCompanyId(@Param("companyId") Long companyId);
+
+  @Query(value =
+          "SELECT * FROM coupon " +
+                  "WHERE is_recurring = true " +
+                  "  AND send_day_of_month = :day " +
+                  // recipient_type JSON 배열 길이가 1 이고, 그 첫 번째 값이 0 인 건 제외
+                  "  AND NOT (JSON_LENGTH(recipient_type) = 1 " +
+                  "       AND JSON_EXTRACT(recipient_type, '$[0]') = 0)",
+          nativeQuery = true
+  )
+  List<Coupon> findByIsRecurringTrueAndSendDayOfMonthExcludingDefault(
+          @Param("day") int day);
 }

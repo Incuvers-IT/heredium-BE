@@ -14,6 +14,7 @@ import art.heredium.domain.membership.repository.MembershipMileageRepository;
 import art.heredium.domain.membership.repository.MembershipRegistrationRepository;
 import art.heredium.domain.membership.repository.MembershipRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
@@ -29,6 +30,9 @@ import java.util.List;
 @RequiredArgsConstructor
 @Transactional(rollbackFor = Exception.class)
 public class MembershipMileageService {
+
+  @Value("${membership.mileage.expiration-years:3}")
+  private int expirationYears;
 
   private final MembershipRepository membershipRepository;
   private final MembershipMileageRepository membershipMileageRepository;
@@ -61,7 +65,7 @@ public class MembershipMileageService {
             .paymentAmount(req.getPaymentAmount())
             .serialNumber(req.getSerialNumber())
             .mileageAmount(req.getMileageAmount())
-            .expirationDate(now.plusYears(3)) // 필요 시 만료일 계산
+            .expirationDate(now.plusYears(expirationYears)) // 필요 시 만료일 계산
             .createdName(currentUser)
             .lastModifiedName(currentUser)
             .build();

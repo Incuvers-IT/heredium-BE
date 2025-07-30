@@ -2,6 +2,7 @@ package art.heredium.controller.user;
 
 import art.heredium.domain.membership.model.dto.request.RegisterMembershipRequest;
 import art.heredium.domain.membership.model.dto.response.MembershipRegistrationResponse;
+import art.heredium.domain.membership.model.dto.response.MembershipResponse;
 import art.heredium.domain.membership.model.dto.response.RegisterMembershipResponse;
 import art.heredium.service.MembershipPaymentService;
 import art.heredium.service.MembershipRegistrationService;
@@ -26,6 +27,15 @@ public class UserMembershipController {
       @RequestBody RegisterMembershipRequest request) {
     return ResponseEntity.ok(
         this.membershipRegistrationService.registerMembership(request.getMembershipId()));
+  }
+
+  /**
+   * code 에 해당하는 멤버십 단일 조회
+   */
+  @GetMapping("/code/{code}")
+  public ResponseEntity<MembershipResponse> getByCode(@PathVariable int code) {
+    return ResponseEntity.ok(
+            membershipRegistrationService.getMembershipByCode(code));
   }
 
 //  @PostMapping(value = "/confirm-payment")

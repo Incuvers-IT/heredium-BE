@@ -5,10 +5,7 @@ import java.time.LocalDateTime;
 
 import javax.persistence.*;
 
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
+import lombok.*;
 
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -29,6 +26,7 @@ import art.heredium.oauth.provider.OAuth2Provider;
 @Table(name = "account")
 @EntityListeners(AuditingEntityListener.class)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @ToString
 // 회원
 public class Account implements Serializable {
@@ -36,6 +34,7 @@ public class Account implements Serializable {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
+  @EqualsAndHashCode.Include
   private Long id;
 
   @Comment("이메일")
@@ -61,9 +60,11 @@ public class Account implements Serializable {
   private LocalDateTime createdDate;
 
   @OneToOne(mappedBy = "account", cascade = CascadeType.ALL, orphanRemoval = true)
+  @ToString.Exclude
   private AccountInfo accountInfo;
 
   @OneToOne(mappedBy = "account", cascade = CascadeType.ALL, orphanRemoval = true)
+  @ToString.Exclude
   private SleeperInfo sleeperInfo;
 
   public Account(PostAccountRequest dto, PostNiceIdEncryptResponse info, String encryptPassword) {

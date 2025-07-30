@@ -170,7 +170,7 @@ public class CompanyService {
 
         List<Coupon> companyCoupons = couponRepository.findByCompanyAndIsDeletedFalse(company);
         couponUsageService.distributeMembershipAndCompanyCoupons(
-            selectedAccount, companyCoupons, true);
+            selectedAccount, companyCoupons, true, null);
 
         companyMembershipRegistrationResponse
             .getSuccessCases()

@@ -140,4 +140,17 @@ public interface MembershipRegistrationRepository
           @Param("accountId") Long accountId,
           @Param("membershipCode") int membershipCode
   );
+
+  /**
+   * paymentStatus 조건 없이 membership.code 만으로 조회합니다.
+   */
+  @Query(
+          "SELECT mr " +
+          "  FROM MembershipRegistration mr " +
+          " JOIN mr.membership m " +
+          " WHERE m.code = :membershipCode"
+  )
+  List<MembershipRegistration> findByMembershipCode(
+          @Param("membershipCode") int membershipCode
+  );
 }

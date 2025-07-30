@@ -80,7 +80,7 @@ public class MembershipPaymentService {
       throw new ApiException(ErrorCode.MEMBERSHIP_NOT_FOUND); // this case should not happen
     final Account account = membershipRegistration.getAccount();
     final List<Coupon> coupons = membership.getCoupons();
-    return this.couponUsageService.distributeMembershipAndCompanyCoupons(account, coupons, false);
+    return this.couponUsageService.distributeMembershipAndCompanyCoupons(account, coupons, false, null);
   }
 
 //  private void updateMembershipRegistrationToSuccess(
