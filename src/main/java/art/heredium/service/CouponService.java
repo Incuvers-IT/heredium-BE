@@ -105,10 +105,16 @@ public class CouponService {
     } else if (isNonMembershipCoupon) {
       startedDate = ((NonMembershipCouponCreateRequest) request).getStartDate();
       endedDate = ((NonMembershipCouponCreateRequest) request).getEndDate();
+      isRecurring = false;
+      marketingConsentBenefit = false;
     } else if (isMembershipCoupon) {
       periodInDays = ((MembershipCouponCreateRequest) request).getPeriodInDays();
+      isRecurring  = false;
+      marketingConsentBenefit = false;
     } else if (isCompanyCoupon) {
       periodInDays = ((CompanyCouponCreateRequest) request).getPeriodInDays();
+      isRecurring  = false;
+      marketingConsentBenefit = false;
     }
 
     ValidationUtil.validateImage(this.cloudStorage, request.getImageUrl());
@@ -159,7 +165,9 @@ public class CouponService {
   }
 
   public List<CouponResponse> getAllCoupons() {
-    return couponRepository.findAll().stream()
+    return couponRepository
+            .findByMembershipIsNull()    // 또는 findAllWhereMembershipIsNull()
+            .stream()
             .map(CouponResponse::new)
             .collect(Collectors.toList());
   }

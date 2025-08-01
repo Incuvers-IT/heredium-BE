@@ -199,13 +199,13 @@ public class MembershipMileageService {
 
     summary.setCreatedName("SYSTEM");
     summary.setLastModifiedName("SYSTEM");
-
+    
     membershipMileageRepository.save(summary);
 
     // 2) FIFO로 원본(type=0) 조회(만료일 오름차순)
     int remain = requiredScore;
     List<MembershipMileage> accruals = membershipMileageRepository
-            .findByAccountIdAndTypeOrderByExpirationDateAsc(accountId, 0);
+            .findByAccountIdAndTypeAndRelatedMileageIsNullOrderByExpirationDateAsc(accountId, 0);
 
     for (MembershipMileage orig : accruals) {
       if (remain <= 0) break;

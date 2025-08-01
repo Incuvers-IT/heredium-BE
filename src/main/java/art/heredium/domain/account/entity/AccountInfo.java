@@ -127,29 +127,31 @@ public class AccountInfo implements Serializable {
     boolean hasJob            = StringUtils.isNotBlank(dto.getJob());
     boolean hasState          = StringUtils.isNotBlank(dto.getState());
     boolean hasDistrict       = StringUtils.isNotBlank(dto.getDistrict());
-    boolean hasAdditionalInfo = Boolean.TRUE.equals(dto.getAdditionalInfoAgreed());
+    boolean hasAdditional     = Boolean.TRUE.equals(dto.getAdditionalInfoAgreed());
     boolean hasMarketing      = Boolean.TRUE.equals(dto.getIsMarketingReceive());
 
-    boolean fullConsent = hasJob && hasState && hasDistrict && hasAdditionalInfo && hasMarketing;
-
-    // (2) 전체 동의일 때만 값을 저장, 아니면 모두 기본값으로
-    if (fullConsent) {
-      this.job                    = dto.getJob();
-      this.state                  = dto.getState();
-      this.district               = dto.getDistrict();
-      this.additionalInfoAgreed   = true;
-      this.isMarketingReceive     = true;
-      this.marketingAgreedDate    = Constants.getNow();
-      this.isLocalResident   = dto.getIsLocalResident();
+    // 1) 추가개인정보 미동의 시 개인정보만 초기화
+    if (!hasAdditional) {
+      this.job                = null;
+      this.state              = null;
+      this.district           = null;
+      this.isLocalResident    = false;
+      this.additionalInfoAgreed = false;
     } else {
-      // 저장하지 않음(또는 false/null)
-      this.job                    = null;
-      this.state                  = null;
-      this.district               = null;
-      this.additionalInfoAgreed   = false;
-      this.isMarketingReceive     = false;
-      this.marketingAgreedDate    = null;
-      this.isLocalResident        = false;
+      // 동의된 경우만 DTO 값 저장
+      this.job                = dto.getJob();
+      this.state              = dto.getState();
+      this.district           = dto.getDistrict();
+      this.isLocalResident    = dto.getIsLocalResident();
+      this.additionalInfoAgreed = true;
+    }
+
+    // 2) 마케팅 수신 여부는 DTO 그대로 반영
+    this.isMarketingReceive = hasMarketing;
+
+    // 3) 모든 입력+동의가 완료된 경우에만 동의일 설정
+    if (hasJob && hasState && hasDistrict && hasAdditional && hasMarketing) {
+      this.marketingAgreedDate = Constants.getNow();
     }
   }
 
@@ -191,24 +193,28 @@ public class AccountInfo implements Serializable {
     boolean hasAdditional   = Boolean.TRUE.equals(dto.getAdditionalInfoAgreed());
     boolean hasMarketing    = Boolean.TRUE.equals(dto.getIsMarketingReceive());
 
-    boolean fullConsent = hasJob && hasState && hasDistrict && hasAdditional && hasMarketing;
-
-    if (fullConsent) {
-      this.job                  = dto.getJob();
-      this.state                = dto.getState();
-      this.district             = dto.getDistrict();
-      this.additionalInfoAgreed = true;
-      this.isMarketingReceive   = true;
-      this.marketingAgreedDate  = LocalDateTime.now();
-      this.isLocalResident     = dto.getIsLocalResident();
-    } else {
-      // 하나라도 빠졌으면 모두 초기화
-      this.job                  = null;
-      this.state                = null;
-      this.district             = null;
+    // 1) 추가개인정보 동의가 없으면 개인정보 필드만 초기화
+    if (!hasAdditional) {
+      this.job                = null;
+      this.state              = null;
+      this.district           = null;
+      this.isLocalResident    = false;
       this.additionalInfoAgreed = false;
-      this.isMarketingReceive   = false;
-      this.isLocalResident     = false;
+    } else {
+      // 동의가 있으면 DTO 그대로 저장
+      this.job                = dto.getJob();
+      this.state              = dto.getState();
+      this.district           = dto.getDistrict();
+      this.isLocalResident    = dto.getIsLocalResident();
+      this.additionalInfoAgreed = true;
+    }
+
+    // 2) 마케팅 수신 여부는 단순히 DTO 값으로 저장
+    this.isMarketingReceive = hasMarketing;
+
+    // 3) 모든 입력+동의(개인정보+마케팅)가 완료된 경우에만 동의일 기록
+    if (hasJob && hasState && hasDistrict && hasAdditional && hasMarketing) {
+      this.marketingAgreedDate = LocalDateTime.now();
     }
   }
 

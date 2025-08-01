@@ -284,6 +284,28 @@ public class Scheduler {
     }
   }
 
+
+  @Async
+  // 매일 자정 00시 00분 00초에 실행
+  @Scheduled(cron = "0 0 0 * * ?")
+  // 매분 0초마다 실행 (즉, 매 분 정각에 실행)
+  //  @Scheduled(cron = "0 * * * * *")
+  @Transactional(rollbackFor = Exception.class)
+  public void runMidnightTasks() {
+
+    // 1) 만료된 2·3등급 처리 (강등/유지)
+    processExpiredTier2And3();
+
+    // 2) 1→2승급 로직 (필요시 예약 알림)
+    upgradeToMembership2();
+
+    // 3) 만료 전 3·2·1개월 알림톡 예약
+    scheduleTierExpiryAlimTalk();
+
+    // 4) 마일리지 소멸
+    expireMileagePoints();
+  }
+
   // —————————————————————————————————————————————
   // 0시: 만료/승급/예정체크/마일리지소멸
   // —————————————————————————————————————————————
@@ -524,27 +546,6 @@ public class Scheduler {
       log.info("Scheduled {} expiry reminders for {} at 10:00",
               batch.size(), targetDay);
     }
-  }
-
-  @Async
-  // 매일 자정 00시 00분 00초에 실행
-//  @Scheduled(cron = "0 0 0 * * ?")
-  // 매분 0초마다 실행 (즉, 매 분 정각에 실행)
-//  @Scheduled(cron = "0 * * * * *")
-  @Transactional(rollbackFor = Exception.class)
-  public void runMidnightTasks() {
-
-    // 1) 만료된 2·3등급 처리 (강등/유지)
-    processExpiredTier2And3();
-
-    // 2) 1→2승급 로직 (필요시 예약 알림)
-    upgradeToMembership2();
-
-    // 3) 만료 전 3·2·1개월 알림톡 예약
-    scheduleTierExpiryAlimTalk();
-
-    // 4) 마일리지 소멸
-    expireMileagePoints();
   }
 
   /**

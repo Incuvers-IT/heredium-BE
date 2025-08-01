@@ -50,26 +50,37 @@ public class CouponUsageService {
   private final HerediumAlimTalk alimTalk;
 
   public List<CouponResponseDto> getCouponsWithUsageByAccountId(Long accountId) {
-    List<Coupon> coupons =
-        couponUsageRepository.findDistinctCouponsByAccountIdAndIsNotDeleted(accountId);
-    List<CouponResponseDto> responseDtos = new ArrayList<>();
+    // 1) coupon_usage 기반으로 발급된 쿠폰
+    List<Coupon> usedAndUnused =
+            couponUsageRepository.findDistinctCouponsByAccountIdAndIsNotDeleted(accountId);
 
-    for (Coupon coupon : coupons) {
-      List<CouponUsage> usedCoupons =
-          couponUsageRepository
-              .findByAccountIdAndCouponIdAndIsUsedTrue(accountId, coupon.getId())
-              .stream()
-              .collect(Collectors.toList());
+    // 2) membership 기반 쿠폰
+    Set<Coupon> allCoupons = new LinkedHashSet<>(usedAndUnused);
+    membershipRegistrationRepository
+            .findLatestForAccount(accountId)
+            .map(reg -> reg.getMembership().getId())
+            .ifPresent(membershipId -> {
+              List<Coupon> membershipCoupons =
+                      couponRepository.findByMembershipIdAndIsDeletedFalse(membershipId);
+              allCoupons.addAll(membershipCoupons);
+            });
 
-      List<CouponUsage> unusedCoupons =
-          couponUsageRepository.findUnusedOrPermanentCoupons(accountId, coupon.getId()).stream()
+    // 3) 최종 합집합으로 DTO 생성
+    List<CouponResponseDto> response = new ArrayList<>();
+    for (Coupon coupon : allCoupons) {
+      // 사용된 내역
+      List<CouponUsage> usedList = couponUsageRepository
+              .findByAccountIdAndCouponIdAndIsUsedTrue(accountId, coupon.getId());
+
+      // 사용되지 않은 내역 (또는 영구쿠폰)
+      List<CouponUsage> unusedList = couponUsageRepository
+              .findUnusedOrPermanentCoupons(accountId, coupon.getId()).stream()
               .sorted(Comparator.comparing(CouponUsage::getExpirationDate))
               .collect(Collectors.toList());
 
-      responseDtos.add(new CouponResponseDto(coupon, usedCoupons, unusedCoupons));
+      response.add(new CouponResponseDto(coupon, usedList, unusedList));
     }
-
-    return responseDtos;
+    return response;
   }
 
   @Transactional(rollbackFor = Exception.class)

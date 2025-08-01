@@ -7,7 +7,7 @@ public enum MailTemplate {
   SIGN_UP(8154, 8154, "회원가입"),
   PASSWORD_CHANGE_USER(8119, 7551, "비밀번호 변경(회원)"),
   PASSWORD_CHANGE_ADMIN(8152, 8179, "비밀번호 변경(관리자)"),
-  TICKET_ISSUANCE(8120, 7552, "입장권 발급 완료"),
+  TICKET_ISSUANCE(8120, 8120, "입장권 발급 완료"),
   TICKET_REFUND_USER(8121, 7553, "입장권 취소(회원)"),
   TICKET_REFUND_ADMIN(8122, 7554, "입장권 취소(관리자)"),
   TICKET_ISSUANCE_GROUP(8123, 7555, "단체입장권 발급"),

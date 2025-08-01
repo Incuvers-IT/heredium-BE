@@ -46,13 +46,13 @@ public interface MembershipMileageRepository extends JpaRepository<MembershipMil
 
   /**
    * 계정(account.id)과 이벤트 타입(type)으로 조회하여
-   * expirationDate 오름차순으로 정렬된 리스트를 반환합니다.
+   * relatedMileage가 NULL 이고 expirationDate 오름차순으로 정렬된 리스트를 반환합니다.
    *
    * @param accountId 계정 ID
    * @param type      이벤트 타입 (0: 적립, 1: 승급, ...)
-   * @return expirationDate ASC 정렬된 마일리지 목록
+   * @return relatedMileage IS NULL 이고 expirationDate ASC 정렬된 마일리지 목록
    */
-  List<MembershipMileage> findByAccountIdAndTypeOrderByExpirationDateAsc(
+  List<MembershipMileage> findByAccountIdAndTypeAndRelatedMileageIsNullOrderByExpirationDateAsc(
           Long accountId,
           Integer type
   );

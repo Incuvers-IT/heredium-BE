@@ -26,9 +26,7 @@ import lombok.Setter;
 import lombok.ToString;
 
 import com.vladmihalcea.hibernate.type.json.JsonStringType;
-import org.hibernate.annotations.Comment;
-import org.hibernate.annotations.DynamicInsert;
-import org.hibernate.annotations.TypeDef;
+import org.hibernate.annotations.*;
 
 import art.heredium.domain.common.entity.BaseEntity;
 import art.heredium.domain.coupon.entity.Coupon;
@@ -92,6 +90,17 @@ public class Membership extends BaseEntity implements Serializable {
   public void updateImageUrl(String imageUrl) {
     this.imageUrl = imageUrl;
   }
+
+  /** 테이블에 DEFAULT(UUID()) 로 채워지는 멤버십 식별자 */
+  @Comment("멤버십 UUID")
+  @Column(name = "uuid",
+          nullable = false,
+          updatable = false,
+          insertable = false,
+          length = 255,
+          columnDefinition = "VARCHAR(255) NOT NULL DEFAULT (UUID())")
+  @Generated(GenerationTime.INSERT)
+  private String uuid;
 
   @Builder
   public Membership(

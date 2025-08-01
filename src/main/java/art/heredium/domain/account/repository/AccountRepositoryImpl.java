@@ -581,6 +581,7 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
   public Page<AccountWithMembershipInfoResponse> searchWithMembershipInfo(
       GetAccountWithMembershipInfoRequest dto, Pageable pageable) {
     JPAQuery<AccountWithMembershipInfoResponse> query = createBaseQuery(dto);
+
     query.orderBy(QAccount.account.id.desc());
 
     // Create a count query

@@ -36,4 +36,14 @@ public abstract class CouponCreateRequest {
   @JsonProperty("is_permanent")
   @NotNull
   private Boolean isPermanent;
+
+  /** 반복형 쿠폰 여부 (true: 반복, false: 일회성) */
+  @JsonProperty("is_recurring")
+  @NotNull
+  private Boolean isRecurring;
+
+  /** 반복형 쿠폰 여부 (true: 반복, false: 일회성) */
+  @JsonProperty("marketing_consent_benefit")
+  @NotNull
+  private Boolean marketingConsentBenefit;
 }

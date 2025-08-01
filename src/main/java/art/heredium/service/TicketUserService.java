@@ -2,6 +2,8 @@ package art.heredium.service;
 
 import java.util.List;
 
+import art.heredium.domain.ticket.model.TicketOrderInfo;
+import art.heredium.payment.dto.PaymentsValidResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -38,9 +40,23 @@ public class TicketUserService {
   private final TicketPayService ticketPayService;
   private final TicketRepository ticketRepository;
 
-  public Object valid(PostTicketUserValidRequest dto) {
-    TicketUserInfo ticketUserInfo = createTicketUserInfo();
-    return ticketPayService.valid(dto.getTicketOrderInfo(), ticketUserInfo, dto.getCouponUuid());
+
+//  public Object valid(PostTicketUserValidRequest dto) {
+//    TicketUserInfo ticketUserInfo = createTicketUserInfo();
+//    return ticketPayService.valid(dto.getTicketOrderInfo(), ticketUserInfo, dto.getCouponUuid());
+//  }
+
+  public PaymentsValidResponse valid(PostTicketUserValidRequest dto) {
+    // 1) 공통: 로그인한 사용자 정보 생성
+    TicketUserInfo userInfo = createTicketUserInfo();
+
+    // 2) 페이 서비스에 ticketOrderInfo + couponUuid + membershipCouponId 를 그대로 넘김
+    return ticketPayService.valid(
+            dto.getTicketOrderInfo(),
+            userInfo,
+            dto.getCouponUuid(),
+            dto.getMembershipCouponId()
+    );
   }
 
   public PostUserTicketResponse insert(PostTicketUserRequest dto) {

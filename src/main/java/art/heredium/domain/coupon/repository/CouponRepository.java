@@ -36,4 +36,20 @@ public interface CouponRepository extends JpaRepository<Coupon, Long> {
   )
   List<Coupon> findByIsRecurringTrueAndSendDayOfMonthExcludingDefault(
           @Param("day") int day);
+
+  /**
+   * 주어진 membershipId 에 매핑된, 삭제되지 않은 쿠폰 목록 조회
+   */
+  @Query(value =
+          "SELECT * FROM coupon " +
+                  "WHERE membership_id = :membershipId " +
+                  "  AND is_deleted = false",
+          nativeQuery = true
+  )
+  List<Coupon> findByMembershipIdAndIsDeletedFalse(
+          @Param("membershipId") Long membershipId
+  );
+
+  // JPA method name convention 으로 membership이 NULL인 것만 조회
+  List<Coupon> findByMembershipIsNull();
 }

@@ -32,6 +32,9 @@ public class CouponResponseDto {
   @JsonProperty("unused_coupons")
   private List<CouponUsageDto> unusedCoupons;
 
+  @JsonProperty("display_name")
+  private String displayName;
+
   public CouponResponseDto(
       Coupon coupon, List<CouponUsage> usedCoupons, List<CouponUsage> unusedCoupons) {
     this.id = coupon.getId();
@@ -42,5 +45,8 @@ public class CouponResponseDto {
     this.usedCoupons = usedCoupons.stream().map(CouponUsageDto::new).collect(Collectors.toList());
     this.unusedCoupons =
         unusedCoupons.stream().map(CouponUsageDto::new).collect(Collectors.toList());
+    this.displayName     = coupon.getMembership() != null
+            ? coupon.getMembership().getName()
+            : coupon.getName();
   }
 }

@@ -37,9 +37,9 @@ public enum AlimTalkTemplate {
       "@heredium",
       "HEREDIUM027"), // Replaced for COUPON_HAS_BEEN_DELIVERED
   NON_MEMBERSHIP_COUPON_HAS_BEEN_USED(
-      "", "@heredium", "HEREDIUM023", "@spadecompany", ""), // dev templateCode has not been created
+      "", "@heredium", "HEREDIUM023", "@heredium", "HEREDIUM023"), // dev templateCode has not been created
   WITH_MEMBERSHIP_COUPON_HAS_BEEN_USED(
-      "", "@heredium", "HEREDIUM024", "@spadecompany", ""), // dev templateCode has not been created
+      "", "@heredium", "HEREDIUM024", "@heredium", "HEREDIUM024"), // dev templateCode has not been created
   TIER_UPGRADE(
           "멤버십 변경 안내", "@heredium", "HEREDIUM030", "@heredium", "HEREDIUM030"),
   MEMBERSHIP_EXPIRY_REMINDER(
