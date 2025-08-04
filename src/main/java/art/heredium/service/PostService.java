@@ -69,6 +69,7 @@ public class PostService {
             .imageOriginalFileName(request.getNoteImage().getOriginalFileName())
             .isEnabled(request.getIsEnabled())
             .contentDetail(request.getContentDetail())
+            .contentDetailMobile(request.getContentDetailMobile())
             .subTitle(request.getSubTitle())
             .admin(admin)
             .futureExhibitionCount(
@@ -190,9 +191,14 @@ public class PostService {
       String processedContent = moveEditorContent(request.getContentDetail(), fileFolderPath);
       post.setContentDetail(processedContent);
     }
+    if (request.getContentDetailMobile() != null) {
+      String fileFolderPath = String.format("%s/%d", FilePathType.POST.getPath(), post.getId());
+      String processedContent = moveEditorContent(request.getContentDetailMobile(), fileFolderPath);
+      post.setContentDetailMobile(processedContent);
+    }
     if (request.getSubTitle() != null) post.setSubTitle(request.getSubTitle());
     if (request.getThumbnailUrls() != null) updateThumbnailUrls(post, request.getThumbnailUrls());
-    if (request.getNoteImage() != null) updateNoteImage(post, request.getNoteImage());
+//    if (request.getNoteImage() != null) updateNoteImage(post, request.getNoteImage());
     if (request.getAdditionalInfo() != null)
       updateAdditionalInfo(post, request.getAdditionalInfo());
     if (request.getStartDate() != null) post.setStartDate(request.getStartDate());

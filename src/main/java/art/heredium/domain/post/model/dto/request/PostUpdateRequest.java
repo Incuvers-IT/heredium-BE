@@ -22,6 +22,9 @@ public class PostUpdateRequest {
   @JsonProperty("content_detail")
   private String contentDetail;
 
+  @JsonProperty("content_detail_mobile")
+  private String contentDetailMobile;
+
   @Size(max = 5000)
   @JsonProperty("sub_title")
   private String subTitle;

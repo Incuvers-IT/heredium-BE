@@ -1,5 +1,6 @@
 package art.heredium.domain.coupon.model.dto.response;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -35,8 +36,18 @@ public class CouponResponseDto {
   @JsonProperty("display_name")
   private String displayName;
 
+  // membership 기간용 필드 추가
+  @JsonProperty("membership_start_date")
+  private LocalDateTime membershipStartDate;
+
+  @JsonProperty("membership_end_date")
+  private LocalDateTime membershipEndDate;
+
   public CouponResponseDto(
-      Coupon coupon, List<CouponUsage> usedCoupons, List<CouponUsage> unusedCoupons) {
+      Coupon coupon,
+      List<CouponUsage> usedCoupons,
+      List<CouponUsage> unusedCoupons
+  ) {
     this.id = coupon.getId();
     this.name = coupon.getName();
     this.couponType = coupon.getCouponType().name();
@@ -48,5 +59,18 @@ public class CouponResponseDto {
     this.displayName     = coupon.getMembership() != null
             ? coupon.getMembership().getName()
             : coupon.getName();
+  }
+
+  // 생성자 오버로딩
+  public CouponResponseDto(
+          Coupon coupon,
+          List<CouponUsage> usedCoupons,
+          List<CouponUsage> unusedCoupons,
+          LocalDateTime startDate,
+          LocalDateTime endDate
+  ) {
+    this(coupon, usedCoupons, unusedCoupons);
+    this.membershipStartDate = startDate;
+    this.membershipEndDate   = endDate;
   }
 }

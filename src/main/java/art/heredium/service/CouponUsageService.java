@@ -50,38 +50,51 @@ public class CouponUsageService {
   private final HerediumAlimTalk alimTalk;
 
   public List<CouponResponseDto> getCouponsWithUsageByAccountId(Long accountId) {
-    // 1) coupon_usage 기반으로 발급된 쿠폰
+    // 1) 사용/미사용 쿠폰
     List<Coupon> usedAndUnused =
             couponUsageRepository.findDistinctCouponsByAccountIdAndIsNotDeleted(accountId);
 
-    // 2) membership 기반 쿠폰
-    Set<Coupon> allCoupons = new LinkedHashSet<>(usedAndUnused);
-    membershipRegistrationRepository
-            .findLatestForAccount(accountId)
-            .map(reg -> reg.getMembership().getId())
-            .ifPresent(membershipId -> {
-              List<Coupon> membershipCoupons =
-                      couponRepository.findByMembershipIdAndIsDeletedFalse(membershipId);
-              allCoupons.addAll(membershipCoupons);
-            });
+    // Optional<MembershipRegistration> 으로 받아 두고…
+    Optional<MembershipRegistration> regOpt =
+            membershipRegistrationRepository.findLatestForAccount(accountId);
 
-    // 3) 최종 합집합으로 DTO 생성
+    // 2) membership 쿠폰
+    Set<Coupon> allCoupons = new LinkedHashSet<>();
+    LocalDateTime start = null, end = null;
+    if (regOpt.isPresent()) {
+      MembershipRegistration reg = regOpt.get();
+      Long membershipId = reg.getMembership().getId();
+      start = reg.getRegistrationDate();
+      end   = reg.getExpirationDate();
+
+      List<Coupon> membershipCoupons =
+              couponRepository.findByMembershipIdAndIsDeletedFalse(membershipId);
+      allCoupons.addAll(membershipCoupons);
+    }
+
+    allCoupons.addAll(usedAndUnused);
+
+    // 3) DTO 변환
     List<CouponResponseDto> response = new ArrayList<>();
     for (Coupon coupon : allCoupons) {
-      // 사용된 내역
       List<CouponUsage> usedList = couponUsageRepository
               .findByAccountIdAndCouponIdAndIsUsedTrue(accountId, coupon.getId());
-
-      // 사용되지 않은 내역 (또는 영구쿠폰)
       List<CouponUsage> unusedList = couponUsageRepository
               .findUnusedOrPermanentCoupons(accountId, coupon.getId()).stream()
               .sorted(Comparator.comparing(CouponUsage::getExpirationDate))
               .collect(Collectors.toList());
 
-      response.add(new CouponResponseDto(coupon, usedList, unusedList));
+      if (coupon.getMembership() != null && regOpt.isPresent()) {
+        // membership 쿠폰인 경우, start/end 포함 생성자 사용
+        response.add(new CouponResponseDto(coupon, usedList, unusedList, start, end));
+      } else {
+        // 일반 쿠폰
+        response.add(new CouponResponseDto(coupon, usedList, unusedList));
+      }
     }
     return response;
   }
+
 
   @Transactional(rollbackFor = Exception.class)
   public void assignCoupons(final long couponId, @NonNull List<Long> accountIds) {

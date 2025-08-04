@@ -35,6 +35,9 @@ public class AdminPostDetailsResponse {
   @JsonProperty("content_detail")
   private String contentDetail;
 
+  @JsonProperty("content_detail_mobile")
+  private String contentDetailMobile;
+
   @JsonProperty("sub_title")
   private String subTitle;
 
@@ -70,6 +73,7 @@ public class AdminPostDetailsResponse {
     }
     this.isEnabled = post.getIsEnabled();
     this.contentDetail = post.getContentDetail();
+    this.contentDetailMobile = post.getContentDetailMobile();
     this.subTitle = post.getSubTitle();
     this.memberships =
         post.getMemberships().stream()

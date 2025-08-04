@@ -63,6 +63,9 @@ public class Post extends BaseEntity {
   @Column(name = "content_detail", columnDefinition = "TEXT")
   private String contentDetail;
 
+  @Column(name = "content_detail_mobile", columnDefinition = "TEXT")
+  private String contentDetailMobile;
+
   @Column(name = "sub_title", columnDefinition = "TEXT")
   private String subTitle;
 
@@ -125,6 +128,7 @@ public class Post extends BaseEntity {
       String thumbnailUrls,
       Boolean isEnabled,
       String contentDetail,
+      String contentDetailMobile,
       String subTitle,
       Admin admin,
       Integer futureExhibitionCount,
@@ -142,6 +146,7 @@ public class Post extends BaseEntity {
     this.thumbnailUrls = thumbnailUrls;
     this.isEnabled = isEnabled;
     this.contentDetail = contentDetail;
+    this.contentDetailMobile = contentDetailMobile;
     this.subTitle = subTitle;
     this.admin = admin;
     this.futureExhibitionCount = futureExhibitionCount;
