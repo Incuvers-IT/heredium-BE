@@ -1,6 +1,7 @@
 package art.heredium.domain.membership.model.dto.request;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -13,4 +14,5 @@ public class GetAllActiveMembershipsRequest {
   private LocalDateTime signUpDateTo;
   private Boolean isAgreeToReceiveMarketing;
   private String text;
+  private List<Integer> type;
 }

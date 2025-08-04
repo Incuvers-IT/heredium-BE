@@ -2,6 +2,7 @@ package art.heredium.domain.membership.repository;
 
 import art.heredium.domain.membership.entity.MembershipMileage;
 import art.heredium.domain.membership.model.dto.request.GetAllActiveMembershipsRequest;
+import art.heredium.domain.membership.model.dto.request.MembershipMileageSearchRequest;
 import art.heredium.domain.membership.model.dto.response.MembershipMileageResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -91,4 +92,15 @@ public interface MembershipMileageRepository extends JpaRepository<MembershipMil
           @Param("remark")   String remark,
           @Param("modifier") String modifier
   );
+
+  Page<MembershipMileageResponse> getUserMembershipsMileageList(
+          MembershipMileageSearchRequest request, Pageable pageable);
+
+
+  @Query("SELECT COALESCE(SUM(m.mileageAmount), 0) " +
+          "FROM MembershipMileage m " +
+          "WHERE m.account.id = :accountId " +
+          "AND m.expirationDate BETWEEN CURRENT_DATE AND :thresholdDate ")
+
+  Long sumExpiringMileage(@Param("accountId") Long accountId, @Param("thresholdDate") LocalDateTime thresholdDate);
 }

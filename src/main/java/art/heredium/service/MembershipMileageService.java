@@ -9,6 +9,8 @@ import art.heredium.domain.membership.entity.MembershipMileage;
 import art.heredium.domain.membership.entity.MembershipRegistration;
 import art.heredium.domain.membership.model.dto.request.GetAllActiveMembershipsRequest;
 import art.heredium.domain.membership.model.dto.request.MembershipMileageCreateRequest;
+import art.heredium.domain.membership.model.dto.request.MembershipMileageSearchRequest;
+import art.heredium.domain.membership.model.dto.response.MembershipMileagePage;
 import art.heredium.domain.membership.model.dto.response.MembershipMileageResponse;
 import art.heredium.domain.membership.repository.MembershipMileageRepository;
 import art.heredium.domain.membership.repository.MembershipRegistrationRepository;
@@ -23,7 +25,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityNotFoundException;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 
 @Service
@@ -297,5 +301,32 @@ public class MembershipMileageService {
 
     // 4) threshold > (sum - 현재 선택 항목)
     return threshold > (sum - mileageAmount);
+  }
+
+  public MembershipMileagePage getMembershipsMileageListWithTotal(MembershipMileageSearchRequest request, Pageable pageable) {
+
+//    Page<MembershipMileageResponse> page = membershipMileageRepository.getMembershipsMileageList(request, pageable);
+    Page<MembershipMileageResponse> page = membershipMileageRepository.getUserMembershipsMileageList(request, pageable);
+    long totalMileage = membershipMileageRepository.sumActiveMileageByAccount(request.getAccountId());
+
+    LocalDate threshold = LocalDate.now().plusMonths(1);
+
+
+    LocalDateTime thresholdDateTime = threshold.atTime(LocalTime.MAX);
+
+
+    long expiringMileage = membershipMileageRepository
+            .sumExpiringMileage(request.getAccountId(), thresholdDateTime);
+
+    return new MembershipMileagePage(
+            page.getContent(),
+            page.getTotalElements(),
+            totalMileage,
+            expiringMileage,
+            page.getNumber(),
+            page.getSize(),
+            page.getTotalPages(),
+            page.isFirst(),
+            page.isLast());
   }
 }

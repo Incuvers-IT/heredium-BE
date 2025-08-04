@@ -19,8 +19,14 @@ import art.heredium.domain.membership.entity.RegistrationType;
 @Setter
 public class MembershipRegistrationResponse {
 
+  @JsonProperty("name")
+  private String name;
+
   @JsonProperty("id")
   private long membershipRegistrationId;
+
+  @JsonProperty("account_id")
+  private long accountId;
 
   @JsonProperty("uuid")
   private String uuid;
@@ -49,6 +55,12 @@ public class MembershipRegistrationResponse {
   public MembershipRegistrationResponse(
       @NonNull MembershipRegistration membershipRegistration,
       @NonNull List<CouponUsage> couponUsages) {
+
+    this.accountId = membershipRegistration.getAccount().getId();
+    this.name = membershipRegistration.getAccount() != null
+            && membershipRegistration.getAccount().getAccountInfo() != null
+            ? membershipRegistration.getAccount().getAccountInfo().getName()
+            : null;
     this.membershipName =
         membershipRegistration.getMembership() != null
             ? membershipRegistration.getMembership().getName()
