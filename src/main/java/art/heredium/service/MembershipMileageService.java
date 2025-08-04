@@ -305,7 +305,6 @@ public class MembershipMileageService {
 
   public MembershipMileagePage getMembershipsMileageListWithTotal(MembershipMileageSearchRequest request, Pageable pageable) {
 
-//    Page<MembershipMileageResponse> page = membershipMileageRepository.getMembershipsMileageList(request, pageable);
     Page<MembershipMileageResponse> page = membershipMileageRepository.getUserMembershipsMileageList(request, pageable);
     long totalMileage = membershipMileageRepository.sumActiveMileageByAccount(request.getAccountId());
 
