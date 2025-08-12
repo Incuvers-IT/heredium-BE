@@ -41,6 +41,7 @@ import art.heredium.domain.post.entity.Post;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @ToString
+@Where(clause = "is_deleted = false")
 // 멤버십
 public class Membership extends BaseEntity implements Serializable {
   @Id
@@ -87,20 +88,24 @@ public class Membership extends BaseEntity implements Serializable {
     this.isEnabled = isEnabled;
   }
 
+  public void updateIsDeleted(boolean isDeleted) {
+    this.isDeleted = isDeleted;
+  }
+
   public void updateImageUrl(String imageUrl) {
     this.imageUrl = imageUrl;
   }
 
   /** 테이블에 DEFAULT(UUID()) 로 채워지는 멤버십 식별자 */
-  @Comment("멤버십 UUID")
-  @Column(name = "uuid",
-          nullable = false,
-          updatable = false,
-          insertable = false,
-          length = 255,
-          columnDefinition = "VARCHAR(255) NOT NULL DEFAULT (UUID())")
-  @Generated(GenerationTime.INSERT)
-  private String uuid;
+//  @Comment("멤버십 UUID")
+//  @Column(name = "uuid",
+//          nullable = false,
+//          updatable = false,
+//          insertable = false,
+//          length = 255,
+//          columnDefinition = "VARCHAR(255) NOT NULL DEFAULT (UUID())")
+//  @Generated(GenerationTime.INSERT)
+//  private String uuid;
 
   @Builder
   public Membership(

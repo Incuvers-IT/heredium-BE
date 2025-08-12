@@ -2,17 +2,14 @@ package art.heredium.service;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import javax.annotation.PostConstruct;
 
+import art.heredium.domain.membership.entity.MembershipMileage;
+import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -64,6 +61,7 @@ import art.heredium.ncloud.service.sens.biz.model.ncloud.NCloudBizAlimTalkFailOv
 import art.heredium.ncloud.service.sens.biz.model.ncloud.NCloudBizAlimTalkMessage;
 import art.heredium.ncloud.type.AlimTalkTemplate;
 import art.heredium.ncloud.type.MailTemplate;
+import lombok.Getter;
 
 @Slf4j
 @Service
@@ -76,6 +74,7 @@ public class TicketService {
   private final RestTemplate restTemplate = new RestTemplate();
   private final HerediumAlimTalk alimTalk;
 
+  private final MembershipMileageService mileageService;
   private final TicketRepository ticketRepository;
   private final LogRepository logRepository;
   private final AccountRepository accountRepository;
@@ -99,6 +98,18 @@ public class TicketService {
           @Override
           public void handleError(ClientHttpResponse response) {}
         });
+  }
+
+  @Getter
+  @AllArgsConstructor
+  static class RefundContext {
+    private final Map<String,String> params;
+    private final EmailWithParameter email;                  // null 가능
+    private final MailTemplate mailTemplate;                 // null 가능
+    private final NCloudBizAlimTalkMessage alimtalkMessage;  // null 가능
+    private final AlimTalkTemplate alimtalkTemplate;         // null 가능
+    private final List<String> smsRequestIdsToCancel;        // 빈 리스트 가능
+    private final Ticket ticket;                             // 필요 시 참조
   }
 
   /** 관리자 - 티켓 목록 */
@@ -151,53 +162,55 @@ public class TicketService {
     if (entity == null) {
       throw new ApiException(ErrorCode.DATA_NOT_FOUND);
     }
+
     if (state.equals(TicketStateType.ADMIN_REFUND)) {
-      if (entity.isRefund()) {
-        throw new ApiException(ErrorCode.BAD_VALID, "이미 환불상태", 1);
-      }
-      Map<String, String> mailParam = entity.getMailParam(herediumProperties);
-      if (entity.getType() == TicketType.NORMAL) {
-        if (!StringUtils.isEmpty(entity.getPgId())) {
-          entity.getPayment().refund(entity);
-        }
-        if (!StringUtils.isBlank(entity.getEmail())) {
-          cloudMail.mail(entity.getEmail(), mailParam, MailTemplate.TICKET_REFUND_ADMIN);
-        }
-        if (!StringUtils.isBlank(entity.getPhone())) {
-          alimTalk.sendAlimTalk(
-              entity.getPhone(),
-              entity.getMailParam(herediumProperties),
-              AlimTalkTemplate.TICKET_REFUND_ADMIN);
-        }
-        alimTalk.cancelAlimTalk(entity.getSmsRequestId());
-      } else if (entity.getType().equals(TicketType.GROUP)) {
-        if (!StringUtils.isBlank(entity.getEmail())) {
-          cloudMail.mail(entity.getEmail(), mailParam, MailTemplate.TICKET_REFUND_GROUP);
-        }
-        if (!StringUtils.isBlank(entity.getPhone())) {
-          alimTalk.sendAlimTalk(
-              entity.getPhone(),
-              entity.getMailParam(herediumProperties),
-              AlimTalkTemplate.TICKET_REFUND_GROUP);
-        }
-        alimTalk.cancelAlimTalk(entity.getSmsRequestId());
-      }
+      // 공통 코어 + 단건 전송
+      RefundContext ctx = doAdminRefundCore(entity, "관리자 환불", userPrincipal);
+      sendNotificationsSingle(ctx);
+      return true;
+
     } else if (state.equals(TicketStateType.USED)) {
       if (!entity.isCanUse()) {
         throw new ApiException(ErrorCode.BAD_VALID, "결제상태에서만 사용완료로 변경가능", 2);
       }
       entity.updateUsedDate();
+
+      // 기존 사용완료 적립 로직 유지
+      try {
+        if (entity.getAccount() != null && !StringUtils.isBlank(entity.getEmail())) {
+          long origin   = Optional.ofNullable(entity.getOriginPrice()).orElse(0L);
+          long discount = Optional.ofNullable(entity.getCouponDiscountAmount()).orElse(0L);
+          long net      = Math.max(0L, origin - discount);
+          int  points   = (int) Math.floorDiv(net, 1000L);
+
+          if (points > 0) {
+            int paymentAmount = (net > Integer.MAX_VALUE) ? Integer.MAX_VALUE : (int) net;
+            MembershipMileage saved = mileageService.earnFromTicket(
+                    entity.getAccount().getId(),
+                    points,
+                    0,
+                    paymentAmount,
+                    "티켓 사용완료 적립",
+                    entity
+            );
+          }
+        }
+      } catch (Exception e) {
+        log.error("Earn mileage on USED failed (ticketId={})", entity.getId(), e);
+      }
+
+      // USED 상태 업데이트/로그 (기존과 동일)
+      entity.updateState(userPrincipal, state);
+      ticketRepository.flush();
+      logRepository.save(entity.createUpdateLog(userPrincipal.getAdmin()));
+      return true;
+
     } else {
       throw new ApiException(ErrorCode.BAD_VALID, "사용완료, 관리자환불로만 변경가능", 3);
     }
-
-    entity.updateState(userPrincipal, state);
-    ticketRepository.flush();
-    logRepository.save(entity.createUpdateLog(userPrincipal.getAdmin()));
-    return true;
   }
 
-  /** 관리자 - 티켓 환불 */
+  /** 관리자 - 티켓 환불(선택항목 일괄) */
   public boolean refundByAdmin(List<Long> ids) {
     Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
     UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
@@ -206,55 +219,195 @@ public class TicketService {
     if (ids.size() != entities.size()) {
       throw new ApiException(ErrorCode.DATA_NOT_FOUND);
     }
-    entities.forEach(
-        entity -> {
-          if (entity.isRefund()) {
-            throw new ApiException(ErrorCode.BAD_VALID, "이미 환불상태", 1);
-          }
-          entity.updateState(userPrincipal, TicketStateType.ADMIN_REFUND);
-        });
-    ticketRepository.flush();
 
-    entities.forEach(
-        entity -> {
-          if (entity.getType() == TicketType.NORMAL && !StringUtils.isEmpty(entity.getPgId())) {
-            entity.getPayment().refund(entity);
-          }
-          if (entity.getCouponUuid() != null && entity.getIsCouponAlreadyRefund() == false) {
-            couponUsageService.rollbackCouponUsage(entity.getCouponUuid());
-            entity.setCouponAlreadyRefund(true);
-            this.ticketRepository.save(entity);
-          }
-        });
+    // 템플릿별로 묶기
+    Map<MailTemplate, List<EmailWithParameter>> emailsByTpl = new HashMap<>();
+    Map<AlimTalkTemplate, List<NCloudBizAlimTalkMessage>> talksByTpl = new HashMap<>();
+    List<String> allSmsToCancel = new ArrayList<>();
 
-    List<EmailWithParameter> emailWithParameter = new ArrayList<>();
-    List<NCloudBizAlimTalkMessage> alimTalkMessages = new ArrayList<>();
-    entities.forEach(
-        ticket -> {
-          if (!StringUtils.isBlank(ticket.getEmail())) {
-            Map<String, String> mailParam = ticket.getMailParam(herediumProperties);
-            emailWithParameter.add(new EmailWithParameter(ticket.getEmail(), mailParam));
-          }
+    for (Ticket e : entities) {
+      RefundContext ctx = doAdminRefundCore(e, "관리자 환불(일괄)", userPrincipal);
 
-          if (!StringUtils.isBlank(ticket.getPhone())) {
-            NCloudBizAlimTalkMessage message =
-                new NCloudBizAlimTalkMessageBuilder()
-                    .variables(ticket.getMailParam(herediumProperties))
-                    .to(ticket.getPhone())
-                    .title(AlimTalkTemplate.TICKET_REFUND_ADMIN.getTitle())
-                    .failOver(new NCloudBizAlimTalkFailOverConfig())
-                    .build();
-            alimTalkMessages.add(message);
-          }
-        });
-    if (emailWithParameter.size() > 0) {
-      cloudMail.mail(emailWithParameter, MailTemplate.TICKET_REFUND_ADMIN);
+      if (ctx.getEmail() != null && ctx.getMailTemplate() != null) {
+        emailsByTpl.computeIfAbsent(ctx.getMailTemplate(), k -> new ArrayList<>()).add(ctx.getEmail());
+      }
+      if (ctx.getAlimtalkMessage() != null && ctx.getAlimtalkTemplate() != null) {
+        talksByTpl.computeIfAbsent(ctx.getAlimtalkTemplate(), k -> new ArrayList<>()).add(ctx.getAlimtalkMessage());
+      }
+      if (ctx.getSmsRequestIdsToCancel() != null) {
+        allSmsToCancel.addAll(ctx.getSmsRequestIdsToCancel());
+      }
     }
-    if (alimTalkMessages.size() > 0) {
-      alimTalk.sendAlimTalk(alimTalkMessages, AlimTalkTemplate.TICKET_REFUND_ADMIN);
-    }
-    entities.forEach(entity -> alimTalk.cancelAlimTalk(entity.getSmsRequestId()));
+
+    // 일괄 발송
+    sendNotificationsBatch(emailsByTpl, talksByTpl, allSmsToCancel);
     return true;
+  }
+
+  /** 공통 코어: 환불 처리(단건 기준) + 전송 페이로드 생성 */
+  private RefundContext doAdminRefundCore(Ticket entity, String reason, UserPrincipal actor) {
+    if (entity.isRefund()) {
+      throw new ApiException(ErrorCode.BAD_VALID, "이미 환불상태", 1);
+    }
+
+    // PG 환불
+    if (entity.getType() == TicketType.NORMAL && !StringUtils.isEmpty(entity.getPgId())) {
+      entity.getPayment().refund(entity);
+    }
+
+    // 쿠폰 롤백 (존재 시에만, idempotent)
+    if (entity.getCouponUuid() != null && Boolean.FALSE.equals(entity.getIsCouponAlreadyRefund())) {
+      try {
+        boolean rolledBack = couponUsageService.rollbackUsageIfPresent(entity.getCouponUuid());
+        if (!rolledBack) {
+          log.warn("Coupon usage not found to rollback. ticketId={}, couponUuid={}",
+                  entity.getId(), entity.getCouponUuid());
+        }
+      } catch (Exception ex) {
+        log.error("Coupon rollback failed. ticketId={}, couponUuid={}",
+                entity.getId(), entity.getCouponUuid(), ex);
+        // 정책: 여기서 실패해도 환불 프로세스 계속 진행할지 결정. 보통 계속 진행 권장.
+      } finally {
+        // 재시도 루프 방지
+        entity.setCouponAlreadyRefund(true);
+        ticketRepository.save(entity);
+      }
+    }
+
+    // 마일리지 취소 & (필요시) 멤버십 강등
+    try {
+      mileageService.refundTicketMileageAndMaybeDemote(entity, reason);
+    } catch (Exception e) {
+      log.error("Refund mileage failed for ticketId={}", entity.getId(), e);
+      // 정책에 따라 롤백/무시 결정. 현재는 진행.
+    }
+
+    // 상태 변경 + 로깅
+    if (actor != null) {
+      entity.updateState(actor, TicketStateType.ADMIN_REFUND);
+    } else {
+      entity.updateState(TicketStateType.ADMIN_REFUND);
+    }
+    ticketRepository.flush();
+    logRepository.save(entity.createUpdateLog(actor != null ? actor.getAdmin() : null));
+
+    // 메일/알림 페이로드
+    Map<String, String> params = entity.getMailParam(herediumProperties);
+
+    MailTemplate mailTpl = null;
+    if (!StringUtils.isBlank(entity.getEmail())) {
+      mailTpl = (entity.getType() == TicketType.GROUP)
+              ? MailTemplate.TICKET_REFUND_GROUP
+              : MailTemplate.TICKET_REFUND_ADMIN;
+    }
+    EmailWithParameter emailParam =
+            (mailTpl != null) ? new EmailWithParameter(entity.getEmail(), params) : null;
+
+    AlimTalkTemplate talkTpl = null;
+    if (!StringUtils.isBlank(entity.getPhone())) {
+      talkTpl = (entity.getType() == TicketType.GROUP)
+              ? AlimTalkTemplate.TICKET_REFUND_GROUP
+              : AlimTalkTemplate.TICKET_REFUND_ADMIN;
+    }
+    NCloudBizAlimTalkMessage alimMsg = null;
+    if (talkTpl != null) {
+      alimMsg = new NCloudBizAlimTalkMessageBuilder()
+              .variables(params)
+              .to(entity.getPhone())
+              .title(talkTpl.getTitle())
+              .failOver(new NCloudBizAlimTalkFailOverConfig())
+              .build();
+    }
+
+    List<String> smsToCancel = entity.getSmsRequestId();
+
+    return new RefundContext(params, emailParam, mailTpl, alimMsg, talkTpl, smsToCancel, entity);
+  }
+
+  /** 단건 전송 */
+  private void sendNotificationsSingle(RefundContext ctx) {
+    // 메일
+    if (ctx.getMailTemplate() != null) {
+      String email = (ctx.getTicket() != null) ? ctx.getTicket().getEmail() : null;
+      if (!StringUtils.isBlank(email)) {
+        try {
+          cloudMail.mail(email, ctx.getParams(), ctx.getMailTemplate());
+        } catch (Exception ex) {
+          log.error("Single mail send failed. ticketId={}, email={}, tpl={}",
+                  (ctx.getTicket() != null ? ctx.getTicket().getId() : null), email, ctx.getMailTemplate(), ex);
+        }
+      }
+    }
+
+    // 알림톡
+    if (ctx.getAlimtalkTemplate() != null) {
+      String phone = (ctx.getTicket() != null) ? ctx.getTicket().getPhone() : null;
+      if (!StringUtils.isBlank(phone)) {
+        try {
+          // 단건은 템플릿/파라미터 방식 사용
+          alimTalk.sendAlimTalk(phone, ctx.getParams(), ctx.getAlimtalkTemplate());
+        } catch (Exception ex) {
+          log.error("Single alimtalk send failed. ticketId={}, phone={}, tpl={}",
+                  (ctx.getTicket() != null ? ctx.getTicket().getId() : null), phone, ctx.getAlimtalkTemplate(), ex);
+        }
+      }
+    }
+
+    // 예약 알림톡 취소
+    List<String> smsIds = ctx.getSmsRequestIdsToCancel();
+    if (smsIds != null && !smsIds.isEmpty()) {
+      try {
+        // 중복 방지
+        List<String> distinctIds = new ArrayList<>(new LinkedHashSet<>(smsIds));
+        alimTalk.cancelAlimTalk(distinctIds);
+      } catch (Exception ex) {
+        log.error("Single alimtalk-cancel failed. ticketId={}, smsIds={}",
+                (ctx.getTicket() != null ? ctx.getTicket().getId() : null), smsIds, ex);
+      }
+    }
+  }
+
+  /** 배치 전송: 템플릿별로 묶어서 일괄 발송 */
+  private void sendNotificationsBatch(
+          Map<MailTemplate, List<EmailWithParameter>> emailsByTpl,
+          Map<AlimTalkTemplate, List<NCloudBizAlimTalkMessage>> talksByTpl,
+          List<String> allSmsToCancel
+  ) {
+    // 메일 템플릿별 배치 발송
+    if (emailsByTpl != null && !emailsByTpl.isEmpty()) {
+      emailsByTpl.forEach((tpl, list) -> {
+        if (tpl != null && list != null && !list.isEmpty()) {
+          try {
+            cloudMail.mail(list, tpl);
+          } catch (Exception ex) {
+            log.error("Batch mail send failed. tpl={}, size={}", tpl, list.size(), ex);
+          }
+        }
+      });
+    }
+
+    // 알림톡 템플릿별 배치 발송
+    if (talksByTpl != null && !talksByTpl.isEmpty()) {
+      talksByTpl.forEach((tpl, list) -> {
+        if (tpl != null && list != null && !list.isEmpty()) {
+          try {
+            alimTalk.sendAlimTalk(list, tpl);
+          } catch (Exception ex) {
+            log.error("Batch alimtalk send failed. tpl={}, size={}", tpl, list.size(), ex);
+          }
+        }
+      });
+    }
+
+    // 예약 알림톡 전체 취소 (중복 제거)
+    if (allSmsToCancel != null && !allSmsToCancel.isEmpty()) {
+      try {
+        List<String> distinctIds = new ArrayList<>(new LinkedHashSet<>(allSmsToCancel));
+        alimTalk.cancelAlimTalk(distinctIds);
+      } catch (Exception ex) {
+        log.error("Batch alimtalk-cancel failed. size={}", allSmsToCancel.size(), ex);
+      }
+    }
   }
 
   /** 관리자 - 단체 입장권 발급 */
@@ -503,4 +656,5 @@ public class TicketService {
 
     return new GetUserTicketInfoResponse(entity, projectInfo.getThumbnail());
   }
+
 }

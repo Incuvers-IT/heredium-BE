@@ -2,6 +2,8 @@ package art.heredium.domain.membership.entity;
 
 import art.heredium.domain.account.entity.Account;
 import art.heredium.domain.common.entity.BaseEntity;
+import art.heredium.domain.ticket.entity.Ticket;
+import art.heredium.domain.ticket.type.TicketKindType;
 import com.vladmihalcea.hibernate.type.json.JsonStringType;
 import lombok.*;
 import org.hibernate.annotations.Comment;
@@ -36,8 +38,9 @@ public class MembershipMileage extends BaseEntity implements Serializable {
   private Integer type;
 
   @Comment("대분류 (0:EXHIBITION,1:PROGRAM,2:COFFEE,3:ARTSHOP) - type=0 적립 시에만 사용")
+  @Convert(converter = TicketKindType.Converter.class)
   @Column(name = "category")
-  private Integer category;
+  private TicketKindType category;
 
   @Comment("대분류 대상 ID (전시·프로그램·상품 등)")
   @Column(name = "category_id")
@@ -67,6 +70,11 @@ public class MembershipMileage extends BaseEntity implements Serializable {
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "related_mileage_id")
   private MembershipMileage relatedMileage;
+
+  @Comment("연결 티켓 (티켓 만료·환불 연동)")
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "ticket_id")
+  private Ticket ticket;
 
   @Comment("유효기간 만료일 (type=0 적립 시 계산)")
   @Column(name = "expiration_date")

@@ -16,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import static art.heredium.domain.ticket.type.TicketKindType.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -36,11 +37,16 @@ public class MembershipMileageRepositoryImpl
 
     QMembershipMileage parent = new QMembershipMileage("parent");
 
+    NumberExpression<Long> groupKeyExpr =
+            new CaseBuilder()
+                    .when(mm.relatedMileage.id.isNull()).then(mm.id)
+                    .otherwise(mm.relatedMileage.id);
+
     // 제목 분기
     StringExpression titleExpr = new CaseBuilder()
-            .when(mm.category.in(0, 3)).then(ex.title)
-            .when(mm.category.eq(1)).then(pr.title)
-            .when(mm.category.eq(2)).then(cf.title)
+            .when(mm.category.in(EXHIBITION, ARTSHOP)).then(ex.title)
+            .when(mm.category.eq(PROGRAM)).then(pr.title)
+            .when(mm.category.eq(COFFEE)).then(cf.title)
             .otherwise((String) null);
 
     // 부모(적립) 먼저 = 0, 자식(취소) = 1
@@ -79,25 +85,27 @@ public class MembershipMileageRepositoryImpl
                     mm.lastModifiedDate,
                     titleExpr,
                     mm.remark,
-                    mm.relatedMileage.id.as("relatedMileageId")
+                    mm.relatedMileage.id.as("relatedMileageId"),
+                    mm.ticket.id.as("ticketId")
             ))
             .from(mm)
             // 제목 용 조인
-            .leftJoin(ex).on(mm.category.in(0, 3).and(mm.categoryId.eq(ex.id)))
-            .leftJoin(pr).on(mm.category.eq(1).and(mm.categoryId.eq(pr.id)))
-            .leftJoin(cf).on(mm.category.eq(2).and(mm.categoryId.eq(cf.id)))
+            .leftJoin(ex).on(mm.category.in(EXHIBITION, ARTSHOP).and(mm.categoryId.eq(ex.id)))
+            .leftJoin(pr).on(mm.category.eq(PROGRAM).and(mm.categoryId.eq(pr.id)))
+            .leftJoin(cf).on(mm.category.eq(COFFEE).and(mm.categoryId.eq(cf.id)))
             // self‑join: 부모 엔티티
             .leftJoin(mm.relatedMileage, parent)
             .where(where)
 //            .where(mm.account.id.eq(request.getAccountId()))
             .orderBy(
-                    // 1) 부모 그룹 생성일 역순
+                    // 1) 그룹(부모) 생성일 역순
                     groupDateExpr.desc(),
-                    // 2) 부모(0) → 자식(1)
+                    // 2) 그룹 키(동일 그룹끼리 묶기)
+                    groupKeyExpr.desc(),
+                    // 3) 그룹 내 부모(0) → 자식(1)
                     childOrderExpr.asc(),
-                    // 3) 각 레코드 자신의 생성일 역순
+                    // 4) 동일 그룹 내 타이브레이커
                     mm.createdDate.desc(),
-                    // 4) 동일일자 시 ID 역순
                     mm.id.desc()
             );
 

@@ -19,6 +19,7 @@ import art.heredium.domain.membership.entity.PaymentStatus;
 import art.heredium.domain.membership.repository.MembershipMileageRepository;
 import art.heredium.domain.membership.repository.MembershipRegistrationRepository;
 import art.heredium.domain.membership.repository.MembershipRepository;
+import art.heredium.domain.ticket.entity.Ticket;
 import art.heredium.domain.ticket.repository.TicketRepository;
 import art.heredium.ncloud.bean.CloudMail;
 import art.heredium.ncloud.bean.CloudStorage;
@@ -96,11 +97,6 @@ public class Scheduler {
     } catch (Exception e) {
       log.error("s3 임시 파일 삭제 스케쥴러 에러", e);
     }
-    try {
-      ticketRepository.updateExpire();
-    } catch (Exception e) {
-      log.error("티켓 기간 만료 처리 스케쥴러 에러", e);
-    }
     sleepAccountSendMail();
     sleepAccount();
     terminateSendMail();
@@ -108,19 +104,19 @@ public class Scheduler {
     terminateNonUser();
   }
 
-  @Async
-  @Scheduled(cron = "0 0 0 * * ?")
-  @Transactional(rollbackFor = Exception.class)
-  public void removeMembershipRegistrations() {
-    final List<Long> redundantMembershipRegistrationIds =
-        this.membershipRegistrationRepository
-            .findByPaymentStatusInAndCreatedDateBefore(
-                Collections.singletonList(PaymentStatus.PENDING), LocalDateTime.now().minusDays(1))
-            .stream()
-            .map(MembershipRegistration::getId)
-            .collect(Collectors.toList());
-    this.membershipRegistrationRepository.deleteAllById(redundantMembershipRegistrationIds);
-  }
+//  @Async
+//  @Scheduled(cron = "0 0 0 * * ?")
+//  @Transactional(rollbackFor = Exception.class)
+//  public void removeMembershipRegistrations() {
+//    final List<Long> redundantMembershipRegistrationIds =
+//        this.membershipRegistrationRepository
+//            .findByPaymentStatusInAndCreatedDateBefore(
+//                Collections.singletonList(PaymentStatus.PENDING), LocalDateTime.now().minusDays(1))
+//            .stream()
+//            .map(MembershipRegistration::getId)
+//            .collect(Collectors.toList());
+//    this.membershipRegistrationRepository.deleteAllById(redundantMembershipRegistrationIds);
+//  }
 
 //  @Async
 //  @Scheduled(cron = "0 0 0 * * ?") // Run at midnight every day
@@ -264,8 +260,7 @@ public class Scheduler {
       }
 
       // 4) 예약 발송 또는 쿠폰 지급
-//      LocalDateTime reserveTime = today.atTime(10, 0);
-      LocalDateTime reserveTime = LocalDateTime.now().plusMinutes(11).truncatedTo(ChronoUnit.SECONDS);
+      LocalDateTime reserveTime = today.atTime(10, 0);
 
       for (Account recipient : recipients) {
         // 단일 쿠폰을 한 번에 발급하도록 리스트로 포장
@@ -275,7 +270,8 @@ public class Scheduler {
                 recipient,         // Account
                 singleCouponList,  // List<Coupon> (이번 루프의 단일 쿠폰)
                 true,               // 알림톡 발송
-                reserveTime
+                reserveTime,
+                "SYSTEM"
         );
       }
 
@@ -289,9 +285,18 @@ public class Scheduler {
   // 매일 자정 00시 00분 00초에 실행
   @Scheduled(cron = "0 0 0 * * ?")
   // 매분 0초마다 실행 (즉, 매 분 정각에 실행)
-  //  @Scheduled(cron = "0 * * * * *")
+//  @Scheduled(cron = "0 * * * * *")
   @Transactional(rollbackFor = Exception.class)
   public void runMidnightTasks() {
+
+    expireTicketsAndAccrueMileage();
+
+    // 온라인 마일리지 적립 추가
+//    try {
+//      ticketRepository.updateExpire();
+//    } catch (Exception e) {
+//      log.error("티켓 기간 만료 처리 스케쥴러 에러", e);
+//    }
 
     // 1) 만료된 2·3등급 처리 (강등/유지)
     processExpiredTier2And3();
@@ -304,6 +309,60 @@ public class Scheduler {
 
     // 4) 마일리지 소멸
     expireMileagePoints();
+  }
+
+  private void expireTicketsAndAccrueMileage() {
+    final LocalDateTime now = LocalDateTime.now();
+
+    // (1) 적립 대상 선조회 (account not null + 순금액≥1000 + 상태/기간 조건)
+    final List<Ticket> targets = ticketRepository.findTargetsForAccrual(now);
+    int accruedCount = 0;
+
+    for (Ticket t : targets) {
+      try {
+        final Account acc = t.getAccount();
+        if (acc == null) continue;
+
+        final Long originBoxed   = t.getOriginPrice();                 // BIGINT → Long 매핑 가정
+        final Long discountBoxed = t.getCouponDiscountAmount();        // nullable
+        final long origin   = (originBoxed   == null ? 0L : originBoxed);
+        final long discount = (discountBoxed == null ? 0L : discountBoxed);
+        final long net      = Math.max(0L, origin - discount);         // 음수 방어
+
+        final int  points   = (int) Math.floorDiv(net, 1000L);         // 1,000원당 1점 (내림)
+        if (points <= 0) continue;
+
+        // (2) 적립: 티켓 FK 연동 + 만료일 계산 포함
+        // paymentMethod=0(온라인), paymentAmount=net(overflow 방지)
+        final int paymentAmount = (net > Integer.MAX_VALUE) ? Integer.MAX_VALUE : (int) net;
+
+        final MembershipMileage saved = mileageService.earnFromTicket(
+                acc.getId(), points, 0, paymentAmount, "티켓 만료 적립", t
+        );
+
+        if (saved != null) {
+          accruedCount++;
+        }
+
+      } catch (org.springframework.dao.DataIntegrityViolationException dup) {
+        // 유니크 제약(uq: source+relatedId or ticket_id) 위반 → 이미 적립됨
+        log.info("[TicketExpire] duplicate accrual skipped (ticketId={})", t.getId());
+      } catch (Exception ex) {
+        // 개별 건 실패는 전체에 영향 주지 않게
+        log.error("[TicketExpire] accrual failed (ticketId={})", t.getId(), ex);
+      }
+    }
+
+    // (3) 만료 일괄 업데이트: 계정 없는 티켓 포함 모두 상태 변경
+    int updated = 0;
+    try {
+      updated = ticketRepository.updateExpireAll(now);
+    } catch (Exception ex) {
+      log.error("[TicketExpire] bulk expire failed", ex);
+    }
+
+    log.info("[TicketExpire] expired {} tickets (updated rows), accrued mileage for {} tickets",
+            updated, accruedCount);
   }
 
   // —————————————————————————————————————————————
@@ -351,6 +410,7 @@ public class Scheduler {
         if (mileageSum >= retentionThreshold) {
           // → Retention: 2→2
           reg.setExpirationDate(retentionExpiry);
+          reg.setRegistrationDate(now);
           reg.setLastModifiedName("SYSTEM");
           retentionList.add(reg);
           log.info("Retention extended for account {} (mileage={})",
@@ -359,6 +419,7 @@ public class Scheduler {
           // → Demote: 2→1
           reg.setMembership(tier1);
           reg.setExpirationDate(null);
+          reg.setRegistrationDate(now);
           reg.setLastModifiedName("SYSTEM");
           demotedFrom2List.add(reg);
           log.info("Demoted from 2→1 for account {}", reg.getAccount().getId());
@@ -367,6 +428,7 @@ public class Scheduler {
       else if (originalCode == 3) {
         // → Demote: 3→1
         reg.setMembership(tier1);
+        reg.setRegistrationDate(now);
         reg.setExpirationDate(null);
         reg.setLastModifiedName("SYSTEM");
         demotedFrom3List.add(reg);
@@ -387,6 +449,36 @@ public class Scheduler {
       );
       log.info("Deducted {} mileage for retention on account {}",
               retentionThreshold, reg.getAccount().getId());
+    }
+
+    // 9-1) 2→2 유지: 2등급 쿠폰 발급
+    for (MembershipRegistration reg : retentionList) {
+      couponUsageService.distributeCouponsForMembership(
+              reg.getAccount(),
+              reg,                 // reg.getMembership()는 2등급
+              false,
+              null
+      );
+    }
+
+    // 9-2) 2→1 강등: 1등급 쿠폰 발급
+    for (MembershipRegistration reg : demotedFrom2List) {
+      couponUsageService.distributeCouponsForMembership(
+              reg.getAccount(),
+              reg,                 // 이미 tier1로 set 됨
+              false,
+              null
+      );
+    }
+
+    // 9-3) 3→1 강등: 1등급 쿠폰 발급
+    for (MembershipRegistration reg : demotedFrom3List) {
+      couponUsageService.distributeCouponsForMembership(
+              reg.getAccount(),
+              reg,                 // 이미 tier1로 set 됨
+              false,
+              null
+      );
     }
 
     // 8) (필요시) 알림톡 발송 로직 호출
@@ -429,6 +521,7 @@ public class Scheduler {
       // (1) 등급·만료일 변경
       reg.setMembership(tier2);
       reg.setExpirationDate(newExpiry);
+      reg.setRegistrationDate(now);
       reg.setLastModifiedName("SYSTEM");
       membershipRegistrationRepository.save(reg);
 
@@ -439,7 +532,15 @@ public class Scheduler {
               tier2Name
       );
 
-      // (3) 예약 알림톡 변수 준비 및 전송
+      // (3) 승급 멤버십 쿠폰 발송
+      couponUsageService.distributeCouponsForMembership(
+              reg.getAccount(), // Account
+              reg,              // MembershipRegistration
+              false,            // 알림톡 즉시 발송 여부
+              null              // 알림톡 예약
+      );
+
+      // (4) 예약 알림톡 변수 준비 및 전송
       LocalDate today = LocalDate.now();
       Map<String,String> params = new HashMap<>();
       params.put("name",           reg.getAccount().getAccountInfo().getName());

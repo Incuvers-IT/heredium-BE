@@ -113,5 +113,14 @@ public class AdminMembershipController {
     return ResponseEntity.ok(detail);
   }
 
+  /**
+   *  삭제 요청
+   *  DELETE /admin/memberships/{id}
+   */
+  @DeleteMapping("/{id}")
+  public ResponseEntity<Void> deleteMembership(@PathVariable Long id) {
+    membershipService.softDeleteMembership(id);
+    return ResponseEntity.noContent().build();
+  }
 
 }

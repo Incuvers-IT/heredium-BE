@@ -171,7 +171,8 @@ public class AccountService {
               entity,
               coupons,
               true,
-              null
+              null,
+              "SYSTEM"
       );
     }
 
@@ -213,6 +214,14 @@ public class AccountService {
     }
 
     membershipRegistrationRepository.save(registration);
+
+    // 5) 쿠폰발급 (멤버십에 따른 쿠폰발급)
+    couponUsageService.distributeCouponsForMembership(
+            entity,           // Account
+            registration,     // MembershipRegistration
+            false,            // 알림톡 즉시 발송 여부
+            null              // 알림톡 예약
+    );
 
     // 5) 로그인 (공통)
     PostLoginResponse loginRes;
@@ -423,7 +432,8 @@ public class AccountService {
               entity,
               coupons,
               true,
-              null
+              null,
+              "SYSTEM"
       );
     }
 
@@ -506,6 +516,7 @@ public class AccountService {
       reg.setMembership(membership);
       reg.setRegistrationType(RegistrationType.MEMBERSHIP_PACKAGE);
       reg.setPaymentStatus(PaymentStatus.COMPLETED);
+      reg.setRegistrationDate(LocalDateTime.now());
     } else {
       // ── 신규등록 모드 ───────────────────────────
       reg = new MembershipRegistration(
@@ -523,6 +534,14 @@ public class AccountService {
 
     // 3) 저장 (JPA가 id 유무로 insert/update 결정)
     membershipRegistrationRepository.save(reg);
+
+    // 5) 쿠폰발급 (멤버십에 따른 쿠폰발급)
+    couponUsageService.distributeCouponsForMembership(
+            entity,           // Account
+            reg,              // MembershipRegistration
+            false,            // 알림톡 즉시 발송 여부
+            null              // 알림톡 예약
+    );
 
     return new GetUserAccountInfoResponse(entity, reg);
   }
@@ -560,7 +579,8 @@ public class AccountService {
               entity,
               coupons,
               true,
-              null
+              null,
+              "SYSTEM"
       );
     }
 

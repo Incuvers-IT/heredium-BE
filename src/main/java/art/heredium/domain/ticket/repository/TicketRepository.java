@@ -164,4 +164,26 @@ public interface TicketRepository extends JpaRepository<Ticket, Long>, TicketRep
 
   Optional<Ticket> findByIdAndNonUser_NameAndNonUser_PhoneAndPassword(
       Long id, String nonUser_name, String nonUser_phone, String password);
+
+  // 적립 대상: account not null + 티켓 email not empty + 순금액 ≥ 1000 + 상태(결제/발권) + 종료 < now
+  @Query("select t " +
+          "from Ticket t " +
+          "where (t.state = art.heredium.domain.ticket.type.TicketStateType.PAYMENT " +
+          "    or t.state = art.heredium.domain.ticket.type.TicketStateType.ISSUANCE) " +
+          "  and t.endDate < :now " +
+          "  and t.account is not null " +
+          "  and t.email is not null " +
+          "  and t.email <> '' " +
+          "  and (t.originPrice - COALESCE(t.couponDiscountAmount, 0)) >= 1000")
+  List<Ticket> findTargetsForAccrual(@Param("now") LocalDateTime now);
+
+  // 전체 만료(계정 유무/금액 무관)
+  @Modifying(clearAutomatically = true, flushAutomatically = true)
+  @Query("update Ticket t " +
+          "   set t.state = art.heredium.domain.ticket.type.TicketStateType.EXPIRED " +
+          " where (t.state = art.heredium.domain.ticket.type.TicketStateType.PAYMENT " +
+          "     or t.state = art.heredium.domain.ticket.type.TicketStateType.ISSUANCE) " +
+          "   and t.endDate < :now")
+  int updateExpireAll(@Param("now") LocalDateTime now);
+
 }

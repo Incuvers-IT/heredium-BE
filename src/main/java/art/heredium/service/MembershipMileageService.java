@@ -15,6 +15,7 @@ import art.heredium.domain.membership.model.dto.response.MembershipMileageRespon
 import art.heredium.domain.membership.repository.MembershipMileageRepository;
 import art.heredium.domain.membership.repository.MembershipRegistrationRepository;
 import art.heredium.domain.membership.repository.MembershipRepository;
+import art.heredium.domain.ticket.entity.Ticket;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
@@ -29,6 +30,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -39,6 +41,7 @@ public class MembershipMileageService {
   private int expirationYears;
 
   private final MembershipRepository membershipRepository;
+  private final CouponUsageService couponUsageService;
   private final MembershipMileageRepository membershipMileageRepository;
   private final MembershipRegistrationRepository registrationRepo;
   private final AccountRepository accountRepo;
@@ -77,6 +80,76 @@ public class MembershipMileageService {
     membershipMileageRepository.save(mm);
   }
 
+  /**
+   * 티켓 만료/환불 등 티켓 연동 적립 생성
+   * @param accountId      계정 ID
+   * @param points         적립 포인트 (1,000원당 1점)
+   * @param paymentMethod  0:온라인, 1:오프라인
+   * @param paymentAmount  순결제금액(net)
+   * @param desc           비고(예: "티켓 만료 적립 - 전시명")
+   * @param ticket         연동 티켓 엔티티(FK)
+   */
+  public MembershipMileage earnFromTicket(
+          Long accountId,
+          int points,
+          int paymentMethod,
+          int paymentAmount,
+          String desc,
+          Ticket ticket
+  ) {
+
+    if (ticket != null && membershipMileageRepository.existsByTicket_IdAndType(ticket.getId(), 0)) {
+      // 이미 이 티켓으로 적립된 기록이 있으면 스킵
+      return null;
+    }
+
+    Account account = accountRepo.findById(accountId)
+            .orElseThrow(() -> new EntityNotFoundException("Account not found"));
+
+    LocalDateTime now = Constants.getNow();
+
+    // 현재 사용자명(없으면 SYSTEM)
+    String currentUser = "SYSTEM";
+    try {
+      Object auth = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+      if (auth instanceof UserPrincipal) {
+        currentUser = ((UserPrincipal) auth).getName();
+      }
+    } catch (Exception ignored) {}
+
+    String uuid = ticket.getUuid();
+    String serialLast5 = (uuid == null)
+            ? null
+            : uuid.substring(Math.max(0, uuid.length() - 5)); // 길이<5면 전체 반환
+
+    MembershipMileage mm = MembershipMileage.builder()
+            .account(account)
+            .type(0)                         // 0: 적립
+            .category(ticket.getKind())      // 필요 시 카테고리 지정
+            .categoryId(ticket.getKindId())
+            .paymentMethod(paymentMethod)
+            .paymentAmount(paymentAmount)
+            .serialNumber(serialLast5)
+            .mileageAmount(points)
+            .expirationDate(now.plusYears(expirationYears)) // 정책: 기본 3년(설정값)
+            .remark(desc)
+            .relatedMileage(null)
+            .build();
+
+    // 티켓 FK 연동
+    mm.setTicket(ticket);
+
+    // created/modified
+    mm.setCreatedName(currentUser);
+    mm.setLastModifiedName(currentUser);
+
+    // (선택) 중복방지 컬럼이 엔티티에 있다면 세팅
+    // mm.setSource(source);
+    // mm.setRelatedId(relatedId);
+
+    return membershipMileageRepository.save(mm);
+  }
+
   @Transactional
   public void refundMileage(Long originalId, String reason, boolean upgradeCancel) {
 
@@ -108,6 +181,14 @@ public class MembershipMileageService {
         reg.setExpirationDate(null);
         reg.setLastModifiedName(currentUser);
         registrationRepo.save(reg);
+
+        // ▼▼ 강등 후 멤버십 쿠폰 발급 (Tier1 기준)
+        couponUsageService.distributeCouponsForMembership(
+                reg.getAccount(), // or orig.getAccount()
+                reg,              // membership=1 로 저장된 최신 Registration
+                false,            // 알림톡 즉시발송 여부
+                null              // 예약시간 (필요시 now.plusMinutes(…) 등)
+        );
       }
 
       // 1‑d) 기존의 summary(relatedMileage) 자식 레코드들 연결 해제
@@ -329,4 +410,44 @@ public class MembershipMileageService {
             page.isFirst(),
             page.isLast());
   }
+
+  @Transactional
+  public void refundTicketMileageAndMaybeDemote(Ticket ticket, String reason) {
+    Optional<MembershipMileage> opt = membershipMileageRepository
+            .findFirstByTicket_IdAndTypeOrderByIdAsc(ticket.getId(), 0); // type=0: 적립 원본
+    if (!opt.isPresent()) return;
+
+    MembershipMileage original = opt.get();
+    int refundPoints = Math.abs(original.getMileageAmount());
+
+    boolean upgradeCancel = needDemoteAfterTicketRefund(original, refundPoints);
+
+    refundMileage(original.getId(), reason, upgradeCancel);
+  }
+
+  @Transactional(readOnly = true)
+  public boolean needDemoteAfterTicketRefund(MembershipMileage original, int refundPoints) {
+    Long accountId = original.getAccount().getId();
+
+    // 현재 등급이 2 아니면 강등 없음
+    Optional<MembershipRegistration> latest = registrationRepo.findLatestForAccount(accountId);
+    if (!latest.isPresent() || latest.get().getMembership().getCode() != 2) return false;
+
+    // summary(승급) 연동이 없으면 강등 판단 자체를 하지 않음
+    if (original.getRelatedMileage() == null) return false;
+
+    // 기준 점수
+    int threshold = membershipRepository.findByCode(2)
+            .orElseThrow(() -> new EntityNotFoundException("Tier2 not found"))
+            .getUsageThreshold();
+
+    // 같은 summary에 묶인 적립 합계 – 이번 환불 포인트
+    Long relatedId = original.getRelatedMileage().getId();
+    Integer sum = membershipMileageRepository.sumByRelatedMileageId(relatedId);
+    int linkedTotal = (sum == null ? 0 : sum);
+
+    // 기준 미만이면 승급취소
+    return threshold > (linkedTotal - refundPoints);
+  }
+
 }

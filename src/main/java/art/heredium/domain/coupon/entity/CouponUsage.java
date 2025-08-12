@@ -74,14 +74,24 @@ public class CouponUsage extends BaseEntity {
   @Column(name = "is_permanent")
   private boolean isPermanent;
 
+  @Comment("등록자")
+  @Column(name = "created_name")
+  private String createdName;
+
+  @Comment("수정자")
+  @Column(name = "last_modified_name")
+  private String lastModifiedName;
+
   public CouponUsage(
-      @NonNull Coupon coupon,
-      @NonNull Account account,
-      @Nullable MembershipRegistration membershipRegistration,
-      @NonNull LocalDateTime deliveredDate,
-      @NonNull LocalDateTime expirationDate,
-      boolean isPermanent,
-      long usedCount) {
+          @NonNull Coupon coupon,
+          @NonNull Account account,
+          @Nullable MembershipRegistration membershipRegistration,
+          @NonNull LocalDateTime deliveredDate,
+          @NonNull LocalDateTime expirationDate,
+          boolean isPermanent,
+          long usedCount,
+          @Nullable String actorName
+  ) {
     this.coupon = coupon;
     this.account = account;
     this.membershipRegistration = membershipRegistration;
@@ -91,5 +101,9 @@ public class CouponUsage extends BaseEntity {
     this.isUsed = false;
     this.isPermanent = isPermanent;
     this.usedCount = usedCount;
+
+    String actor = actorName == null ? "SYSTEM" : actorName;
+    this.createdName = actor;
+    this.lastModifiedName = actor;
   }
 }

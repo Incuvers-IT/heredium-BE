@@ -9,7 +9,8 @@ import art.heredium.domain.common.type.PersistableEnum;
 public enum TicketKindType implements PersistableEnum<Integer> {
   EXHIBITION(0, "전시"),
   PROGRAM(1, "프로그램"),
-  COFFEE(2, "커피주문"),
+  COFFEE(2, "커피"),
+  ARTSHOP(3, "아트숍")
   ;
 
   private int code;

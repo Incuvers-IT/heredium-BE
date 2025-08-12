@@ -4,7 +4,7 @@ import lombok.Getter;
 
 @Getter
 public enum AlimTalkTemplate {
-  SIGN_UP("회원가입 안내", "@heredium", "HEREDIUM001", "@heredium", "HEREDIUM028"),
+  SIGN_UP("", "@heredium", "HEREDIUM001", "@heredium", "HEREDIUM034"),
   TICKET_ISSUANCE("예매 완료", "@heredium", "HEREDIUM002", "@heredium", "HEREDIUM002"),
   TICKET_INFORMATION("입장 안내", "@heredium", "HEREDIUM003", "@heredium", "HEREDIUM003"),
   TICKET_REFUND_USER("예매 취소", "@heredium", "HEREDIUM004", "@heredium", "HEREDIUM004"),

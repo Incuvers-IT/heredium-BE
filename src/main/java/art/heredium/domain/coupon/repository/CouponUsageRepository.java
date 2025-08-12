@@ -66,4 +66,6 @@ public interface CouponUsageRepository extends JpaRepository<CouponUsage, Long> 
           + "ON cu.coupon.id = c.id "
           + "WHERE c.company.id = :companyId")
   List<CouponUsage> findAllByCompanyId(@Param("companyId") Long companyId);
+
+  void deleteByAccountIdAndMembershipRegistrationIdIsNotNull(Long accountId);
 }

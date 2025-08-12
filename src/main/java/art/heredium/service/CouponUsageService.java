@@ -8,10 +8,14 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import art.heredium.domain.account.entity.UserPrincipal;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,10 +42,10 @@ import art.heredium.ncloud.type.AlimTalkTemplate;
 @Slf4j
 public class CouponUsageService {
   private static final DateTimeFormatter COUPON_DATETIME_FORMAT =
-      DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+          DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
 
   private static final DateTimeFormatter COUPON_DATE_FORMAT =
-      DateTimeFormatter.ofPattern("yyyy-MM-dd");
+          DateTimeFormatter.ofPattern("yyyy-MM-dd");
   private final CouponUsageRepository couponUsageRepository;
   private final CouponRepository couponRepository;
   private final AccountRepository accountRepository;
@@ -50,66 +54,42 @@ public class CouponUsageService {
   private final HerediumAlimTalk alimTalk;
 
   public List<CouponResponseDto> getCouponsWithUsageByAccountId(Long accountId) {
-    // 1) 사용/미사용 쿠폰
-    List<Coupon> usedAndUnused =
+    List<Coupon> coupons =
             couponUsageRepository.findDistinctCouponsByAccountIdAndIsNotDeleted(accountId);
+    List<CouponResponseDto> responseDtos = new ArrayList<>();
 
-    // Optional<MembershipRegistration> 으로 받아 두고…
-    Optional<MembershipRegistration> regOpt =
-            membershipRegistrationRepository.findLatestForAccount(accountId);
+    for (Coupon coupon : coupons) {
+      List<CouponUsage> usedCoupons =
+              couponUsageRepository
+                      .findByAccountIdAndCouponIdAndIsUsedTrue(accountId, coupon.getId())
+                      .stream()
+                      .collect(Collectors.toList());
 
-    // 2) membership 쿠폰
-    Set<Coupon> allCoupons = new LinkedHashSet<>();
-    LocalDateTime start = null, end = null;
-    if (regOpt.isPresent()) {
-      MembershipRegistration reg = regOpt.get();
-      Long membershipId = reg.getMembership().getId();
-      start = reg.getRegistrationDate();
-      end   = reg.getExpirationDate();
+      List<CouponUsage> unusedCoupons =
+              couponUsageRepository.findUnusedOrPermanentCoupons(accountId, coupon.getId()).stream()
+                      .sorted(Comparator.comparing(CouponUsage::getExpirationDate))
+                      .collect(Collectors.toList());
 
-      List<Coupon> membershipCoupons =
-              couponRepository.findByMembershipIdAndIsDeletedFalse(membershipId);
-      allCoupons.addAll(membershipCoupons);
+      responseDtos.add(new CouponResponseDto(coupon, usedCoupons, unusedCoupons));
     }
 
-    allCoupons.addAll(usedAndUnused);
-
-    // 3) DTO 변환
-    List<CouponResponseDto> response = new ArrayList<>();
-    for (Coupon coupon : allCoupons) {
-      List<CouponUsage> usedList = couponUsageRepository
-              .findByAccountIdAndCouponIdAndIsUsedTrue(accountId, coupon.getId());
-      List<CouponUsage> unusedList = couponUsageRepository
-              .findUnusedOrPermanentCoupons(accountId, coupon.getId()).stream()
-              .sorted(Comparator.comparing(CouponUsage::getExpirationDate))
-              .collect(Collectors.toList());
-
-      if (coupon.getMembership() != null && regOpt.isPresent()) {
-        // membership 쿠폰인 경우, start/end 포함 생성자 사용
-        response.add(new CouponResponseDto(coupon, usedList, unusedList, start, end));
-      } else {
-        // 일반 쿠폰
-        response.add(new CouponResponseDto(coupon, usedList, unusedList));
-      }
-    }
-    return response;
+    return responseDtos;
   }
-
 
   @Transactional(rollbackFor = Exception.class)
   public void assignCoupons(final long couponId, @NonNull List<Long> accountIds) {
     final Coupon coupon =
-        this.couponRepository
-            .findById(couponId)
-            .orElseThrow(() -> new ApiException(ErrorCode.COUPON_NOT_FOUND));
+            this.couponRepository
+                    .findById(couponId)
+                    .orElseThrow(() -> new ApiException(ErrorCode.COUPON_NOT_FOUND));
     if (coupon.getFromSource() == CouponSource.MEMBERSHIP_PACKAGE) {
       throw new ApiException(
-          ErrorCode.INVALID_COUPON_TO_ASSIGN,
-          String.format(
-              "Error while assigning coupon: %s: This coupon is membership coupon",
-              coupon.getName()));
+              ErrorCode.INVALID_COUPON_TO_ASSIGN,
+              String.format(
+                      "Error while assigning coupon: %s: This coupon is membership coupon",
+                      coupon.getName()));
     }
-    this.assignCouponToAccounts(coupon, accountIds, CouponSource.ADMIN_SITE, true, null);
+    this.assignCouponToAccounts(coupon, accountIds, CouponSource.ADMIN_SITE, true, null, null);
   }
 
   /**
@@ -120,10 +100,13 @@ public class CouponUsageService {
    */
   @Transactional(rollbackFor = Exception.class)
   public List<CouponUsage> distributeMembershipAndCompanyCoupons(
-      @NonNull Account account, @NonNull List<Coupon> coupons, boolean sendAlimtalk, LocalDateTime reserveTime) {
+          @NonNull Account account, @NonNull List<Coupon> coupons, boolean sendAlimtalk
+          , LocalDateTime reserveTime, String name
+
+  ) {
     List<CouponUsage> couponUsages = new ArrayList<>();
     coupons.forEach(
-        coupon -> {
+            coupon -> {
 //          if (coupon.getFromSource() == CouponSource.ADMIN_SITE) {
 //            throw new ApiException(
 //                ErrorCode.INVALID_COUPON_TO_ASSIGN,
@@ -131,15 +114,16 @@ public class CouponUsageService {
 //                    "Error while assigning coupon: %s: This coupon is not membership coupon",
 //                    coupon.getName()));
 //          }
-          couponUsages.addAll(
-              this.assignCouponToAccounts(
-                  coupon,
-                  Stream.of(account.getId()).collect(Collectors.toList()),
-                  coupon.getFromSource(),
-                  sendAlimtalk,
-                  reserveTime
-              ));
-        });
+              couponUsages.addAll(
+                      this.assignCouponToAccounts(
+                              coupon,
+                              Stream.of(account.getId()).collect(Collectors.toList()),
+                              coupon.getFromSource(),
+                              sendAlimtalk,
+                              reserveTime,
+                              name
+                      ));
+            });
     return this.couponUsageRepository.saveAll(couponUsages);
   }
 
@@ -158,8 +142,8 @@ public class CouponUsageService {
     if (couponUsage.getCoupon().getFromSource() == CouponSource.MEMBERSHIP_PACKAGE) {
       if (couponUsage.getCoupon().getMembership() == null) {
         log.info(
-            "Ignore sendCouponUsedMessageToAlimTalk due to coupon source is membership package and membership is null {}",
-            couponUsage);
+                "Ignore sendCouponUsedMessageToAlimTalk due to coupon source is membership package and membership is null {}",
+                couponUsage);
         return;
       }
       this.sendWithMembershipCouponUsedMessageToAlimTalk(couponUsage);
@@ -171,13 +155,13 @@ public class CouponUsageService {
   private CouponUsage getCouponUsageByUuid(@NonNull final String uuid) {
     LocalDateTime now = LocalDateTime.now();
     final CouponUsage couponUsage =
-        couponUsageRepository
-            .findByUuid(uuid)
-            .orElseThrow(
-                () ->
-                    new ApiException(
-                        ErrorCode.COUPON_USAGE_NOT_FOUND,
-                        "Coupon usage not found by uuid " + uuid));
+            couponUsageRepository
+                    .findByUuid(uuid)
+                    .orElseThrow(
+                            () ->
+                                    new ApiException(
+                                            ErrorCode.COUPON_USAGE_NOT_FOUND,
+                                            "Coupon usage not found by uuid " + uuid));
 
     if (couponUsage.getExpirationDate().isBefore(now)) {
       throw new ApiException(ErrorCode.COUPON_EXPIRED, "Coupon is expired");
@@ -201,8 +185,26 @@ public class CouponUsageService {
           @NonNull final List<Long> accountIds,
           @NonNull final CouponSource source,
           final boolean sendAlimtalk,
-          LocalDateTime reserveTime
+          LocalDateTime reserveTime,
+          String name
   ) {
+
+    final String actorNameFinal;
+    if (name != null) {
+      actorNameFinal = name;
+    } else {
+      Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+      if (auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getPrincipal())) {
+        UserPrincipal principal = (UserPrincipal) auth.getPrincipal();
+        String extractedName = principal.getName();
+        // DB 제약 길이 방어
+        actorNameFinal = (extractedName != null && extractedName.length() > 10)
+                ? extractedName.substring(0, 10)
+                : extractedName;
+      } else {
+        actorNameFinal = "SYSTEM";
+      }
+    }
 
     // 1) 기본 정보 추출
     long numberOfUses = Optional.ofNullable(coupon.getNumberOfUses()).orElse(1L);
@@ -271,9 +273,9 @@ public class CouponUsageService {
       if (isPermanentCoupon) {
         // 상시할인 한 번만
         CouponUsage usage = new CouponUsage(
-                coupon, account, mr,
-                startDateTime, endDateTime,
-                true, 0L);
+                coupon, account, mr, startDateTime, endDateTime, true, 0L, actorNameFinal
+        );
+
         couponUsages.add(usage);
         accountsToSendAlimTalk.put(account, usage);
 
@@ -281,9 +283,9 @@ public class CouponUsageService {
         // 횟수만큼 반복 생성
         for (int i = 0; i < numberOfUses; i++) {
           CouponUsage usage = new CouponUsage(
-                  coupon, account, mr,
-                  startDateTime, endDateTime,
-                  false, 0L);
+                  coupon, account, mr, startDateTime, endDateTime, false, 0L, actorNameFinal
+          );
+
           couponUsages.add(usage);
           if (i == 0) { // 첫 건만 알림 맵에 등록
             accountsToSendAlimTalk.put(account, usage);
@@ -305,16 +307,16 @@ public class CouponUsageService {
   @NonNull
   private MembershipRegistration findMembershipRegistration(@NonNull final Account account) {
     return this.membershipRegistrationRepository
-        .findTopByAccountOrderByRegistrationDateDesc(account)
-        .orElseThrow(
-            () ->
-                new ApiException(
-                    ErrorCode.MEMBERSHIP_REGISTRATION_NOT_FOUND,
-                    "Membership registration not found with accountId: " + account.getId()));
+            .findTopByAccountOrderByRegistrationDateDesc(account)
+            .orElseThrow(
+                    () ->
+                            new ApiException(
+                                    ErrorCode.MEMBERSHIP_REGISTRATION_NOT_FOUND,
+                                    "Membership registration not found with accountId: " + account.getId()));
   }
 
   private void sendCouponDeliveredMessageToAlimTalk(
-      final Map<Account, CouponUsage> accountsToSendAlimTalk, LocalDateTime reserveTime) {
+          final Map<Account, CouponUsage> accountsToSendAlimTalk, LocalDateTime reserveTime) {
     log.info("Start sendCouponDeliveredMessageToAlimTalk {}", accountsToSendAlimTalk);
 
     Map<String, Map<String, String>> phonesAndMessagesToSendAlimTalk = new HashMap<>();
@@ -366,7 +368,7 @@ public class CouponUsageService {
     Optional<CouponUsage> couponUsageOptional = couponUsageRepository.findByUuid(couponUuid);
     if (!couponUsageOptional.isPresent())
       throw new ApiException(
-          ErrorCode.COUPON_USAGE_NOT_FOUND, "Coupon usage not found by uuid " + couponUuid);
+              ErrorCode.COUPON_USAGE_NOT_FOUND, "Coupon usage not found by uuid " + couponUuid);
     CouponUsage couponUsage = couponUsageOptional.get();
     long usedCount = couponUsage.getUsedCount();
     couponUsage.setUsedCount(--usedCount);
@@ -389,16 +391,16 @@ public class CouponUsageService {
       params.put("accountName", couponUsage.getAccount().getAccountInfo().getName());
       params.put("membershipName", couponUsage.getCoupon().getMembership().getName());
       params.put(
-          "issuedDate",
-          couponUsage.getUsedDate().format(COUPON_DATETIME_FORMAT)); // Is actually used date
+              "issuedDate",
+              couponUsage.getUsedDate().format(COUPON_DATETIME_FORMAT)); // Is actually used date
       params.put("couponType", couponUsage.getCoupon().getCouponType().getDesc());
       params.put("CSTel", herediumProperties.getTel());
       params.put("CSEmail", herediumProperties.getEmail());
 
       this.alimTalk.sendAlimTalkWithoutTitle(
-          couponUsage.getAccount().getAccountInfo().getPhone(),
-          params,
-          AlimTalkTemplate.WITH_MEMBERSHIP_COUPON_HAS_BEEN_USED);
+              couponUsage.getAccount().getAccountInfo().getPhone(),
+              params,
+              AlimTalkTemplate.WITH_MEMBERSHIP_COUPON_HAS_BEEN_USED);
     } catch (Exception e) {
       log.warn("Sending message to AlimTalk failed: ", e);
     } finally {
@@ -412,16 +414,16 @@ public class CouponUsageService {
       final Map<String, String> params = new HashMap<>();
       params.put("accountName", couponUsage.getAccount().getAccountInfo().getName());
       params.put(
-          "issuedDate",
-          couponUsage.getUsedDate().format(COUPON_DATETIME_FORMAT)); // Is actually used date
+              "issuedDate",
+              couponUsage.getUsedDate().format(COUPON_DATETIME_FORMAT)); // Is actually used date
       params.put("couponType", couponUsage.getCoupon().getCouponType().getDesc());
       params.put("CSTel", herediumProperties.getTel());
       params.put("CSEmail", herediumProperties.getEmail());
 
       this.alimTalk.sendAlimTalkWithoutTitle(
-          couponUsage.getAccount().getAccountInfo().getPhone(),
-          params,
-          AlimTalkTemplate.NON_MEMBERSHIP_COUPON_HAS_BEEN_USED);
+              couponUsage.getAccount().getAccountInfo().getPhone(),
+              params,
+              AlimTalkTemplate.NON_MEMBERSHIP_COUPON_HAS_BEEN_USED);
     } catch (Exception e) {
       log.warn("Sending message to AlimTalk failed: ", e);
     } finally {
@@ -430,11 +432,11 @@ public class CouponUsageService {
   }
 
   public CouponUsageCheckResponse checkActiveMembershipCouponUsage(
-      final long membershipRegistrationId) {
+          final long membershipRegistrationId) {
     // Get the count of used coupons directly
     long usedCouponsCount =
-        couponUsageRepository.countByMembershipRegistrationIdAndIsUsedTrue(
-            membershipRegistrationId);
+            couponUsageRepository.countByMembershipRegistrationIdAndIsUsedTrue(
+                    membershipRegistrationId);
 
     return new CouponUsageCheckResponse(usedCouponsCount);
   }
@@ -442,5 +444,120 @@ public class CouponUsageService {
   public void deleteAllByCompanyId(Long companyId) {
     List<CouponUsage> couponUsages = this.couponUsageRepository.findAllByCompanyId(companyId);
     this.couponUsageRepository.deleteAll(couponUsages);
+  }
+
+  /**
+   * 멤버십 전용 쿠폰 발급
+   */
+  @Transactional(rollbackFor = Exception.class)
+  public List<CouponUsage> distributeCouponsForMembership(
+          @NonNull Account account,
+          @NonNull MembershipRegistration registration,
+          boolean sendAlimtalk,
+          LocalDateTime reserveTime
+  ) {
+
+    // 0) 기존 멤버십 쿠폰 삭제
+    couponUsageRepository.deleteByAccountIdAndMembershipRegistrationIdIsNotNull(account.getId());
+
+    // 1) 해당 멤버십에 연결된 쿠폰 조회
+    List<Coupon> coupons = couponRepository
+            .findByMembershipIdAndIsDeletedFalse(registration.getMembership().getId());
+
+    if (coupons.isEmpty()) {
+      return Collections.emptyList();
+    }
+
+    LocalDateTime forcedEnd = registration.getExpirationDate();
+    if (forcedEnd == null) {
+      forcedEnd = LocalDateTime.of(9999, 12, 31, 23, 59, 59);
+    }
+
+    // 2) 각 쿠폰마다 계정에 발급
+    List<CouponUsage> usages = new ArrayList<>();
+    for (Coupon coupon : coupons) {
+      usages.addAll(
+              assignCouponToAccountsWithFixedPeriod(
+                      coupon,
+                      Collections.singletonList(account.getId()),
+                      CouponSource.MEMBERSHIP_PACKAGE,
+                      sendAlimtalk,
+                      reserveTime,
+                      registration.getRegistrationDate(),
+                      forcedEnd,
+                      registration
+              )
+      );
+    }
+
+    // 3) DB 저장
+    return couponUsageRepository.saveAll(usages);
+  }
+
+  /**
+   * 고정 기간 발급 (forcedStart/forcedEnd 적용)
+   */
+  private List<CouponUsage> assignCouponToAccountsWithFixedPeriod(
+          Coupon coupon,
+          List<Long> accountIds,
+          CouponSource source,
+          boolean sendAlimtalk,
+          LocalDateTime reserveTime,
+          LocalDateTime forcedStart,
+          LocalDateTime forcedEnd,
+          MembershipRegistration registration
+  ) {
+    long numberOfUses = Optional.ofNullable(coupon.getNumberOfUses()).orElse(1L);
+    boolean isPermanent = Boolean.TRUE.equals(coupon.getIsPermanent());
+
+    // 계정 조회 및 검증
+    Map<Long, Account> accountMap = accountRepository.findByIdIn(new HashSet<>(accountIds))
+            .stream().collect(Collectors.toMap(Account::getId, Function.identity()));
+    if (accountMap.size() != accountIds.size()) {
+      throw new ApiException(ErrorCode.USER_NOT_FOUND);
+    }
+
+    List<CouponUsage> result = new ArrayList<>();
+    Map<Account, CouponUsage> talkMap = new java.util.HashMap<>();
+
+    // 발급 로직
+    for (Account acct : accountMap.values()) {
+      if (isPermanent) {
+        CouponUsage u = new CouponUsage(
+                coupon, acct, registration,
+                forcedStart, forcedEnd,
+                true, 0L, "SYSTEM"
+        );
+        result.add(u);
+        talkMap.put(acct, u);
+      } else {
+        for (int i = 0; i < numberOfUses; i++) {
+          CouponUsage u = new CouponUsage(
+                  coupon, acct, registration,
+                  forcedStart, forcedEnd,
+                  false, 0L, "SYSTEM"
+          );
+          result.add(u);
+          if (i == 0) talkMap.put(acct, u);
+        }
+      }
+    }
+
+    // 알림톡 발송
+    if (sendAlimtalk && !talkMap.isEmpty()) {
+      sendCouponDeliveredMessageToAlimTalk(talkMap, reserveTime);
+    }
+
+    return result;
+  }
+
+  public boolean rollbackUsageIfPresent(String couponUsageUuid) {
+    // 1) 존재 확인
+    Optional<CouponUsage> usageOpt = couponUsageRepository.findByUuid(couponUsageUuid);
+    if (!usageOpt.isPresent()) return false;
+
+    // 2) 실제 롤백 (내부에서 중복방지도 idempotent하게)
+    rollbackCouponUsage(couponUsageUuid);
+    return true;
   }
 }

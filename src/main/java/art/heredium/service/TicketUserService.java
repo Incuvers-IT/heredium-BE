@@ -2,8 +2,6 @@ package art.heredium.service;
 
 import java.util.List;
 
-import art.heredium.domain.ticket.model.TicketOrderInfo;
-import art.heredium.payment.dto.PaymentsValidResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -40,23 +38,9 @@ public class TicketUserService {
   private final TicketPayService ticketPayService;
   private final TicketRepository ticketRepository;
 
-
-//  public Object valid(PostTicketUserValidRequest dto) {
-//    TicketUserInfo ticketUserInfo = createTicketUserInfo();
-//    return ticketPayService.valid(dto.getTicketOrderInfo(), ticketUserInfo, dto.getCouponUuid());
-//  }
-
-  public PaymentsValidResponse valid(PostTicketUserValidRequest dto) {
-    // 1) 공통: 로그인한 사용자 정보 생성
-    TicketUserInfo userInfo = createTicketUserInfo();
-
-    // 2) 페이 서비스에 ticketOrderInfo + couponUuid + membershipCouponId 를 그대로 넘김
-    return ticketPayService.valid(
-            dto.getTicketOrderInfo(),
-            userInfo,
-            dto.getCouponUuid(),
-            dto.getMembershipCouponId()
-    );
+  public Object valid(PostTicketUserValidRequest dto) {
+    TicketUserInfo ticketUserInfo = createTicketUserInfo();
+    return ticketPayService.valid(dto.getTicketOrderInfo(), ticketUserInfo, dto.getCouponUuid());
   }
 
   public PostUserTicketResponse insert(PostTicketUserRequest dto) {
@@ -75,9 +59,9 @@ public class TicketUserService {
     Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
     TicketUserInfo ticketUserInfo;
     boolean anonymousUser =
-        authentication == null
-            || !authentication.isAuthenticated()
-            || authentication.getPrincipal().equals("anonymousUser");
+            authentication == null
+                    || !authentication.isAuthenticated()
+                    || authentication.getPrincipal().equals("anonymousUser");
     if (anonymousUser) {
       throw new ApiException(ErrorCode.BAD_REQUEST, "잘못된 접근");
     }
@@ -96,7 +80,7 @@ public class TicketUserService {
 
   /** 회원 티켓 목록 */
   public Page<GetUserMemberTicketResponse> ticketByAccount(
-      List<TicketKindType> kinds, Integer year, Pageable pageable) {
+          List<TicketKindType> kinds, Integer year, Pageable pageable) {
     Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
     UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
     return ticketRepository.findByMember(userPrincipal.getId(), kinds, year, pageable);

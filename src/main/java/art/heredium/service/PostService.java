@@ -177,7 +177,7 @@ public class PostService {
             .orElseThrow(() -> new ApiException(ErrorCode.POST_NOT_FOUND));
 
     updatePostFields(post, request);
-    updateMemberships(post, request.getMemberships());
+//    updateMemberships(post, request.getMemberships());
 
     final Post savedPost = postRepository.save(post);
     this.updatePostHistory(savedPost);

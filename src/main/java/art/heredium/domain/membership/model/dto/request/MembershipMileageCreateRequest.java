@@ -1,6 +1,7 @@
 package art.heredium.domain.membership.model.dto.request;
 
 import art.heredium.domain.coupon.model.dto.request.MembershipCouponCreateRequest;
+import art.heredium.domain.ticket.type.TicketKindType;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.Setter;
@@ -18,7 +19,7 @@ public class MembershipMileageCreateRequest {
   private Long accountId;
 
   @JsonProperty("category")
-  private Integer category;
+  private TicketKindType category;
 
   @JsonProperty("categoryId")
   private Long categoryId;

@@ -1,7 +1,5 @@
 package art.heredium.service;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
@@ -10,8 +8,6 @@ import java.util.stream.Collectors;
 
 import javax.annotation.PostConstruct;
 
-import art.heredium.domain.coupon.repository.CouponRepository;
-import art.heredium.domain.membership.entity.Membership;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -75,7 +71,6 @@ public class TicketPayService {
   private final JwtRedisUtil jwtRedisUtil;
   private final CouponUsageRepository couponUsageRepository;
   private final CouponUsageService couponUsageService;
-  private final CouponRepository couponRepository;
 
   public static final String COUPON_USAGE_CACHE_KEY = "couponUsage-";
   private static final String COUPON_UUID_CACHE_KEY = "couponUuid-";
@@ -83,15 +78,15 @@ public class TicketPayService {
   @PostConstruct
   private void init() {
     restTemplate.setErrorHandler(
-        new ResponseErrorHandler() {
-          @Override
-          public boolean hasError(ClientHttpResponse response) {
-            return false;
-          }
+            new ResponseErrorHandler() {
+              @Override
+              public boolean hasError(ClientHttpResponse response) {
+                return false;
+              }
 
-          @Override
-          public void handleError(ClientHttpResponse response) {}
-        });
+              @Override
+              public void handleError(ClientHttpResponse response) {}
+            });
   }
 
   public Object valid(TicketOrderInfo ticketOrderInfo, TicketUserInfo ticketUserInfo) {
@@ -103,7 +98,7 @@ public class TicketPayService {
   }
 
   public Object valid(
-      TicketOrderInfo ticketOrderInfo, TicketUserInfo ticketUserInfo, String couponUuid) {
+          TicketOrderInfo ticketOrderInfo, TicketUserInfo ticketUserInfo, String couponUuid) {
 
     String couponCacheKey = COUPON_USAGE_CACHE_KEY + couponUuid;
     String couponInUse = jwtRedisUtil.getData(couponCacheKey);
@@ -118,8 +113,12 @@ public class TicketPayService {
 
     if (couponUsage != null) {
       applyCouponDiscount(entity, couponUsage);
-      jwtRedisUtil.setDataExpire(couponCacheKey, couponCacheKey, 15 * 60);
-      jwtRedisUtil.setDataExpire(COUPON_UUID_CACHE_KEY + entity.getUuid(), couponUuid, 15 * 60);
+//      jwtRedisUtil.setDataExpire(couponCacheKey, couponCacheKey, 15 * 60);
+//      jwtRedisUtil.setDataExpire(COUPON_UUID_CACHE_KEY + entity.getUuid(), couponUuid, 15 * 60);
+
+      // ① 결제 완료 콜백에서 꺼내 쓸 쿠폰 UUID만 저장
+      jwtRedisUtil.setDataExpire(COUPON_UUID_CACHE_KEY + entity.getUuid(),
+              couponUuid, 15 * 60);
     }
 
     jwtRedisUtil.setDataExpire(entity.getUuid(), ticketOrderInfo, 15 * 60);
@@ -133,9 +132,9 @@ public class TicketPayService {
     }
 
     CouponUsage couponUsage =
-        couponUsageRepository
-            .findByUuid(couponUuid)
-            .orElseThrow(() -> new ApiException(ErrorCode.COUPON_NOT_FOUND));
+            couponUsageRepository
+                    .findByUuid(couponUuid)
+                    .orElseThrow(() -> new ApiException(ErrorCode.COUPON_NOT_FOUND));
 
     if (couponUsage.getIsUsed() && !couponUsage.isPermanent()) {
       throw new ApiException(ErrorCode.COUPON_ALREADY_USED);
@@ -152,67 +151,12 @@ public class TicketPayService {
     return couponUsage;
   }
 
-  public PaymentsValidResponse valid(
-          TicketOrderInfo orderInfo,
-          TicketUserInfo  userInfo,
-          String          couponUuid,
-          Long            membershipCouponId
-  ) {
-    // 1) 공통: orderId 생성 & 캐시
-    String orderId = Constants.getUUID();
-    jwtRedisUtil.setDataExpire(orderId,                   orderInfo, 15 * 60);
-    jwtRedisUtil.setDataExpire("ticketUserInfo-" + orderId, userInfo, 15 * 60);
-
-    // 2) 일반 UUID 쿠폰 예약 캐시
-    if (couponUuid != null) {
-      validateCouponUsage(couponUuid, orderInfo.getKind());
-      jwtRedisUtil.setDataExpire(COUPON_UUID_CACHE_KEY + orderId, couponUuid, 15 * 60);
-    }
-
-    // 3) 멤버십 쿠폰 예약 캐시 (ID 그대로 저장)
-    if (membershipCouponId != null) {
-      // coupon.id → membership UUID 확인
-      Coupon coupon = couponRepository.findById(membershipCouponId)
-              .orElseThrow(() -> new ApiException(ErrorCode.COUPON_NOT_FOUND));
-      if (coupon.getMembership() == null) {
-        throw new ApiException(ErrorCode.BAD_VALID, "해당 쿠폰은 멤버십 쿠폰이 아닙니다.");
-      }
-      jwtRedisUtil.setDataExpire("membershipCoupon-" + orderId, membershipCouponId, 15 * 60);
-    }
-
-    // 4) 티켓 미리 생성
-    Ticket preview = createTicket(orderInfo, userInfo, orderId);
-
-    // 5) preview 에 쿠폰 할인 적용
-    if (membershipCouponId != null) {
-      Coupon memCoupon = couponRepository.findById(membershipCouponId)
-              .orElseThrow(() -> new ApiException(ErrorCode.COUPON_NOT_FOUND));
-      long maxPrice = preview.getPrices().stream()
-              .mapToLong(TicketPrice::getPrice)
-              .max().orElse(0L);
-      long discount = maxPrice * memCoupon.getDiscountPercent() / 100;
-      preview.setCouponDiscountAmount(discount);
-      // 멤버십 식별자는 membership.getUuid()
-      preview.updateCouponUuid(memCoupon.getMembership().getUuid());
-    }
-
-    if (couponUuid != null) {
-      CouponUsage usage = validateCouponUsage(couponUuid, orderInfo.getKind());
-      applyCouponDiscount(preview, usage);
-      preview.updateCouponUuid(couponUuid);
-    }
-
-    // 6) 할인 적용된 preview 를 반환
-    return PaymentsValidResponse.from(preview);
-  }
-
-
   private void applyCouponDiscount(Ticket ticket, CouponUsage couponUsage) {
     Coupon coupon = couponUsage.getCoupon();
     TicketPrice mostExpensiveItem =
-        ticket.getPrices().stream()
-            .max(Comparator.comparing(TicketPrice::getPrice))
-            .orElseThrow(() -> new ApiException(ErrorCode.TICKET_PRICE_NOT_FOUND));
+            ticket.getPrices().stream()
+                    .max(Comparator.comparing(TicketPrice::getPrice))
+                    .orElseThrow(() -> new ApiException(ErrorCode.TICKET_PRICE_NOT_FOUND));
 
     long discountAmount = (mostExpensiveItem.getPrice() * coupon.getDiscountPercent()) / 100;
 
@@ -232,79 +176,74 @@ public class TicketPayService {
     }
   }
 
+  // 결제진행
   @Transactional(noRollbackFor = ApiException.class)
   public PostUserTicketResponse insert(PaymentsPayRequest dto) {
-    // 1) 캐시에서 결제 전 저장된 정보 꺼내기
+    // 결제모듈에서 결제완료후 시작전 저장한 데이터와 매칭
     TicketOrderInfo info = jwtRedisUtil.getData(dto.getOrderId(), TicketOrderInfo.class);
-    TicketUserInfo user = jwtRedisUtil.getData("ticketUserInfo-" + dto.getOrderId(), TicketUserInfo.class);
-    if (info == null || user == null) {
+    TicketUserInfo ticketUserInfo =
+            jwtRedisUtil.getData("ticketUserInfo-" + dto.getOrderId(), TicketUserInfo.class);
+    if (info == null || ticketUserInfo == null) {
       throw new ApiException(ErrorCode.DATA_NOT_FOUND);
     }
 
-    // 2) 임시 UUID 매핑 테이블에 기록
-    if (!ticketUuidRepository.existsById(dto.getOrderId())) {
-      ticketUuidRepository.saveAndFlush(new TicketUuid(dto.getOrderId(), user, info));
+    try {
+      TicketUuid ticketUuid = ticketUuidRepository.findById(dto.getOrderId()).orElse(null);
+      if (ticketUuid == null) {
+        ticketUuidRepository.saveAndFlush(new TicketUuid(dto.getOrderId(), ticketUserInfo, info));
+      }
+    } catch (Exception e) {
+      throw new ApiException(ErrorCode.DB_ERROR, e.getMessage());
     }
 
-    // 3) 티켓 객체 생성 및 결제 연동
-    Ticket ticket = createTicket(info, user, dto.getOrderId());
-    PaymentTicketResponse pay = (PaymentTicketResponse) dto.getType().pay(dto, ticket.getPrice());
-    ticket.initPay(pay, dto.getType());
+    Ticket entity = createTicket(info, ticketUserInfo, dto.getOrderId());
+    PaymentTicketResponse pay = (PaymentTicketResponse) dto.getType().pay(dto, entity.getPrice());
+    entity.initPay(pay, dto.getType());
+    String couponUuid = jwtRedisUtil.getData(COUPON_UUID_CACHE_KEY + entity.getUuid());
 
-    // 4) 멤버십 쿠폰 적용
-    Long memCouponId = jwtRedisUtil.getData("membershipCoupon-" + dto.getOrderId(), Long.class);
-    if (memCouponId != null) {
-      Coupon memCoupon = couponRepository.findById(memCouponId)
-              .orElseThrow(() -> new ApiException(ErrorCode.COUPON_NOT_FOUND));
-      long maxPrice = ticket.getPrices().stream()
-              .mapToLong(TicketPrice::getPrice).max().orElse(0);
-      long discount = maxPrice * memCoupon.getDiscountPercent() / 100;
-      ticket.setCouponDiscountAmount(discount);
-      ticket.updateCouponUuid(memCoupon.getMembership().getUuid());
-      jwtRedisUtil.deleteData("membershipCoupon-" + dto.getOrderId());
+    try {
+      ticketRepository.saveAndFlush(entity);
+      ticketUuidRepository.deleteById(entity.getUuid());
+      Map<String, String> mailParam = entity.getMailParam(herediumProperties);
+      if (!StringUtils.isBlank(entity.getEmail())) {
+        cloudMail.mail(entity.getEmail(), mailParam, MailTemplate.TICKET_ISSUANCE);
+      }
+      alimTalk.sendAlimTalk(
+              entity.getPhone(),
+              entity.getMailParam(herediumProperties),
+              AlimTalkTemplate.TICKET_ISSUANCE);
+      List<String> smsRequestId =
+              alimTalk.sendAlimTalk(
+                      entity.getPhone(),
+                      entity.getMailParam(herediumProperties),
+                      AlimTalkTemplate.TICKET_INFORMATION,
+                      entity.getStartDate().minusDays(1).withHour(10));
+      entity.updateSmsRequestId(smsRequestId);
+      if (couponUuid != null) {
+        // Validate coupon first
+        CouponUsage couponUsage = validateCouponUsage(couponUuid, entity.getKind());
+
+        // Apply coupon discount if valid
+        if (couponUsage != null) {
+          applyCouponDiscount(entity, couponUsage);
+          entity.updateCouponUuid(couponUuid);
+          couponUsageService.checkoutCouponUsage(couponUuid);
+          // ② 결제 성공 시 “사용 중” 잠금만 설정
+          jwtRedisUtil.setDataExpire(COUPON_USAGE_CACHE_KEY + couponUuid,
+                  couponUuid, 15 * 60);
+        }
+
+        jwtRedisUtil.deleteData(COUPON_USAGE_CACHE_KEY + couponUuid);
+        jwtRedisUtil.deleteData(COUPON_UUID_CACHE_KEY + entity.getUuid());
+      }
+      ticketRepository.saveAndFlush(entity);
+    } catch (Exception e) {
+      log.error("티켓구매 에러", e);
+      dto.getType().cancel(entity, dto);
+      throw new ApiException(ErrorCode.DB_ERROR, e.getMessage());
     }
 
-    // 5) 일반 UUID 쿠폰 적용
-    String couponUuid = jwtRedisUtil.getData(COUPON_UUID_CACHE_KEY + dto.getOrderId(), String.class);
-    if (couponUuid != null) {
-      CouponUsage usage = validateCouponUsage(couponUuid, ticket.getKind());
-      applyCouponDiscount(ticket, usage);
-      ticket.updateCouponUuid(couponUuid);
-      couponUsageService.checkoutCouponUsage(couponUuid);
-      jwtRedisUtil.deleteData(COUPON_UUID_CACHE_KEY + dto.getOrderId());
-      jwtRedisUtil.deleteData(COUPON_USAGE_CACHE_KEY + couponUuid);
-    }
-
-    // 6) DB 저장
-    ticketRepository.saveAndFlush(ticket);
-    ticketUuidRepository.deleteById(dto.getOrderId());
-
-    // 7) 메일 발송
-    Map<String, String> mailParam = ticket.getMailParam(herediumProperties);
-    if (!StringUtils.isBlank(ticket.getEmail())) {
-      cloudMail.mail(ticket.getEmail(), mailParam, MailTemplate.TICKET_ISSUANCE);
-    }
-
-    // 8) 알림톡 발송 (즉시)
-    alimTalk.sendAlimTalk(
-            ticket.getPhone(),
-            mailParam,
-            AlimTalkTemplate.TICKET_ISSUANCE
-    );
-
-    // 9) 예약 알림톡 발송 (관람 하루 전 오전 10시)
-    List<String> smsRequestId = alimTalk.sendAlimTalk(
-            ticket.getPhone(),
-            mailParam,
-            AlimTalkTemplate.TICKET_INFORMATION,
-            ticket.getStartDate().minusDays(1).withHour(10)
-    );
-    ticket.updateSmsRequestId(smsRequestId);
-
-    // 10) 최종 저장
-    ticketRepository.saveAndFlush(ticket);
-
-    return new PostUserTicketResponse(ticket);
+    return new PostUserTicketResponse(entity);
   }
 
   public PostUserTicketResponse insert(TicketOrderInfo dto, TicketUserInfo ticketUserInfo) {
@@ -320,22 +259,22 @@ public class TicketPayService {
       cloudMail.mail(entity.getEmail(), mailParam, MailTemplate.TICKET_ISSUANCE);
     }
     alimTalk.sendAlimTalk(
-        entity.getPhone(),
-        entity.getMailParam(herediumProperties),
-        AlimTalkTemplate.TICKET_ISSUANCE);
-    List<String> smsRequestId =
-        alimTalk.sendAlimTalk(
             entity.getPhone(),
             entity.getMailParam(herediumProperties),
-            AlimTalkTemplate.TICKET_INFORMATION,
-            entity.getStartDate().minusDays(1).withHour(10));
+            AlimTalkTemplate.TICKET_ISSUANCE);
+    List<String> smsRequestId =
+            alimTalk.sendAlimTalk(
+                    entity.getPhone(),
+                    entity.getMailParam(herediumProperties),
+                    AlimTalkTemplate.TICKET_INFORMATION,
+                    entity.getStartDate().minusDays(1).withHour(10));
     entity.updateSmsRequestId(smsRequestId);
     ticketRepository.saveAndFlush(entity);
     return new PostUserTicketResponse(entity);
   }
 
   public PostUserTicketResponse insert(
-      TicketOrderInfo dto, TicketUserInfo ticketUserInfo, String couponUuid) {
+          TicketOrderInfo dto, TicketUserInfo ticketUserInfo, String couponUuid) {
 
     // Validate coupon first
     CouponUsage couponUsage = validateCouponUsage(couponUuid, dto.getKind());
@@ -348,7 +287,7 @@ public class TicketPayService {
       entity.updateCouponUuid(couponUuid);
     }
     long couponDiscountAmount =
-        entity.getCouponDiscountAmount() == null ? 0 : entity.getCouponDiscountAmount();
+            entity.getCouponDiscountAmount() == null ? 0 : entity.getCouponDiscountAmount();
     if (!StringUtils.isEmpty(entity.getPgId()) || (entity.getPrice() - couponDiscountAmount) > 0) {
       throw new ApiException(ErrorCode.BAD_VALID, "결제가 필요합니다.");
     }
@@ -360,15 +299,15 @@ public class TicketPayService {
       cloudMail.mail(entity.getEmail(), mailParam, MailTemplate.TICKET_ISSUANCE);
     }
     alimTalk.sendAlimTalk(
-        entity.getPhone(),
-        entity.getMailParam(herediumProperties),
-        AlimTalkTemplate.TICKET_ISSUANCE);
-    List<String> smsRequestId =
-        alimTalk.sendAlimTalk(
             entity.getPhone(),
             entity.getMailParam(herediumProperties),
-            AlimTalkTemplate.TICKET_INFORMATION,
-            entity.getStartDate().minusDays(1).withHour(10));
+            AlimTalkTemplate.TICKET_ISSUANCE);
+    List<String> smsRequestId =
+            alimTalk.sendAlimTalk(
+                    entity.getPhone(),
+                    entity.getMailParam(herediumProperties),
+                    AlimTalkTemplate.TICKET_INFORMATION,
+                    entity.getStartDate().minusDays(1).withHour(10));
     entity.updateSmsRequestId(smsRequestId);
     ticketRepository.saveAndFlush(entity);
     return new PostUserTicketResponse(entity);
@@ -381,12 +320,12 @@ public class TicketPayService {
 
     TicketRoundValidator ticketRoundValidator = new TicketRoundValidator();
     ticketRoundValidator
-        .chain(new VHoliday(info))
-        .chain(new VSumTicketNumber(ticketRepository, ticketUserInfo, info))
-        .chain(new VRoundDate(info))
-        .chain(new VBookingDate(info))
-        .chain(new VClosing(info))
-        .chain(new VOverBooking(ticketRepository, info));
+            .chain(new VHoliday(info))
+            .chain(new VSumTicketNumber(ticketRepository, ticketUserInfo, info))
+            .chain(new VRoundDate(info))
+            .chain(new VBookingDate(info))
+            .chain(new VClosing(info))
+            .chain(new VOverBooking(ticketRepository, info));
     ticketRoundValidator.validate();
 
     boolean isDiscount;
@@ -401,37 +340,37 @@ public class TicketPayService {
     }
 
     List<TicketPrice> ticketPrices =
-        info.getPrices().stream()
-            .map(
-                price ->
-                    new TicketPrice(
-                        null,
-                        price.getType(),
-                        price.getNumber(),
-                        (isDiscount) ? price.getDiscountPrice() : price.getPrice(),
-                        price.getPrice(),
-                        isDiscount ? price.getNote() : null))
-            .collect(Collectors.toList());
+            info.getPrices().stream()
+                    .map(
+                            price ->
+                                    new TicketPrice(
+                                            null,
+                                            price.getType(),
+                                            price.getNumber(),
+                                            (isDiscount) ? price.getDiscountPrice() : price.getPrice(),
+                                            price.getPrice(),
+                                            isDiscount ? price.getNote() : null))
+                    .collect(Collectors.toList());
 
     Account account =
-        ticketUserInfo.getAccountId() != null
-            ? accountRepository.findById(ticketUserInfo.getAccountId()).orElse(null)
-            : null;
+            ticketUserInfo.getAccountId() != null
+                    ? accountRepository.findById(ticketUserInfo.getAccountId()).orElse(null)
+                    : null;
     NonUser nonuser =
-        ticketUserInfo.getNonUserId() != null
-            ? nonUserRepository.findById(ticketUserInfo.getNonUserId()).orElse(null)
-            : null;
+            ticketUserInfo.getNonUserId() != null
+                    ? nonUserRepository.findById(ticketUserInfo.getNonUserId()).orElse(null)
+                    : null;
     return new Ticket(
-        ticketPrices,
-        ticketUserInfo,
-        info.getKind(),
-        info.getKindId(),
-        info.getRoundId(),
-        account,
-        nonuser,
-        uuid,
-        info.getTitle(),
-        info.getRoundStartDate(),
-        info.getRoundEndDate());
+            ticketPrices,
+            ticketUserInfo,
+            info.getKind(),
+            info.getKindId(),
+            info.getRoundId(),
+            account,
+            nonuser,
+            uuid,
+            info.getTitle(),
+            info.getRoundStartDate(),
+            info.getRoundEndDate());
   }
 }

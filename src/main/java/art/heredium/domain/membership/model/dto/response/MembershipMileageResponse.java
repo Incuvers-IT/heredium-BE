@@ -1,6 +1,7 @@
 package art.heredium.domain.membership.model.dto.response;
 
 import art.heredium.domain.membership.entity.PaymentStatus;
+import art.heredium.domain.ticket.type.TicketKindType;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -23,7 +24,7 @@ public class MembershipMileageResponse {
   private Integer type;                          // 이벤트타입
 
   @JsonProperty("category")
-  private Integer category;                      // 대분류
+  private TicketKindType category;               // 대분류
 
   @JsonProperty("categoryId")
   private Long categoryId;                    // 대분류대상
@@ -63,4 +64,7 @@ public class MembershipMileageResponse {
 
   @JsonProperty("relatedMileageId")
   private Long relatedMileageId;      // 취소 연관 마일리지ID
+
+  @JsonProperty("ticketId")
+  private Long ticketId;              // 티켓ID
 }

@@ -2,7 +2,6 @@ package art.heredium.controller.user;
 
 import javax.validation.Valid;
 
-import art.heredium.payment.dto.PaymentsValidResponse;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.http.ResponseEntity;
@@ -23,22 +22,10 @@ public class UserTicketUserController {
 
   private final TicketUserService ticketUserService;
 
-  /**
-   * 유효성(가격, 쿠폰) 확인
-   */
   @PostMapping("/valid")
-  public ResponseEntity<PaymentsValidResponse> valid(
-          @RequestBody @Valid PostTicketUserValidRequest dto
-  ) {
-    // dto 에는 ticketOrderInfo, couponUuid, membershipCouponId 가 들어있습니다.
-    PaymentsValidResponse resp = ticketUserService.valid(dto);
-    return ResponseEntity.ok(resp);
+  public ResponseEntity valid(@RequestBody @Valid PostTicketUserValidRequest ticketOrderInfo) {
+    return ResponseEntity.ok(ticketUserService.valid(ticketOrderInfo));
   }
-
-//  @PostMapping("/valid")
-//  public ResponseEntity valid(@RequestBody @Valid PostTicketUserValidRequest ticketOrderInfo) {
-//    return ResponseEntity.ok(ticketUserService.valid(ticketOrderInfo));
-//  }
 
   @PostMapping
   public ResponseEntity insert(@RequestBody @Valid PostTicketUserRequest dto) {

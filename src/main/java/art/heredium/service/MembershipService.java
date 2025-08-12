@@ -330,4 +330,12 @@ public class MembershipService {
     createRequest.setIsPermanent(updateRequest.getIsPermanent());
     return createRequest;
   }
+
+  @Transactional
+  public void softDeleteMembership(Long membershipId) {
+    Membership m = membershipRepository.findById(membershipId)
+            .orElseThrow(() -> new ApiException(ErrorCode.MEMBERSHIP_NOT_FOUND));
+
+    m.updateIsDeleted(true);
+  }
 }

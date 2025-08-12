@@ -13,6 +13,7 @@ import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 public interface MembershipMileageRepository extends JpaRepository<MembershipMileage, Long> {
   Page<MembershipMileageResponse> getMembershipsMileageList(
@@ -103,4 +104,10 @@ public interface MembershipMileageRepository extends JpaRepository<MembershipMil
           "AND m.expirationDate BETWEEN CURRENT_DATE AND :thresholdDate ")
 
   Long sumExpiringMileage(@Param("accountId") Long accountId, @Param("thresholdDate") LocalDateTime thresholdDate);
+
+  // ticket_id + type(0: 적립) 존재 여부
+  boolean existsByTicket_IdAndType(Long ticketId, Integer type);
+
+  // MembershipMileageRepository
+  Optional<MembershipMileage> findFirstByTicket_IdAndTypeOrderByIdAsc(Long ticketId, Integer type);
 }
