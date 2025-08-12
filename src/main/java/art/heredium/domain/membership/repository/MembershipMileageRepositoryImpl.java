@@ -159,7 +159,8 @@ public class MembershipMileageRepositoryImpl
                     mm.lastModifiedDate,
                     Expressions.constant(""),
                     mm.remark,
-                    mm.relatedMileage.id.as("relatedMileageId")
+                    mm.relatedMileage.id.as("relatedMileageId"),
+                    mm.ticket.id.as("ticketId")
             ))
             .from(mm)
             .where(where)
