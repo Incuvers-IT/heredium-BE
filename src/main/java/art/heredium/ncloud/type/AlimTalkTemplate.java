@@ -5,9 +5,9 @@ import lombok.Getter;
 @Getter
 public enum AlimTalkTemplate {
   SIGN_UP("", "@heredium", "HEREDIUM001", "@heredium", "HEREDIUM035"), //템플릿 검수 완료시 HEREDIUM046 사용
-  TICKET_ISSUANCE("예매 완료", "@heredium", "HEREDIUM002", "@heredium", "HEREDIUM036"),
-  TICKET_INFORMATION("입장 안내", "@heredium", "HEREDIUM003", "@heredium", "HEREDIUM037"),
-  TICKET_REFUND_USER("예매 취소", "@heredium", "HEREDIUM004", "@heredium", "HEREDIUM038"),
+  TICKET_ISSUANCE("", "@heredium", "HEREDIUM002", "@heredium", "HEREDIUM036"),
+  TICKET_INFORMATION("", "@heredium", "HEREDIUM003", "@heredium", "HEREDIUM037"),
+  TICKET_REFUND_USER("", "@heredium", "HEREDIUM004", "@heredium", "HEREDIUM038"),
   TICKET_REFUND_ADMIN("예매 취소", "@heredium", "HEREDIUM005", "@heredium", "HEREDIUM039"),
   TICKET_ISSUANCE_GROUP("단체입장권 발급", "@heredium", "HEREDIUM006", "@heredium", "HEREDIUM006"), //휴면
   TICKET_REFUND_GROUP("단체입장권 취소", "@heredium", "HEREDIUM007", "@heredium", "HEREDIUM007"), //휴면
@@ -16,7 +16,7 @@ public enum AlimTalkTemplate {
   ACCOUNT_NOTY_SLEEP_TERMINATE(
       "자동탈퇴 안내", "@heredium", "HEREDIUM010", "@heredium", "HEREDIUM010"), //휴면
   ACCOUNT_SLEEP_TERMINATE("자동탈퇴 완료", "@heredium", "HEREDIUM011", "@heredium", "HEREDIUM011"), //휴면
-  ACCOUNT_TERMINATE("회원탈퇴 안내", "@heredium", "HEREDIUM012", "@heredium", "HEREDIUM041"),
+  ACCOUNT_TERMINATE("", "@heredium", "HEREDIUM012", "@heredium", "HEREDIUM041"),
   COFFEE_COMPLETE("커피제작 완료", "@heredium", "HEREDIUM013", "@heredium", "HEREDIUM013"), //휴면
   USER_REGISTER_MEMBERSHIP_PACKAGE(
       "템플릿 이름",
@@ -31,7 +31,7 @@ public enum AlimTalkTemplate {
       "@spadecompany",
       ""), //삭제  // dev templateCode has not been created
   COUPON_HAS_BEEN_ISSUED_V4(
-      "쿠폰발행",
+      "",
       "@heredium",
       "HEREDIUM027",
       "@heredium",
@@ -41,9 +41,9 @@ public enum AlimTalkTemplate {
   WITH_MEMBERSHIP_COUPON_HAS_BEEN_USED(
       "", "@heredium", "HEREDIUM024", "@heredium", "HEREDIUM024"), //삭제 // dev templateCode has not been created
   TIER_UPGRADE(
-          "멤버십 변경 안내", "@heredium", "HEREDIUM030", "@heredium", "HEREDIUM042"),
+          "", "@heredium", "HEREDIUM030", "@heredium", "HEREDIUM042"),
   MEMBERSHIP_EXPIRY_REMINDER(
-          "멤버십 만료 안내", "@heredium", "HEREDIUM032", "@heredium", "HEREDIUM043")
+          "", "@heredium", "HEREDIUM032", "@heredium", "HEREDIUM043")
   // 알림톡 추가 필요
   // 등급 조정 안내 HEREDIUM045 ; 환불 또는 결제취소에 의한 멤버십 등급 롤백
   // 멤버십 등급 전환 HEREDIUM044; 3 > 1 || 2 > 1로 전환시
