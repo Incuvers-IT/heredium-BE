@@ -18,6 +18,9 @@ public class GetAdminAccountResponse {
   private LocalDateTime lastLoginDate;
   private Boolean isMarketingReceive;
   private Long visitCount;
+  private String job;
+  private String state;
+  private String district;
 
   @QueryProjection
   public GetAdminAccountResponse(
@@ -28,7 +31,11 @@ public class GetAdminAccountResponse {
       LocalDateTime createdDate,
       LocalDateTime lastLoginDate,
       Boolean isMarketingReceive,
-      Long visitCount) {
+      Long visitCount,
+      String job,
+      String state,
+      String district
+  ) {
     this.id = id;
     this.email = email;
     this.name = name;
@@ -37,5 +44,8 @@ public class GetAdminAccountResponse {
     this.lastLoginDate = lastLoginDate;
     this.isMarketingReceive = isMarketingReceive;
     this.visitCount = visitCount;
+    this.job = job;
+    this.state = state;
+    this.district = district;
   }
 }

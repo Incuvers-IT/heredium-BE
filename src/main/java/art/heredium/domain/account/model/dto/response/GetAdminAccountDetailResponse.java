@@ -25,6 +25,9 @@ public class GetAdminAccountDetailResponse {
   private Boolean isMarketingReceive;
   private Boolean isLocalResident;
   private OAuth2Provider provider;
+  private String job;
+  private String state;
+  private String district;
 
   public GetAdminAccountDetailResponse(Account entity) {
     AccountInfo accountInfo = entity.getAccountInfo();
@@ -39,6 +42,9 @@ public class GetAdminAccountDetailResponse {
       this.lastLoginDate = accountInfo.getLastLoginDate();
       this.isMarketingReceive = accountInfo.getIsMarketingReceive();
       this.isLocalResident = accountInfo.getIsLocalResident();
+      this.job = accountInfo.getJob();
+      this.state = accountInfo.getState();
+      this.district = accountInfo.getDistrict();
     } else if (sleeperInfo != null) {
       this.name = sleeperInfo.getName();
       this.phone = sleeperInfo.getPhone();

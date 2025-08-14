@@ -73,7 +73,9 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
                         QAccountInfo.accountInfo.phone,
                         QAccount.account.createdDate,
                         QAccountInfo.accountInfo.lastLoginDate,
-                        ExpressionUtils.as(selectVisitCount(), visitCount)))
+                        ExpressionUtils.as(selectVisitCount(), visitCount)
+                    )
+                )
                 .from(QAccount.account)
                 .innerJoin(QAccount.account.accountInfo, QAccountInfo.accountInfo)
                 .where(searchFilter(dto))
@@ -262,6 +264,7 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
     return new PageImpl<>(result, pageable, total);
   }
 
+  // 여기
   @Override
   public Page<GetAdminAccountResponse> search(GetAdminAccountRequest dto, Pageable pageable) {
     Long total =
@@ -301,7 +304,11 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
                 QAccount.account.createdDate,
                 QAccountInfo.accountInfo.lastLoginDate,
                 QAccountInfo.accountInfo.isMarketingReceive,
-                ExpressionUtils.as(selectVisitCount(), visitCount)))
+                ExpressionUtils.as(selectVisitCount(), visitCount),
+                QAccountInfo.accountInfo.job,
+                QAccountInfo.accountInfo.state,
+                QAccountInfo.accountInfo.district
+            ))
         .from(QAccount.account)
         .innerJoin(QAccount.account.accountInfo, QAccountInfo.accountInfo)
         .where(searchFilter(dto))
@@ -379,12 +386,15 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
     }
 
     builder.and(isMarketingReceiveEq(dto.getIsMarketingReceive()));
+    builder.and(jobEq(dto.getJob()));
 
     if (!StringUtils.isBlank(dto.getText())) {
       BooleanBuilder textBuilder = new BooleanBuilder();
       textBuilder.or(emailContain(dto.getText()));
       textBuilder.or(nameContain(dto.getText()));
       textBuilder.or(phoneContain(dto.getText()));
+      textBuilder.or(stateContain(dto.getText()));
+      textBuilder.or(districtContain(dto.getText()));
       builder.and(textBuilder);
     }
     return builder;
@@ -482,6 +492,20 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
 
   private Predicate isMarketingReceiveEq(Boolean value) {
     return value != null ? QAccountInfo.accountInfo.isMarketingReceive.eq(value) : null;
+  }
+
+  private Predicate jobEq(String value) {
+    return value != null ? QAccountInfo.accountInfo.job.eq(value) : null;
+  }
+
+  private BooleanExpression stateContain(String value) {
+    return value != null ? QAccountInfo.accountInfo.state.contains(value) : null;
+    // 필요시 대소문자 무시: .containsIgnoreCase(value)
+  }
+
+  private BooleanExpression districtContain(String value) {
+    return value != null ? QAccountInfo.accountInfo.district.contains(value) : null;
+    // 필요시 대소문자 무시: .containsIgnoreCase(value)
   }
 
   private Predicate sleeperIsMarketingReceiveEq(Boolean value) {

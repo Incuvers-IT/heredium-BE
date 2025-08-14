@@ -15,6 +15,7 @@ public class GetAdminAccountRequest {
   private LocalDateTime endDate;
   private Boolean isMarketingReceive;
   private String text;
+  private String job;
 
   @Getter
   public enum SearchDateType {
