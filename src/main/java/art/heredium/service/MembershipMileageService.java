@@ -37,8 +37,8 @@ import java.util.Optional;
 @Transactional(rollbackFor = Exception.class)
 public class MembershipMileageService {
 
-  @Value("${membership.mileage.expiration-years:3}")
-  private int expirationYears;
+  @Value("${membership.mileage.expiration-days:364}")
+  private int expirationDays;
 
   private final MembershipRepository membershipRepository;
   private final CouponUsageService couponUsageService;
@@ -72,7 +72,7 @@ public class MembershipMileageService {
             .paymentAmount(req.getPaymentAmount())
             .serialNumber(req.getSerialNumber())
             .mileageAmount(req.getMileageAmount())
-            .expirationDate(now.plusYears(expirationYears)) // 필요 시 만료일 계산
+            .expirationDate(calcExpireAt(now)) // 필요 시 만료일 계산
             .createdName(currentUser)
             .lastModifiedName(currentUser)
             .build();
@@ -131,7 +131,7 @@ public class MembershipMileageService {
             .paymentAmount(paymentAmount)
             .serialNumber(serialLast5)
             .mileageAmount(points)
-            .expirationDate(now.plusYears(expirationYears)) // 정책: 기본 3년(설정값)
+            .expirationDate(calcExpireAt(now))
             .remark(desc)
             .relatedMileage(null)
             .build();
@@ -336,23 +336,33 @@ public class MembershipMileageService {
           int type,
           String remark
   ) {
+
+    // 원본 널 안전 처리 (히스토리 데이터에 널 있을 수 있음)
+    Integer origPaymentAmount = Optional.ofNullable(original.getPaymentAmount()).orElse(0);
+    Integer origMileageAmount = Optional.ofNullable(original.getMileageAmount()).orElse(0);
+    Integer origPaymentMethod = Optional.ofNullable(original.getPaymentMethod()).orElse(0);
+
     MembershipMileage adj = MembershipMileage.builder()
             .account(original.getAccount())
             .type(type)
             .category(original.getCategory())
             .categoryId(original.getCategoryId())
-            .paymentMethod(original.getPaymentMethod())
-            .paymentAmount(-original.getPaymentAmount())
+            .paymentMethod(origPaymentMethod)                // not null
+            .paymentAmount(-origPaymentAmount)              // not null
             .serialNumber(original.getSerialNumber())
-            .mileageAmount(-original.getMileageAmount())
-            .expirationDate(null)          // 이벤트용이므로 만료일 없음
+            .mileageAmount(-origMileageAmount)              // not null
+            .expirationDate(null)                           // 이벤트용
             .remark(remark)
-            .relatedMileage(original)      // 원본 참조
+            .relatedMileage(original)
+            // .ticket(original.getTicket())  // 필요하면 연결 유지, 불필요하면 생략
             .build();
 
+    // 인증 컨텍스트 안전 처리 (스케줄러/비동기 스레드)
     Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-    UserPrincipal principal = (UserPrincipal) authentication.getPrincipal();
-    String currentUser = (principal != null ? principal.getName() : "SYSTEM");
+    String currentUser = "SYSTEM";
+    if (authentication != null && authentication.getPrincipal() instanceof UserPrincipal) {
+      currentUser = ((UserPrincipal) authentication.getPrincipal()).getName();
+    }
 
     adj.setCreatedName(currentUser);
     adj.setLastModifiedName(currentUser);
@@ -450,4 +460,9 @@ public class MembershipMileageService {
     return threshold > (linkedTotal - refundPoints);
   }
 
+  private LocalDateTime calcExpireAt(LocalDateTime base) {
+    // 기준 시각의 '날짜' 기준으로 364일 뒤의 '그 날 23:59:59'
+    LocalDate target = base.toLocalDate().plusDays(expirationDays);
+    return LocalDateTime.of(target, LocalTime.of(23, 59, 59));
+  }
 }

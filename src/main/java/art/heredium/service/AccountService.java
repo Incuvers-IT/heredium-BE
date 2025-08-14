@@ -128,6 +128,7 @@ public class AccountService {
 
       // (c) 나이·본인인증 체크
       info = niceIdService.decrypt(dto.getEncodeData());
+
       long age = ChronoUnit.YEARS.between(info.getBirthDate(), Constants.getNow());
       if (age < 14) {
         throw new ApiException(ErrorCode.UNDER_FOURTEEN);
@@ -145,6 +146,8 @@ public class AccountService {
         throw new ApiException(ErrorCode.DUPLICATE_EMAIL);
       }
       info = niceIdService.decrypt(dto.getEncodeData());
+      // 테스트
+      info.setBirthDate(LocalDate.parse("2006-08-16"));
       long age = ChronoUnit.YEARS.between(info.getBirthDate(), Constants.getNow());
       if (age < 14) {
         throw new ApiException(ErrorCode.UNDER_FOURTEEN);
@@ -193,7 +196,8 @@ public class AccountService {
       // 생일 만 19세 되는 날 00:00 → 그 전날 23:59:59
       expirationDate = info.getBirthDate()
               .plusYears(19)
-              .atTime(23, 59, 59);
+              .atStartOfDay()
+              .minusSeconds(1);
     }
 
     // 4) MembershipRegistration 생성 및 저장
@@ -409,10 +413,10 @@ public class AccountService {
     if (entity == null) {
       throw new ApiException(ErrorCode.NOT_FOUND);
     }
-  
+
     // 첫 동의건에 대한 처리
     LocalDateTime prevAgreeDate = entity.getAccountInfo().getMarketingAgreedDate();
-    
+
     // 마케팅 쿠폰 발급 조건 확인 및 발급
     boolean hasJob            = StringUtils.isNotBlank(dto.getJob());
     boolean hasState          = StringUtils.isNotBlank(dto.getState());
