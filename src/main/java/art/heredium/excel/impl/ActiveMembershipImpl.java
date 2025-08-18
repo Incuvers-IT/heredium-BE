@@ -27,13 +27,15 @@ public class ActiveMembershipImpl implements CreateBody {
             "계정", // account (value is user's email)
             "이름",
             "연락처",
-            "결제상태",
-            "결제일시",
-            "멤버십횟수",
+//            "결제상태",
+//            "결제일시",
+//            "멤버십횟수",
             "전시사용횟수",
             "프로그램사용횟수",
-            "음료사용횟수",
-            "마케팅수신동의");
+            "커피사용횟수",
+            "마일리지내역"
+//            "마케팅수신동의",
+        );
     return new ArrayList<>(headList);
   }
 
@@ -50,13 +52,15 @@ public class ActiveMembershipImpl implements CreateBody {
               createString(entity.getEmail()),
               createString(entity.getName()),
               createString(entity.getPhone()),
-              createString(entity.getPaymentStatus()),
+//              createString(entity.getPaymentStatus()),
 //              createString(entity.getPaymentDate().format(dtfd)),
-              createString(entity.getNumberOfMemberships()),
+//              createString(entity.getNumberOfMemberships()),
               createString(entity.getNumberOfExhibitionsUsed()),
               createString(entity.getNumberOfProgramsUsed()),
               createString(entity.getNumberOfCoffeeUsed()),
-              createString(entity.getIsAgreeToReceiveMarketing()));
+              createString(entity.getMileageSum())
+//              createString(entity.getIsAgreeToReceiveMarketing())
+          );
       bodyList1.add(asList);
     }
     return bodyList1;

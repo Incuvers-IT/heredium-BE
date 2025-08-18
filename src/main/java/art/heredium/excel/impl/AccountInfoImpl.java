@@ -25,23 +25,25 @@ public class AccountInfoImpl implements CreateBody {
             "NO",
             "멤버십",
             "상태",
-            "결제일시",
             "시작일시",
             "종료일시",
             "전시 쿠폰 사용",
             "프로그램 쿠폰 사용",
             "커피 쿠폰 사용",
+//            "전시사용횟수",
+//            "프로그램사용횟수",
+//            "커피사용횟수",
             "이용금액",
             "계정",
             "이름",
-            "연락처",
-            "생성 날짜",
-            "마지막 로그인 날짜",
-            "멤버십횟수",
-            "전시사용횟수",
-            "프로그램사용횟수",
-            "음료사용횟수",
-            "마케팅 동의");
+            "연락처"
+//            "생성 날짜",
+//            "마지막 로그인 날짜",
+//            "멤버십횟수",
+//            "전시사용횟수",
+//            "프로그램사용횟수",
+//            "마케팅 동의"
+        );
     return new ArrayList<>(headList);
   }
 
@@ -65,21 +67,22 @@ public class AccountInfoImpl implements CreateBody {
               createString(entity.getNumberOfUsedExhibitionCoupons()),
               createString(entity.getNumberOfUsedProgramCoupons()),
               createString(entity.getNumberOfUsedCoffeeCoupons()),
+//              createString(entity.getNumberOfExhibitionTickets()),
+//              createString(entity.getNumberOfProgramTickets()),
+//              createString(entity.getNumberOfCoffeeTickets()),
               createString(entity.getAmount()),
               createString(entity.getEmail()),
               createString(entity.getName()),
-              createString(entity.getPhone()),
-              createString(
-                  entity.getCreatedDate() != null ? entity.getCreatedDate().format(dtfd) : null),
-              createString(
-                  entity.getLastLoginDate() != null
-                      ? entity.getLastLoginDate().format(dtfdWithTime)
-                      : null),
-              createString(entity.getNumberOfActiveMemberships()),
-              createString(entity.getNumberOfExhibitionTickets()),
-              createString(entity.getNumberOfProgramTickets()),
-              createString(entity.getNumberOfCoffeeTickets()),
-              createString(entity.getMarketingConsent()));
+              createString(entity.getPhone())
+//              createString(
+//                  entity.getCreatedDate() != null ? entity.getCreatedDate().format(dtfd) : null),
+//              createString(
+//                  entity.getLastLoginDate() != null
+//                      ? entity.getLastLoginDate().format(dtfdWithTime)
+//                      : null),
+//              createString(entity.getNumberOfActiveMemberships())
+//              createString(entity.getMarketingConsent())
+          );
       bodyList1.add(asList);
     }
     return bodyList1;

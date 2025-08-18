@@ -83,7 +83,7 @@ public class ExcelService {
     List<AccountWithMembershipInfoExcelDownloadResponse> accountInfos =
         this.accountRepository.listWithMembershipInfoIncludingTitle(dto);
     ExcelModelManager enm = new ExcelModelManager();
-    enm.setFileName(fileName);
+    enm.setFileName(fileName + "_" + System.currentTimeMillis());
     AccountInfoImpl accountInfo = new AccountInfoImpl(accountInfos);
     enm.addHead(accountInfo.head(), "Sheet1");
     enm.addBody(accountInfo.body());
@@ -95,7 +95,7 @@ public class ExcelService {
     List<ActiveMembershipRegistrationsResponse> activeMemberships =
         this.membershipRegistrationRepository.listActiveMembershipRegistrations(dto);
     ExcelModelManager enm = new ExcelModelManager();
-    enm.setFileName(fileName);
+    enm.setFileName(fileName + "_" + System.currentTimeMillis());
     ActiveMembershipImpl activeMembership = new ActiveMembershipImpl(activeMemberships);
     enm.addHead(activeMembership.head(), "Sheet1");
     enm.addBody(activeMembership.body());
