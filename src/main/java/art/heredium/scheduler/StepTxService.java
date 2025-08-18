@@ -26,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -215,9 +216,74 @@ public class StepTxService {
         }
 
         // 8) (필요시) 알림톡 발송 로직 호출
-        // sendRetentionAlimTalk(retentionList);
-        // sendDemoteAlimTalk(demotedFrom2List, 2);
-        // sendDemoteAlimTalk(demotedFrom3List, 3);
+         sendRetentionAlimTalk(retentionList);
+         sendDemoteAlimTalk(demotedFrom2List, 2);
+         sendDemoteAlimTalk(demotedFrom3List, 3);
+    }
+
+    // 유지(2→2) 알림
+    private void sendRetentionAlimTalk(List<MembershipRegistration> regs) {
+        if (regs == null || regs.isEmpty()) return;
+
+        LocalDate today = LocalDate.now();
+        LocalDateTime reserveTime = null;
+//        LocalDateTime reserveTime = today.atTime(10, 0); // 오전 10시 예약
+
+        for (MembershipRegistration reg : regs) {
+            try {
+                Map<String, String> params = new HashMap<>();
+                params.put("name", reg.getAccount().getAccountInfo().getName());
+                params.put("membershipName", reg.getMembership().getName());
+                params.put("month", String.valueOf(today.getMonthValue()));
+                params.put("day", String.valueOf(today.getDayOfMonth()));
+                params.put("CSTel", herediumProperties.getTel());
+                params.put("CSEmail", herediumProperties.getEmail());
+
+                // ⚠️ 템플릿은 유지 안내용으로 교체 (예: MEMBERSHIP_TIER_RETAINED)
+                alimTalk.sendAlimTalk(
+                        reg.getAccount().getAccountInfo().getPhone(),
+                        params,
+                        AlimTalkTemplate.TIER_UPGRADE,
+                        reserveTime
+                );
+            } catch (Exception e) {
+                log.error("[AlimTalk][Retention] send failed (accountId={})",
+                        reg.getAccount().getId(), e);
+            }
+        }
+
+        log.info("[AlimTalk][Retention] scheduled {} messages", regs.size());
+    }
+
+    // 강등(2→1, 3→1) 알림: 개별 전송 스타일
+    private void sendDemoteAlimTalk(List<MembershipRegistration> regs, int fromMembership) {
+        if (regs == null || regs.isEmpty()) return;
+
+        LocalDate today = LocalDate.now();
+//        LocalDateTime reserveTime = today.atTime(10, 0); // 즉시 발송은 null
+        LocalDateTime reserveTime = null; // 즉시 발송은 null
+
+        for (MembershipRegistration reg : regs) {
+            try {
+                Map<String, String> params = new HashMap<>();
+                params.put("name", reg.getAccount().getAccountInfo().getName());
+                params.put("membershipName", reg.getMembership().getName());
+                params.put("CSTel", herediumProperties.getTel());
+                params.put("CSEmail", herediumProperties.getEmail());
+
+                alimTalk.sendAlimTalk(
+                        reg.getAccount().getAccountInfo().getPhone(),
+                        params,
+                        AlimTalkTemplate.MEMBERSHIP_TIER_DEMOTED,
+                        reserveTime // 즉시 발송은 null
+                );
+                log.info("[AlimTalk][Demote {}→1] sent (accountId={})",
+                        fromMembership, reg.getAccount().getId());
+            } catch (Exception e) {
+                log.error("[AlimTalk][Demote {}→1] send failed (accountId={})",
+                        fromMembership, reg.getAccount().getId(), e);
+            }
+        }
     }
 
     /**

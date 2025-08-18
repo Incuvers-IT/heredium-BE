@@ -35,7 +35,7 @@ public enum AlimTalkTemplate {
       "@heredium",
       "HEREDIUM027",
       "@heredium",
-      "HEREDIUM031"), // Replaced for COUPON_HAS_BEEN_DELIVERED
+      "HEREDIUM047"), // Replaced for COUPON_HAS_BEEN_DELIVERED
   NON_MEMBERSHIP_COUPON_HAS_BEEN_USED(
       "", "@heredium", "HEREDIUM023", "@heredium", "HEREDIUM023"), //삭제 // dev templateCode has not been created
   WITH_MEMBERSHIP_COUPON_HAS_BEEN_USED(
@@ -43,10 +43,14 @@ public enum AlimTalkTemplate {
   TIER_UPGRADE(
           "", "@heredium", "HEREDIUM030", "@heredium", "HEREDIUM042"),
   MEMBERSHIP_EXPIRY_REMINDER(
-          "", "@heredium", "HEREDIUM032", "@heredium", "HEREDIUM043")
+          "", "@heredium", "HEREDIUM032", "@heredium", "HEREDIUM043"),
   // 알림톡 추가 필요
   // 등급 조정 안내 HEREDIUM045 ; 환불 또는 결제취소에 의한 멤버십 등급 롤백
+  MEMBERSHIP_TIER_REFUND(
+          "", "@heredium", "HEREDIUM032", "@heredium", "HEREDIUM045"),
   // 멤버십 등급 전환 HEREDIUM044; 3 > 1 || 2 > 1로 전환시
+  MEMBERSHIP_TIER_DEMOTED(
+          "", "@heredium", "HEREDIUM032", "@heredium", "HEREDIUM044")
   ;
 
   private String prodPlusFriendId;

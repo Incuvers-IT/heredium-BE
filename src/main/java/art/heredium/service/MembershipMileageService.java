@@ -1,5 +1,6 @@
 package art.heredium.service;
 
+import art.heredium.core.config.properties.HerediumProperties;
 import art.heredium.core.util.Constants;
 import art.heredium.domain.account.entity.Account;
 import art.heredium.domain.account.entity.UserPrincipal;
@@ -16,7 +17,10 @@ import art.heredium.domain.membership.repository.MembershipMileageRepository;
 import art.heredium.domain.membership.repository.MembershipRegistrationRepository;
 import art.heredium.domain.membership.repository.MembershipRepository;
 import art.heredium.domain.ticket.entity.Ticket;
+import art.heredium.ncloud.bean.HerediumAlimTalk;
+import art.heredium.ncloud.type.AlimTalkTemplate;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -29,9 +33,12 @@ import javax.persistence.EntityNotFoundException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(rollbackFor = Exception.class)
@@ -45,6 +52,9 @@ public class MembershipMileageService {
   private final MembershipMileageRepository membershipMileageRepository;
   private final MembershipRegistrationRepository registrationRepo;
   private final AccountRepository accountRepo;
+  // ↓ 알림톡/환경정보
+  private final HerediumAlimTalk alimTalk;
+  private final HerediumProperties herediumProperties;
 
   public Page<MembershipMileageResponse> getMembershipsMileageList(
           GetAllActiveMembershipsRequest request, Pageable pageable) {
@@ -173,9 +183,15 @@ public class MembershipMileageService {
                 .findLatestForAccount(accountId)
                 .orElseThrow(() -> new EntityNotFoundException("No registration found"));
 
+        // from/to 등급명 준비 (알림톡용)
+        String fromName = membershipRepository.findByCode(2)
+                .map(Membership::getName).orElse("상위등급");
+
         // 1‑c) Tier1(기본, code=1)으로 다운그레이드 후 만료일 해제
         Membership basic = membershipRepository.findByCode(1)
                 .orElseThrow(() -> new EntityNotFoundException("Basic membership not found"));
+
+        String toName = basic.getName();
 
         reg.setMembership(basic);
         reg.setExpirationDate(null);
@@ -189,12 +205,43 @@ public class MembershipMileageService {
                 false,            // 알림톡 즉시발송 여부
                 null              // 예약시간 (필요시 now.plusMinutes(…) 등)
         );
+
+        // ✅ 강등 알림톡(개별 전송)
+        try {
+          String toPhone = reg.getAccount().getAccountInfo().getPhone();
+          if (toPhone != null && !toPhone.isEmpty()) {
+            Map<String, String> params = new HashMap<>();
+            params.put("name", reg.getAccount().getAccountInfo().getName());
+            params.put("membershipNameFrom", fromName);
+            params.put("membershipNameTo", toName);
+            params.put("CSTel", herediumProperties.getTel());
+            params.put("CSEmail", herediumProperties.getEmail());
+
+            // 즉시 발송(null). 예약 발송하려면 LocalDate.now().atTime(10, 0) 전달
+            alimTalk.sendAlimTalk(
+                    toPhone,
+                    params,
+                    AlimTalkTemplate.MEMBERSHIP_TIER_REFUND,
+                    null
+            );
+            log.info("[AlimTalk][REFUND 2→1] sent (accountId={})", reg.getAccount().getId());
+          } else {
+            log.warn("[AlimTalk][REFUND] phone missing (accountId={})", reg.getAccount().getId());
+          }
+        } catch (Exception e) {
+          // 알림톡 실패는 트랜잭션 영향 X
+          log.error("[AlimTalk][REFUND 2→1] send failed (accountId={})",
+                  reg.getAccount().getId(), e);
+        }
       }
 
       // 1‑d) 기존의 summary(relatedMileage) 자식 레코드들 연결 해제
       MembershipMileage summary = orig.getRelatedMileage();
       if (summary != null) {
-        membershipMileageRepository.markCancelledById(summary.getId(), "승급 취소", currentUser);
+//        membershipMileageRepository.markCancelledById(summary.getId(), "승급 취소", currentUser);
+
+        // 원본 승급 기록의 마일리지 값
+        int originalAmount = summary.getMileageAmount();
 
         membershipMileageRepository
           .findByRelatedMileageId(summary.getId())
@@ -202,6 +249,20 @@ public class MembershipMileageService {
             child.setRelatedMileage(null);
             membershipMileageRepository.save(child);
           });
+
+        // B. 취소 이력 로우 생성 (type=6, amount=0), 원본 summary를 relatedMileage로 연결해 추적 가능하게
+        MembershipMileage cancelLog = MembershipMileage.builder()
+                .account(summary.getAccount())
+                .type(6)                         // 승급 취소
+                .paymentMethod(0)
+                .paymentAmount(0)
+                .mileageAmount(-originalAmount)
+                .remark("승급 취소")
+                .relatedMileage(summary)         // 원본 summary를 참조(추적용)
+                .createdName(currentUser)
+                .lastModifiedName(currentUser)
+                .build();
+        membershipMileageRepository.save(cancelLog);
       }
 
     }else{

@@ -88,7 +88,6 @@ public class AdminMembershipMileageController {
     membershipMileageService.refundMileage(id, request.getReason(), upgradeCancel);
   }
 
-
   @PostMapping("/cancel/check")
   public ResponseEntity<Map<String, Boolean>> checkCancel(
           @RequestBody @Valid CancelCheckRequest req

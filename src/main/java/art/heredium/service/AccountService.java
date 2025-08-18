@@ -147,7 +147,7 @@ public class AccountService {
       }
       info = niceIdService.decrypt(dto.getEncodeData());
       // 테스트
-      info.setBirthDate(LocalDate.parse("2006-08-16"));
+//      info.setBirthDate(LocalDate.parse("2006-08-16"));
       long age = ChronoUnit.YEARS.between(info.getBirthDate(), Constants.getNow());
       if (age < 14) {
         throw new ApiException(ErrorCode.UNDER_FOURTEEN);
@@ -240,7 +240,7 @@ public class AccountService {
     }
 
     try {
-      sendSignupNotifications(entity);
+      sendSignupNotifications(entity, registration);
     } catch (Exception ex) {
       log.error("회원가입 메일/알림톡 발송 중 오류", ex);
     }
@@ -248,9 +248,10 @@ public class AccountService {
     return loginRes;
   }
 
-  private void sendSignupNotifications(Account entity) {
+  private void sendSignupNotifications(Account entity, MembershipRegistration registration) {
     Map<String, String> params = new HashMap<>();
     params.put("name", entity.getAccountInfo().getName());
+    params.put("membershipName", registration.getMembership().getName());
     params.put("link", herediumProperties.getDomain());
     params.put("CSTel", herediumProperties.getTel());
     params.put("CSEmail", herediumProperties.getEmail());

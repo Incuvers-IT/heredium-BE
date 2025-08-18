@@ -264,7 +264,6 @@ public class AccountRepositoryImpl implements AccountRepositoryQueryDsl {
     return new PageImpl<>(result, pageable, total);
   }
 
-  // 여기
   @Override
   public Page<GetAdminAccountResponse> search(GetAdminAccountRequest dto, Pageable pageable) {
     Long total =
