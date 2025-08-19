@@ -16,4 +16,7 @@ public interface MembershipRepository extends JpaRepository<Membership, Long> {
   List<Membership> findByPostIdAndIsEnabledTrue(@Param("post_id") long postId);
 
   Optional<Membership> findByCode(Integer code);
+
+  @Query("select distinct m from Membership m left join fetch m.coupons")
+  List<Membership> findAllWithCoupons();
 }

@@ -1,9 +1,6 @@
 package art.heredium.service;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import art.heredium.domain.coupon.entity.Coupon;
@@ -13,9 +10,7 @@ import art.heredium.domain.coupon.model.dto.response.CouponResponse;
 import art.heredium.domain.coupon.repository.CouponRepository;
 import art.heredium.domain.membership.model.dto.request.MembershipUpdateCouponRequest;
 import art.heredium.domain.membership.model.dto.request.MembershipUpdateRequest;
-import art.heredium.domain.membership.model.dto.response.ActiveMembershipDetailResponse;
-import art.heredium.domain.membership.model.dto.response.MembershipOptionResponse;
-import art.heredium.domain.membership.model.dto.response.MembershipResponse;
+import art.heredium.domain.membership.model.dto.response.*;
 import art.heredium.domain.post.model.dto.request.MembershipCouponUpdateRequest;
 import art.heredium.domain.post.model.dto.request.PostMembershipUpdateRequest;
 import lombok.RequiredArgsConstructor;
@@ -35,7 +30,6 @@ import art.heredium.domain.common.type.FilePathType;
 import art.heredium.domain.membership.entity.Membership;
 import art.heredium.domain.membership.model.dto.request.GetAllActiveMembershipsRequest;
 import art.heredium.domain.membership.model.dto.request.MembershipCreateRequest;
-import art.heredium.domain.membership.model.dto.response.ActiveMembershipRegistrationsResponse;
 import art.heredium.domain.membership.repository.MembershipRegistrationRepository;
 import art.heredium.domain.membership.repository.MembershipRepository;
 import art.heredium.domain.post.entity.Post;
@@ -338,4 +332,54 @@ public class MembershipService {
 
     m.updateIsDeleted(true);
   }
+
+  @Transactional(readOnly = true)
+  public MembershipBenefitResponse getMembershipBenefitList() {
+    final List<Membership> memberships =
+            Optional.ofNullable(membershipRepository.findAllWithCoupons())
+                    .orElse(Collections.emptyList());
+
+    return MembershipBenefitResponse.builder()
+            .items(
+                    memberships.stream()
+                            .filter(Objects::nonNull)
+                            .map(this::toRow)
+                            .collect(Collectors.toList())
+            )
+            .build();
+  }
+
+  private MembershipBenefitResponse.Row toRow(Membership m) {
+    final List<Coupon> coupons = Optional.ofNullable(m.getCoupons())
+            .orElse(Collections.emptyList());
+
+    return MembershipBenefitResponse.Row.builder()
+            .membershipId(m.getId())
+            .code(m.getCode())
+            .name(m.getName())
+            .shortName(m.getShortName())
+            .imageUrl(m.getImageUrl())
+            .usageThreshold(m.getUsageThreshold())
+            .coupons(
+                    coupons.stream()
+                            .filter(Objects::nonNull)
+                            .map(this::toCoupon)
+                            .collect(Collectors.toList())
+            )
+            .build();
+  }
+
+  private MembershipBenefitResponse.Coupon toCoupon(Coupon c) {
+    return MembershipBenefitResponse.Coupon.builder()
+            .id(c.getId())
+            .name(c.getName())
+            .type(c.getCouponType() != null ? c.getCouponType().name() : null)
+            .discountPercent(c.getDiscountPercent())
+            .periodInDays(c.getPeriodInDays())
+            .imageUrl(c.getImageUrl())
+            .membershipId(c.getMembership() != null ? c.getMembership().getId() : null)
+            .fromSource(c.getFromSource() != null ? c.getFromSource().name() : null)
+            .build();
+  }
+
 }

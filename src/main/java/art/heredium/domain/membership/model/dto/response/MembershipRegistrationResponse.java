@@ -22,6 +22,9 @@ public class MembershipRegistrationResponse {
   @JsonProperty("name")
   private String name;
 
+  @JsonProperty("short_name")
+  private String shortName;
+
   @JsonProperty("id")
   private long membershipRegistrationId;
 
@@ -65,6 +68,10 @@ public class MembershipRegistrationResponse {
         membershipRegistration.getMembership() != null
             ? membershipRegistration.getMembership().getName()
             : null;
+    this.shortName =
+            membershipRegistration.getMembership() != null
+                    ? membershipRegistration.getMembership().getShortName()
+                    : null;
     this.companyName =
         membershipRegistration.getCompany() != null
             ? membershipRegistration.getCompany().getName()

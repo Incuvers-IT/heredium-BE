@@ -1,11 +1,13 @@
 package art.heredium.controller.user;
 
 import art.heredium.domain.membership.model.dto.request.RegisterMembershipRequest;
+import art.heredium.domain.membership.model.dto.response.MembershipBenefitResponse;
 import art.heredium.domain.membership.model.dto.response.MembershipRegistrationResponse;
 import art.heredium.domain.membership.model.dto.response.MembershipResponse;
 import art.heredium.domain.membership.model.dto.response.RegisterMembershipResponse;
 import art.heredium.service.MembershipPaymentService;
 import art.heredium.service.MembershipRegistrationService;
+import art.heredium.service.MembershipService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,31 +18,27 @@ import org.springframework.web.bind.annotation.*;
 public class UserMembershipController {
   private final MembershipRegistrationService membershipRegistrationService;
   private final MembershipPaymentService membershipPaymentService;
+  private final MembershipService membershipService;
 
-  @GetMapping(value = "/info")
+  @GetMapping("/info")
   public ResponseEntity<MembershipRegistrationResponse> getMembershipRegistrationInfo() {
-    return ResponseEntity.ok(this.membershipRegistrationService.getMembershipRegistrationInfo());
+    return ResponseEntity.ok(membershipRegistrationService.getMembershipRegistrationInfo());
   }
 
-  @PostMapping(value = "/register")
+  @GetMapping("/benefit")
+  public ResponseEntity<MembershipBenefitResponse> getMembershipBenefitList() {
+    return ResponseEntity.ok(membershipService.getMembershipBenefitList());
+  }
+
+  @PostMapping("/register")
   public ResponseEntity<RegisterMembershipResponse> registerMembership(
-      @RequestBody RegisterMembershipRequest request) {
+          @RequestBody RegisterMembershipRequest request) {
     return ResponseEntity.ok(
-        this.membershipRegistrationService.registerMembership(request.getMembershipId()));
+            membershipRegistrationService.registerMembership(request.getMembershipId()));
   }
 
-  /**
-   * code 에 해당하는 멤버십 단일 조회
-   */
   @GetMapping("/code/{code}")
   public ResponseEntity<MembershipResponse> getByCode(@PathVariable int code) {
-    return ResponseEntity.ok(
-            membershipRegistrationService.getMembershipByCode(code));
+    return ResponseEntity.ok(membershipRegistrationService.getMembershipByCode(code));
   }
-
-//  @PostMapping(value = "/confirm-payment")
-//  public ResponseEntity<MembershipConfirmPaymentResponse> confirmPayment(
-//      @RequestBody MembershipConfirmPaymentRequest request) {
-//    return ResponseEntity.ok(this.membershipPaymentService.confirmPayment(request));
-//  }
 }
