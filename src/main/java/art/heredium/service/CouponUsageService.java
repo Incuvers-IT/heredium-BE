@@ -18,6 +18,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
 
 import art.heredium.core.config.error.entity.ApiException;
 import art.heredium.core.config.error.entity.ErrorCode;
@@ -36,6 +37,7 @@ import art.heredium.domain.membership.entity.MembershipRegistration;
 import art.heredium.domain.membership.repository.MembershipRegistrationRepository;
 import art.heredium.ncloud.bean.HerediumAlimTalk;
 import art.heredium.ncloud.type.AlimTalkTemplate;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 @Service
 @RequiredArgsConstructor
@@ -100,31 +102,27 @@ public class CouponUsageService {
    */
   @Transactional(rollbackFor = Exception.class)
   public List<CouponUsage> distributeMembershipAndCompanyCoupons(
-          @NonNull Account account, @NonNull List<Coupon> coupons, boolean sendAlimtalk
-          , LocalDateTime reserveTime, String name
-
+          @NonNull Account account,
+          @NonNull List<Coupon> coupons,
+          boolean sendAlimtalk,
+          LocalDateTime reserveTime,
+          String name
   ) {
-    List<CouponUsage> couponUsages = new ArrayList<>();
-    coupons.forEach(
-            coupon -> {
-//          if (coupon.getFromSource() == CouponSource.ADMIN_SITE) {
-//            throw new ApiException(
-//                ErrorCode.INVALID_COUPON_TO_ASSIGN,
-//                String.format(
-//                    "Error while assigning coupon: %s: This coupon is not membership coupon",
-//                    coupon.getName()));
-//          }
-              couponUsages.addAll(
-                      this.assignCouponToAccounts(
-                              coupon,
-                              Stream.of(account.getId()).collect(Collectors.toList()),
-                              coupon.getFromSource(),
-                              sendAlimtalk,
-                              reserveTime,
-                              name
-                      ));
-            });
-    return this.couponUsageRepository.saveAll(couponUsages);
+    List<CouponUsage> allSaved = new ArrayList<>();
+    Long accountId = account.getId();
+
+    for (Coupon coupon : coupons) {
+      List<CouponUsage> saved = assignCouponToAccounts(
+              coupon,
+              Collections.singletonList(accountId),
+              coupon.getFromSource(),
+              sendAlimtalk,
+              reserveTime,
+              name
+      );
+      allSaved.addAll(saved);
+    }
+    return allSaved;
   }
 
   public CouponUsageResponse getCouponUsageResponseByUuid(@NonNull final String uuid) {
@@ -139,17 +137,17 @@ public class CouponUsageService {
     couponUsage.setIsUsed(true);
     couponUsage.setUsedDate(LocalDateTime.now());
     couponUsageRepository.save(couponUsage);
-    if (couponUsage.getCoupon().getFromSource() == CouponSource.MEMBERSHIP_PACKAGE) {
-      if (couponUsage.getCoupon().getMembership() == null) {
-        log.info(
-                "Ignore sendCouponUsedMessageToAlimTalk due to coupon source is membership package and membership is null {}",
-                couponUsage);
-        return;
-      }
-      this.sendWithMembershipCouponUsedMessageToAlimTalk(couponUsage);
-      return;
-    }
-    this.sendNonMembershipCouponUsedMessageToAlimTalk(couponUsage);
+//    if (couponUsage.getCoupon().getFromSource() == CouponSource.MEMBERSHIP_PACKAGE) {
+//      if (couponUsage.getCoupon().getMembership() == null) {
+//        log.info(
+//                "Ignore sendCouponUsedMessageToAlimTalk due to coupon source is membership package and membership is null {}",
+//                couponUsage);
+//        return;
+//      }
+//      this.sendWithMembershipCouponUsedMessageToAlimTalk(couponUsage);
+//      return;
+//    }
+//    this.sendNonMembershipCouponUsedMessageToAlimTalk(couponUsage);
   }
 
   private CouponUsage getCouponUsageByUuid(@NonNull final String uuid) {
@@ -294,13 +292,19 @@ public class CouponUsageService {
       }
     });
 
-    // 5) 알림톡 발송
+    // 6) DB 저장 (먼저 저장)
+    List<CouponUsage> saved = couponUsageRepository.saveAll(couponUsages);
+
+    // 5’) 커밋 이후 발송 예약
     if (sendAlimtalk && !accountsToSendAlimTalk.isEmpty()) {
-      sendCouponDeliveredMessageToAlimTalk(accountsToSendAlimTalk, reserveTime);
+      runAfterCommit(() ->
+              sendCouponDeliveredMessageToAlimTalk(accountsToSendAlimTalk, reserveTime)
+      );
     }
 
     // 6) DB 저장
-    return couponUsageRepository.saveAll(couponUsages);
+    return saved;
+
   }
 
 
@@ -382,53 +386,6 @@ public class CouponUsageService {
   @Transactional(rollbackFor = Exception.class)
   public void rollbackCouponDistribution(Long membershipRegistrationId) {
     this.couponUsageRepository.deleteByMembershipRegistrationId(membershipRegistrationId);
-  }
-
-  private void sendWithMembershipCouponUsedMessageToAlimTalk(final CouponUsage couponUsage) {
-    log.info("Start sendWithMembershipCouponUsedMessageToAlimTalk {}", couponUsage);
-    try {
-      final Map<String, String> params = new HashMap<>();
-      params.put("accountName", couponUsage.getAccount().getAccountInfo().getName());
-      params.put("membershipName", couponUsage.getCoupon().getMembership().getName());
-      params.put(
-              "issuedDate",
-              couponUsage.getUsedDate().format(COUPON_DATETIME_FORMAT)); // Is actually used date
-      params.put("couponType", couponUsage.getCoupon().getCouponType().getDesc());
-      params.put("CSTel", herediumProperties.getTel());
-      params.put("CSEmail", herediumProperties.getEmail());
-
-      this.alimTalk.sendAlimTalkWithoutTitle(
-              couponUsage.getAccount().getAccountInfo().getPhone(),
-              params,
-              AlimTalkTemplate.WITH_MEMBERSHIP_COUPON_HAS_BEEN_USED);
-    } catch (Exception e) {
-      log.warn("Sending message to AlimTalk failed: ", e);
-    } finally {
-      log.info("End sendWithMembershipCouponUsedMessageToAlimTalk");
-    }
-  }
-
-  private void sendNonMembershipCouponUsedMessageToAlimTalk(final CouponUsage couponUsage) {
-    log.info("Start sendNonMembershipCouponUsedMessageToAlimTalk {}", couponUsage);
-    try {
-      final Map<String, String> params = new HashMap<>();
-      params.put("accountName", couponUsage.getAccount().getAccountInfo().getName());
-      params.put(
-              "issuedDate",
-              couponUsage.getUsedDate().format(COUPON_DATETIME_FORMAT)); // Is actually used date
-      params.put("couponType", couponUsage.getCoupon().getCouponType().getDesc());
-      params.put("CSTel", herediumProperties.getTel());
-      params.put("CSEmail", herediumProperties.getEmail());
-
-      this.alimTalk.sendAlimTalkWithoutTitle(
-              couponUsage.getAccount().getAccountInfo().getPhone(),
-              params,
-              AlimTalkTemplate.NON_MEMBERSHIP_COUPON_HAS_BEEN_USED);
-    } catch (Exception e) {
-      log.warn("Sending message to AlimTalk failed: ", e);
-    } finally {
-      log.info("End sendNonMembershipCouponUsedMessageToAlimTalk");
-    }
   }
 
   public CouponUsageCheckResponse checkActiveMembershipCouponUsage(
@@ -543,9 +500,10 @@ public class CouponUsageService {
       }
     }
 
-    // 알림톡 발송
     if (sendAlimtalk && !talkMap.isEmpty()) {
-      sendCouponDeliveredMessageToAlimTalk(talkMap, reserveTime);
+      runAfterCommit(() ->
+              sendCouponDeliveredMessageToAlimTalk(talkMap, reserveTime)
+      );
     }
 
     return result;
@@ -559,5 +517,16 @@ public class CouponUsageService {
     // 2) 실제 롤백 (내부에서 중복방지도 idempotent하게)
     rollbackCouponUsage(couponUsageUuid);
     return true;
+  }
+
+  private void runAfterCommit(Runnable task) {
+    if (TransactionSynchronizationManager.isSynchronizationActive()) {
+      TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+        @Override public void afterCommit() { task.run(); }
+      });
+    } else {
+      // 트랜잭션 밖이면 즉시 실행
+      task.run();
+    }
   }
 }

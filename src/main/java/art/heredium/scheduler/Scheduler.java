@@ -109,30 +109,6 @@ public class Scheduler {
 //    this.membershipRegistrationRepository.deleteAllById(redundantMembershipRegistrationIds);
 //  }
 
-//  @Async
-//  @Scheduled(cron = "0 0 0 * * ?") // Run at midnight every day
-//  @Transactional(rollbackFor = Exception.class)
-//  public void updateExpiredMemberships() {
-//    try {
-//      List<MembershipRegistration> expiredMemberships =
-//          membershipRegistrationRepository.findByExpirationDateBeforeAndPaymentStatusNotIn(
-//              LocalDateTime.now(), Arrays.asList(PaymentStatus.EXPIRED, PaymentStatus.REFUND));
-//
-//      expiredMemberships.forEach(
-//          membership -> {
-//            membership.updatePaymentStatus(PaymentStatus.EXPIRED);
-//            membershipRegistrationRepository.save(membership);
-//          });
-//
-//      if (!expiredMemberships.isEmpty()) {
-//        log.info("Updated {} expired memberships", expiredMemberships.size());
-//        sendExpiredMembershipNotifications(expiredMemberships);
-//      }
-//    } catch (Exception e) {
-//      log.error("Error updating expired memberships", e);
-//    }
-//  }
-
   @Async
   @Scheduled(cron = "0 0 2 * * ?") // Every day at 2am
   @Transactional(rollbackFor = Exception.class)
@@ -283,51 +259,6 @@ public class Scheduler {
     } finally {
       log.info("[SchedulerTrigger] end");
     }
-  }
-
-  @Async
-  @Transactional(propagation = Propagation.NEVER)
-  public void sendExpiredMembershipNotifications(List<MembershipRegistration> expiredMemberships) {
-    expiredMemberships.forEach(
-        membership -> {
-          try {
-            sendMembershipExpiredMessageToAlimTalk(
-                membership.getAccount().getAccountInfo().getPhone(), membership);
-          } catch (Exception e) {
-            log.error(
-                "Failed to send AlimTalk notification for membership {}: {}",
-                membership.getId(),
-                e.getMessage());
-          }
-        });
-  }
-
-  private void sendMembershipExpiredMessageToAlimTalk(
-      final String toPhone, final MembershipRegistration membership) {
-    log.info("Start sendMembershipExpiredMessageToAlimTalk");
-    Map<String, String> params = createMembershipExpiredParams(membership);
-    try {
-      this.alimTalk.sendAlimTalkWithoutTitle(
-          toPhone, params, AlimTalkTemplate.MEMBERSHIP_PACKAGE_HAS_EXPIRED);
-    } catch (Exception e) {
-      log.warn(
-          "Sending message to AlimTalk failed: {}, message params: {}", e.getMessage(), params);
-    } finally {
-      log.info("End sendMembershipExpiredMessageToAlimTalk");
-    }
-  }
-
-  private Map<String, String> createMembershipExpiredParams(MembershipRegistration membership) {
-    Map<String, String> variables = new HashMap<>();
-    variables.put("accountName", membership.getAccount().getAccountInfo().getName());
-    variables.put("membershipName", membership.getMembershipOrCompanyName());
-    variables.put(
-        "startDate", membership.getRegistrationDate().format(MEMBERSHIP_REGISTER_DATETIME_FORMAT));
-    variables.put(
-        "endDate", membership.getExpirationDate().format(MEMBERSHIP_REGISTER_DATETIME_FORMAT));
-    variables.put("CSTel", herediumProperties.getTel());
-    variables.put("CSEmail", herediumProperties.getEmail());
-    return variables;
   }
 
   private void sleepAccountSendMail() {

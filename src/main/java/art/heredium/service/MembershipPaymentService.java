@@ -112,33 +112,6 @@ public class MembershipPaymentService {
     this.membershipRegistrationRepository.deleteAllById(pendingMembershipRegistrationIds);
   }
 
-  private void sendMembershipRegistrationMessageToAlimTalk(
-      final MembershipRegistration membershipRegistration, List<CouponUsage> coupons) {
-    log.info(
-        "Start sendMembershipRegistrationMessageToAlimTalk {}, {}",
-        membershipRegistration,
-        coupons);
-    try {
-      final Map<String, String> params = new HashMap<>();
-      params.put("accountName", membershipRegistration.getAccount().getAccountInfo().getName());
-      params.put("membershipName", membershipRegistration.getMembership().getName());
-      params.put(
-          "startDate", membershipRegistration.getRegistrationDate().format(MEMBERSHIP_DATE_FORMAT));
-      params.put(
-          "endDate", membershipRegistration.getExpirationDate().format(MEMBERSHIP_DATE_FORMAT));
-      params.put("detailCoupons", this.buildCouponDetails(coupons));
-      params.put("CSTel", herediumProperties.getTel());
-      params.put("CSEmail", herediumProperties.getEmail());
-      this.alimTalk.sendAlimTalkWithoutTitle(
-          membershipRegistration.getAccount().getAccountInfo().getPhone(),
-          params,
-          AlimTalkTemplate.USER_REGISTER_MEMBERSHIP_PACKAGE);
-    } catch (Exception e) {
-      log.warn("Sending message to AlimTalk failed: {}", e.getMessage());
-    }
-    log.info("End sendMembershipRegistrationMessageToAlimTalk");
-  }
-
   private String buildCouponDetails(List<CouponUsage> coupons) {
     // Group couponUsages by couponId to remove redundancy
     final Map<Long, List<CouponUsage>> couponUsagesGroupedByCouponId =

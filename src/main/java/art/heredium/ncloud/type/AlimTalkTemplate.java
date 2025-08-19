@@ -4,60 +4,59 @@ import lombok.Getter;
 
 @Getter
 public enum AlimTalkTemplate {
-  SIGN_UP("", "@heredium", "HEREDIUM001", "@heredium", "HEREDIUM046"),
-  TICKET_ISSUANCE("", "@heredium", "HEREDIUM002", "@heredium", "HEREDIUM036"),
-  TICKET_INFORMATION("", "@heredium", "HEREDIUM003", "@heredium", "HEREDIUM037"),
-  TICKET_REFUND_USER("", "@heredium", "HEREDIUM004", "@heredium", "HEREDIUM038"),
-  TICKET_REFUND_ADMIN("예매 취소", "@heredium", "HEREDIUM005", "@heredium", "HEREDIUM039"),
-  TICKET_ISSUANCE_GROUP("단체입장권 발급", "@heredium", "HEREDIUM006", "@heredium", "HEREDIUM006"), //휴면
-  TICKET_REFUND_GROUP("단체입장권 취소", "@heredium", "HEREDIUM007", "@heredium", "HEREDIUM007"), //휴면
-  TICKET_INVITE("초대권 발급", "@heredium", "HEREDIUM008", "@heredium", "HEREDIUM008"), //기존 템플릿 유지
-  ACCOUNT_SLEEP("휴면계정 안내", "@heredium", "HEREDIUM009", "@heredium", "HEREDIUM009"), // 휴면
+  // 회원가입
+  SIGN_UP("", "@heredium", "HEREDIUM046", "@heredium", "HEREDIUM046"),
+  // 예약완료
+  TICKET_ISSUANCE("", "@heredium", "HEREDIUM036", "@heredium", "HEREDIUM036"),
+  // 입장 안내
+  TICKET_INFORMATION("", "@heredium", "HEREDIUM037", "@heredium", "HEREDIUM037"),
+  // 애매 취소
+  TICKET_REFUND_USER("", "@heredium", "HEREDIUM038", "@heredium", "HEREDIUM038"),
+  // 애매 취소 관리자
+  TICKET_REFUND_ADMIN("", "@heredium", "HEREDIUM039", "@heredium", "HEREDIUM039"),
+  // 단체 입장권 발급(휴면상태)
+  TICKET_ISSUANCE_GROUP("단체입장권 발급", "@heredium", "HEREDIUM006", "@heredium", "HEREDIUM006"),
+  // 단체 입장권 취소(휴면상태)
+  TICKET_REFUND_GROUP("단체입장권 취소", "@heredium", "HEREDIUM007", "@heredium", "HEREDIUM007"),
+  // 초대권 발급(기존 유지)
+  TICKET_INVITE("초대권 발급", "@heredium", "HEREDIUM008", "@heredium", "HEREDIUM008"),
+  // 휴면계정(휴면상태)
+  ACCOUNT_SLEEP("휴면계정 안내", "@heredium", "HEREDIUM009", "@heredium", "HEREDIUM009"),
+  // 자동탈퇴 안내(휴면)
   ACCOUNT_NOTY_SLEEP_TERMINATE(
-      "자동탈퇴 안내", "@heredium", "HEREDIUM010", "@heredium", "HEREDIUM010"), //휴면
-  ACCOUNT_SLEEP_TERMINATE("자동탈퇴 완료", "@heredium", "HEREDIUM011", "@heredium", "HEREDIUM011"), //휴면
-  ACCOUNT_TERMINATE("", "@heredium", "HEREDIUM012", "@heredium", "HEREDIUM041"),
-  COFFEE_COMPLETE("커피제작 완료", "@heredium", "HEREDIUM013", "@heredium", "HEREDIUM013"), //휴면
-  USER_REGISTER_MEMBERSHIP_PACKAGE(
-      "템플릿 이름",
-      "@heredium",
-      "HEREDIUM021",
-      "@spadecompany",
-      ""), //삭제 // dev templateCode has not been created
-  MEMBERSHIP_PACKAGE_HAS_EXPIRED(
-      "멤버십 패키지가 만료되었습니다",
-      "@heredium",
-      "HEREDIUM020",
-      "@spadecompany",
-      ""), //삭제  // dev templateCode has not been created
+      "자동탈퇴 안내", "@heredium", "HEREDIUM010", "@heredium", "HEREDIUM010"),
+  // 자동탈퇴 완료(휴면)
+  ACCOUNT_SLEEP_TERMINATE("자동탈퇴 완료", "@heredium", "HEREDIUM011", "@heredium", "HEREDIUM011"),
+  // 회원탈퇴 안내
+  ACCOUNT_TERMINATE("", "@heredium", "HEREDIUM041", "@heredium", "HEREDIUM041"),
+  // 커피제작 완료(휴면)
+  COFFEE_COMPLETE("커피제작 완료", "@heredium", "HEREDIUM013", "@heredium", "HEREDIUM013"),
+  // 쿠폰 발급
   COUPON_HAS_BEEN_ISSUED_V4(
       "",
       "@heredium",
-      "HEREDIUM027",
+      "HEREDIUM047",
       "@heredium",
-      "HEREDIUM047"), // Replaced for COUPON_HAS_BEEN_DELIVERED
-  NON_MEMBERSHIP_COUPON_HAS_BEEN_USED(
-      "", "@heredium", "HEREDIUM023", "@heredium", "HEREDIUM023"), //삭제 // dev templateCode has not been created
-  WITH_MEMBERSHIP_COUPON_HAS_BEEN_USED(
-      "", "@heredium", "HEREDIUM024", "@heredium", "HEREDIUM024"), //삭제 // dev templateCode has not been created
+      "HEREDIUM047"),
+  // 멤버십 승급 안내 1>2
   TIER_UPGRADE(
-          "", "@heredium", "HEREDIUM030", "@heredium", "HEREDIUM042"),
+          "", "@heredium", "HEREDIUM042", "@heredium", "HEREDIUM042"),
+  // 멤버십 기한 만료 안내
   MEMBERSHIP_EXPIRY_REMINDER(
-          "", "@heredium", "HEREDIUM032", "@heredium", "HEREDIUM043"),
-  // 알림톡 추가 필요
-  // 등급 조정 안내 HEREDIUM045 ; 환불 또는 결제취소에 의한 멤버십 등급 롤백
+          "", "@heredium", "HEREDIUM043", "@heredium", "HEREDIUM043"),
+  // 등급 조정 안내 2>1 환불 또는 결제취소에 의한 멤버십 등급 롤백
   MEMBERSHIP_TIER_REFUND(
-          "", "@heredium", "HEREDIUM032", "@heredium", "HEREDIUM045"),
-  // 멤버십 등급 전환 HEREDIUM044; 3 > 1 || 2 > 1로 전환시
+          "", "@heredium", "HEREDIUM045", "@heredium", "HEREDIUM045"),
+  // 멤버십 등급 전환 3 > 1 || 2 > 1로 전환시
   MEMBERSHIP_TIER_DEMOTED(
-          "", "@heredium", "HEREDIUM032", "@heredium", "HEREDIUM044")
+          "", "@heredium", "HEREDIUM044", "@heredium", "HEREDIUM044")
   ;
 
-  private String prodPlusFriendId;
-  private String prodTemplateCode;
-  private String devPlusFriendId;
-  private String devTemplateCode;
-  private String title;
+  private final String prodPlusFriendId;
+  private final String prodTemplateCode;
+  private final String devPlusFriendId;
+  private final String devTemplateCode;
+  private final String title;
 
   AlimTalkTemplate(
       String title,
