@@ -15,13 +15,13 @@ import art.heredium.domain.account.model.dto.response.*;
 import art.heredium.domain.account.repository.AccountInfoRepository;
 import art.heredium.domain.account.repository.AccountRepository;
 import art.heredium.domain.coupon.entity.Coupon;
-import art.heredium.domain.coupon.entity.CouponUsage;
 import art.heredium.domain.coupon.repository.CouponRepository;
 import art.heredium.domain.coupon.repository.CouponUsageRepository;
 import art.heredium.domain.membership.entity.Membership;
 import art.heredium.domain.membership.entity.MembershipRegistration;
 import art.heredium.domain.membership.entity.PaymentStatus;
 import art.heredium.domain.membership.entity.RegistrationType;
+import art.heredium.domain.membership.repository.MembershipMileageRepository;
 import art.heredium.domain.membership.repository.MembershipRegistrationRepository;
 import art.heredium.domain.membership.repository.MembershipRepository;
 import art.heredium.domain.ticket.repository.TicketRepository;
@@ -42,12 +42,13 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.ss.usermodel.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
@@ -59,7 +60,6 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -84,8 +84,10 @@ public class AccountService {
   private final HerediumProperties herediumProperties;
   private final MembershipRepository membershipRepository;
   private final MembershipRegistrationRepository membershipRegistrationRepository;
+  private final MembershipMileageRepository membershipMileageRepository;
   private final CouponRepository couponRepository;
   private final CouponUsageService couponUsageService;
+  private final CouponUsageRepository couponUsageRepository;
   private final OAuthService oAuthService;
 
   public GetUserAccountResponse get(String password) {
@@ -146,14 +148,11 @@ public class AccountService {
         throw new ApiException(ErrorCode.DUPLICATE_EMAIL);
       }
       info = niceIdService.decrypt(dto.getEncodeData());
-      // 테스트
-//      info.setBirthDate(LocalDate.parse("2006-08-16"));
       long age = ChronoUnit.YEARS.between(info.getBirthDate(), Constants.getNow());
       if (age < 14) {
         throw new ApiException(ErrorCode.UNDER_FOURTEEN);
       }
       entity = new Account(dto, info, bCryptPasswordEncoder.encode(dto.getPassword()));
-
     }
 
     accountRepository.save(entity);
@@ -485,6 +484,7 @@ public class AccountService {
     entity.getAccountInfo().updatePhoneVerification(dto);
 
     LocalDate birthDate = LocalDate.parse(dto.getBirthDate());
+
     long age = ChronoUnit.YEARS.between(birthDate, Constants.getNow());
 
     if (age < 14) {
@@ -548,6 +548,34 @@ public class AccountService {
             null              // 알림톡 예약
     );
 
+    // 7) 멤버십 3(학생)으로 전환 시, 커밋 후 알림톡 발송
+    if (targetCode == 3) {
+      final String phone = entity.getAccountInfo().getPhone();
+      final Map<String, String> params = new HashMap<>();
+      params.put("name", entity.getAccountInfo().getName());
+      params.put("membershipName", reg.getMembership().getName());
+
+      // 트랜잭션 커밋 이후에만 전송
+      if (TransactionSynchronizationManager.isSynchronizationActive()) {
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+          @Override public void afterCommit() {
+            try {
+              alimTalk.sendAlimTalk(phone, params, AlimTalkTemplate.MEMBERSHIP_TIER_DEMOTED);
+            } catch (Exception e) {
+              log.warn("멤버십 전환 알림톡 발송 실패: {}", e.getMessage(), e);
+            }
+          }
+        });
+      } else {
+        // 트랜잭션 밖이면 즉시 실행
+        try {
+          alimTalk.sendAlimTalk(phone, params, AlimTalkTemplate.MEMBERSHIP_TIER_DEMOTED);
+        } catch (Exception e) {
+          log.warn("멤버십 전환 알림톡 발송 실패(즉시): {}", e.getMessage(), e);
+        }
+      }
+    }
+
     return new GetUserAccountInfoResponse(entity, reg);
   }
 
@@ -604,10 +632,9 @@ public class AccountService {
         throw new ApiException(ErrorCode.PASSWORD_NOT_MATCHED);
       }
     }
-    Account entity = accountRepository.findById(userPrincipal.getId()).orElse(null);
-    if (entity == null) {
-      throw new ApiException(ErrorCode.NOT_FOUND);
-    }
+    Account entity = accountRepository.findById(userPrincipal.getId())
+            .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND));
+
     Map<String, String> params = new HashMap<>();
     params.put("name", entity.getAccountInfo().getName());
     params.put("CSTel", herediumProperties.getTel());
@@ -617,6 +644,15 @@ public class AccountService {
     String phone = entity.getAccountInfo().getPhone();
     entity.terminate();
     ticketRepository.terminateByAccount(entity.getId());
+
+    // 1) 멤버십 관련 이력 소프트삭제
+    int regCnt = membershipRegistrationRepository.softDeleteByAccountId(entity.getId());
+    int mileCnt = membershipMileageRepository.softDeleteByAccountId(entity.getId());
+    int couponCnt = couponUsageRepository.softDeleteByAccountId(entity.getId());
+
+    // 2) 로깅
+    log.info("Account {} terminated. softDeleted: registrations={}, mileages={}, couponUsages={}",
+            entity.getId(), regCnt, mileCnt, couponCnt);
 
     cloudMail.mail(email, params, MailTemplate.ACCOUNT_TERMINATE);
     alimTalk.sendAlimTalk(phone, params, AlimTalkTemplate.ACCOUNT_TERMINATE);

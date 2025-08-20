@@ -260,8 +260,8 @@ public class StepTxService {
         if (regs == null || regs.isEmpty()) return;
 
         LocalDate today = LocalDate.now();
-//        LocalDateTime reserveTime = today.atTime(10, 0); // 즉시 발송은 null
-        LocalDateTime reserveTime = null; // 즉시 발송은 null
+        LocalDateTime reserveTime = today.atTime(10, 0); // 즉시 발송은 null
+//        LocalDateTime reserveTime = null; // 즉시 발송은 null
 
         for (MembershipRegistration reg : regs) {
             try {

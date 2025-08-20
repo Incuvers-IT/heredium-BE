@@ -15,6 +15,7 @@ import org.hibernate.annotations.TypeDef;
 import art.heredium.domain.account.entity.Account;
 import art.heredium.domain.common.entity.BaseEntity;
 import art.heredium.domain.company.entity.Company;
+import org.hibernate.annotations.Where;
 
 @Entity
 @Setter
@@ -24,6 +25,7 @@ import art.heredium.domain.company.entity.Company;
 @TypeDef(name = "json", typeClass = JsonStringType.class)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @ToString
+@Where(clause = "is_deleted = 0")
 // 멤버십등록
 public class MembershipRegistration extends BaseEntity {
   @Id
@@ -71,6 +73,10 @@ public class MembershipRegistration extends BaseEntity {
   @Comment("수정자")
   @Column(name = "last_modified_name")
   private String lastModifiedName;
+
+  @Comment("삭제여부")
+  @Column(name = "is_deleted", nullable = false)
+  private boolean isDeleted = false;
 
   public MembershipRegistration(
       @NonNull Account account,

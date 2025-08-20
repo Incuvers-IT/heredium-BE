@@ -41,7 +41,7 @@ import art.heredium.domain.post.entity.Post;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @ToString
-@Where(clause = "is_deleted = false")
+@Where(clause = "is_deleted = 0")
 // 멤버십
 public class Membership extends BaseEntity implements Serializable {
   @Id

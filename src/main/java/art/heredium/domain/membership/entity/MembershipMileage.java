@@ -9,6 +9,7 @@ import lombok.*;
 import org.hibernate.annotations.Comment;
 import org.hibernate.annotations.DynamicInsert;
 import org.hibernate.annotations.TypeDef;
+import org.hibernate.annotations.Where;
 
 import javax.persistence.*;
 import java.io.Serializable;
@@ -24,6 +25,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @ToString
+@Where(clause = "is_deleted = 0")
 public class MembershipMileage extends BaseEntity implements Serializable {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -85,5 +87,9 @@ public class MembershipMileage extends BaseEntity implements Serializable {
 
   @Column(name = "last_modified_name", nullable = false, length = 10)
   private String lastModifiedName;
+  
+  @Comment("삭제여부")
+  @Column(name = "is_deleted", nullable = false)
+  private boolean isDeleted = false;
 
 }

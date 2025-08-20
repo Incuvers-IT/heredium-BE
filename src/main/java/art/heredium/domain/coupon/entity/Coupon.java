@@ -24,7 +24,7 @@ import java.util.List;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @ToString
-@Where(clause = "is_deleted = false")
+@Where(clause = "is_deleted = 0")
 public class Coupon extends BaseEntity {
 
   @Id

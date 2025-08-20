@@ -101,10 +101,6 @@ public interface MembershipRegistrationRepository
           @Param("now") LocalDateTime now
   );
 
-  /**
-   * 만료일 between start/end, paymentStatus=ACTIVE, membership.code=2 이면서
-   * sum(mm.mileageAmount) < threshold 인 레코드만 조회
-   */
   @Query(
           "SELECT mr " +
                   "  FROM MembershipRegistration mr " +
@@ -122,9 +118,11 @@ public interface MembershipRegistrationRepository
           @Param("threshold") long threshold
   );
 
-  @Modifying
-  @Query("DELETE FROM MembershipRegistration mr WHERE mr.company.id = :companyId")
-  void deleteAllByCompanyId(@Param("companyId") Long companyId);
+  @Modifying(clearAutomatically = true, flushAutomatically = true)
+  @Query("UPDATE MembershipRegistration mr " +
+          "SET mr.isDeleted = true, mr.lastModifiedDate = CURRENT_TIMESTAMP " +
+          "WHERE mr.company.id = :companyId AND mr.isDeleted = false")
+  void softDeleteAllByCompanyId(@Param("companyId") Long companyId);
 
   /**
    * account.id, membership.code 기준으로 가입 여부 확인
@@ -153,4 +151,11 @@ public interface MembershipRegistrationRepository
   List<MembershipRegistration> findByMembershipCode(
           @Param("membershipCode") int membershipCode
   );
+
+  @Modifying(clearAutomatically = true, flushAutomatically = true)
+  @Query("UPDATE MembershipRegistration mr " +
+          "SET mr.isDeleted = true, mr.lastModifiedDate = CURRENT_TIMESTAMP " +
+          "WHERE mr.account.id = :accountId AND mr.isDeleted = false")
+  int softDeleteByAccountId(@Param("accountId") Long accountId);
+
 }

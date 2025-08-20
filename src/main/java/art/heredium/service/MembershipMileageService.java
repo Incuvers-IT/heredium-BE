@@ -462,10 +462,7 @@ public class MembershipMileageService {
     long totalMileage = membershipMileageRepository.sumActiveMileageByAccount(request.getAccountId());
 
     LocalDate threshold = LocalDate.now().plusMonths(1);
-
-
     LocalDateTime thresholdDateTime = threshold.atTime(LocalTime.MAX);
-
 
     long expiringMileage = membershipMileageRepository
             .sumExpiringMileage(request.getAccountId(), thresholdDateTime);

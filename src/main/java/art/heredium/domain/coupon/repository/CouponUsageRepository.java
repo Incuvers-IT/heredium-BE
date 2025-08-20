@@ -68,4 +68,10 @@ public interface CouponUsageRepository extends JpaRepository<CouponUsage, Long> 
   List<CouponUsage> findAllByCompanyId(@Param("companyId") Long companyId);
 
   void deleteByAccountIdAndMembershipRegistrationIdIsNotNull(Long accountId);
+
+  @Modifying(clearAutomatically = true, flushAutomatically = true)
+  @Query("UPDATE CouponUsage cu " +
+          "SET cu.isDeleted = true, cu.lastModifiedDate = CURRENT_TIMESTAMP " +
+          "WHERE cu.account.id = :accountId AND cu.isDeleted = false")
+  int softDeleteByAccountId(@Param("accountId") Long accountId);
 }

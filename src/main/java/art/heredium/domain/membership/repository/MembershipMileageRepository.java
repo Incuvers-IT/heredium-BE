@@ -29,7 +29,6 @@ public interface MembershipMileageRepository extends JpaRepository<MembershipMil
                   "WHERE m.account.id = :accountId " +
                   "  AND m.type = 0 " +
                   "  AND m.relatedMileage IS NULL "
-
   )
   long sumActiveMileageByAccount(@Param("accountId") Long accountId);
 
@@ -69,13 +68,6 @@ public interface MembershipMileageRepository extends JpaRepository<MembershipMil
   List<MembershipMileage> findByRelatedMileageId(@Param("relatedId") Long relatedMileageId);
 
   /**
-   * 주어진 summary(MembershipMileage)와 연관된 모든 마일리지 레코드를 삭제
-   */
-  @Modifying
-  @Query("DELETE FROM MembershipMileage m WHERE m.id = :summary")
-  void deleteByRelatedMileage(@Param("summary") MembershipMileage summary);
-
-  /**
    * 단일 마일리지 레코드를 “승급 취소” 상태(type=6, mileageAmount=0)로 업데이트
    */
   @Modifying
@@ -97,10 +89,10 @@ public interface MembershipMileageRepository extends JpaRepository<MembershipMil
   Page<MembershipMileageResponse> getUserMembershipsMileageList(
           MembershipMileageSearchRequest request, Pageable pageable);
 
-
   @Query("SELECT COALESCE(SUM(m.mileageAmount), 0) " +
           "FROM MembershipMileage m " +
           "WHERE m.account.id = :accountId " +
+          "AND m.relatedMileage IS NULL " +
           "AND m.expirationDate BETWEEN CURRENT_DATE AND :thresholdDate ")
 
   Long sumExpiringMileage(@Param("accountId") Long accountId, @Param("thresholdDate") LocalDateTime thresholdDate);
@@ -110,4 +102,10 @@ public interface MembershipMileageRepository extends JpaRepository<MembershipMil
 
   // MembershipMileageRepository
   Optional<MembershipMileage> findFirstByTicket_IdAndTypeOrderByIdAsc(Long ticketId, Integer type);
+
+  @Modifying(clearAutomatically = true, flushAutomatically = true)
+  @Query("UPDATE MembershipMileage mm " +
+          "SET mm.isDeleted = true, mm.lastModifiedDate = CURRENT_TIMESTAMP " +
+          "WHERE mm.account.id = :accountId AND mm.isDeleted = false")
+  int softDeleteByAccountId(@Param("accountId") Long accountId);
 }

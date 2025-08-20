@@ -16,7 +16,7 @@ public enum MailTemplate {
   ACCOUNT_SLEEP(8126, 7558, "휴면계정 변환"),
   ACCOUNT_NOTY_SLEEP_TERMINATE(8127, 7559, "자동탈퇴안내"),
   ACCOUNT_SLEEP_TERMINATE(8155, 8158, "자동탈퇴"),
-  ACCOUNT_TERMINATE(8156, 8159, "회원탈퇴"),
+  ACCOUNT_TERMINATE(8156, 8156, "회원탈퇴"),
   REQUEST_GROUP(8128, 8021, "단체입장권 신청"),
   ;
 

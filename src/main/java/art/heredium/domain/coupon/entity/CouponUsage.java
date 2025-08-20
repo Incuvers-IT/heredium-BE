@@ -12,6 +12,7 @@ import lombok.NoArgsConstructor;
 import lombok.NonNull;
 import lombok.Setter;
 
+import org.hibernate.annotations.Where;
 import org.springframework.lang.Nullable;
 
 import org.hibernate.annotations.Comment;
@@ -28,6 +29,7 @@ import art.heredium.domain.membership.entity.MembershipRegistration;
 @DynamicInsert
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
+@Where(clause = "is_deleted = 0")
 public class CouponUsage extends BaseEntity {
 
   @Id
@@ -81,6 +83,10 @@ public class CouponUsage extends BaseEntity {
   @Comment("수정자")
   @Column(name = "last_modified_name")
   private String lastModifiedName;
+
+  @Comment("삭제여부")
+  @Column(name = "is_deleted", nullable = false)
+  private boolean isDeleted = false;
 
   public CouponUsage(
           @NonNull Coupon coupon,

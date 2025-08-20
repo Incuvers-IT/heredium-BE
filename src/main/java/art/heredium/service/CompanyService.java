@@ -436,7 +436,7 @@ public class CompanyService {
 
     this.couponUsageService.deleteAllByCompanyId(companyId);
     this.couponRepository.deleteByCompanyId(companyId);
-    this.membershipRegistrationRepository.deleteAllByCompanyId(companyId);
+    this.membershipRegistrationRepository.softDeleteAllByCompanyId(companyId);
     this.companyRepository.delete(company);
   }
 
