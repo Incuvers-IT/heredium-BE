@@ -6,13 +6,19 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.Comparator;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 import art.heredium.domain.account.entity.UserPrincipal;
+import art.heredium.domain.coupon.model.dto.request.UserCouponUsageRequest;
+import art.heredium.domain.coupon.model.dto.response.*;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import lombok.var;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -28,9 +34,6 @@ import art.heredium.domain.account.repository.AccountRepository;
 import art.heredium.domain.coupon.entity.Coupon;
 import art.heredium.domain.coupon.entity.CouponSource;
 import art.heredium.domain.coupon.entity.CouponUsage;
-import art.heredium.domain.coupon.model.dto.response.CouponResponseDto;
-import art.heredium.domain.coupon.model.dto.response.CouponUsageCheckResponse;
-import art.heredium.domain.coupon.model.dto.response.CouponUsageResponse;
 import art.heredium.domain.coupon.repository.CouponRepository;
 import art.heredium.domain.coupon.repository.CouponUsageRepository;
 import art.heredium.domain.membership.entity.MembershipRegistration;
@@ -77,6 +80,149 @@ public class CouponUsageService {
 
     return responseDtos;
   }
+
+  private static boolean overlaps(LocalDateTime start, LocalDateTime end,
+                                  LocalDateTime from, LocalDateTime to) {
+    if (start == null) return false;
+    LocalDateTime e = (end != null) ? end : LocalDateTime.MAX;
+    return !start.isAfter(to) && !e.isBefore(from);
+  }
+
+  public List<CouponResponseDto> getCouponsWithUsageByAccountId(
+          Long accountId,
+          UserCouponUsageRequest req
+  ) {
+      // 기간 기본값(요청이 null일 때 대비)
+      LocalDateTime now  = LocalDateTime.now();
+      LocalDateTime from = req.getStartDate() != null ? req.getStartDate() : now.minusMonths(1).with(LocalTime.MIN);
+      LocalDateTime to   = req.getEndDate()   != null ? req.getEndDate()   : now.with(LocalTime.MAX);
+
+      boolean tabAvailable = req.isAvailableTab();
+      boolean tabUsed      = req.isUsedTab();
+      boolean tabTotal     = !tabAvailable && !tabUsed;
+
+      List<Coupon> coupons =
+              couponUsageRepository.findDistinctCouponsByAccountIdAndIsNotDeleted(accountId);
+
+      List<CouponResponseDto> result = new ArrayList<>(coupons.size());
+
+      for (Coupon coupon : coupons) {
+          // 원본 조회
+          List<CouponUsage> usedRaw =
+                  couponUsageRepository.findByAccountIdAndCouponIdAndIsUsedTrue(accountId, coupon.getId());
+
+          List<CouponUsage> unusedRaw =
+                  couponUsageRepository.findUnusedOrPermanentCoupons(accountId, coupon.getId())
+                          .stream()
+                          .sorted(Comparator.comparing(
+                                  CouponUsage::getExpirationDate,
+                                  Comparator.nullsLast(Comparator.naturalOrder())))
+                          .collect(Collectors.toList());
+
+          // 탭/기간 필터
+
+          // 사용 탭: usedDate 기준
+          List<CouponUsage> usedFiltered = usedRaw.stream()
+                  .filter(cu -> overlaps(cu.getDeliveredDate(), cu.getExpirationDate(), from, to))
+                  .collect(Collectors.toList());
+
+          // 보유/전체: deliveredDate(발급일) 기준
+          List<CouponUsage> unusedFiltered = unusedRaw.stream()
+                  .filter(cu -> {
+                    LocalDateTime delivered  = cu.getDeliveredDate();         // 시작
+                    if (delivered == null) return false;
+
+                    // 만료: 상시(isPermanent)거나 null이면 '무한대'로 취급
+                    LocalDateTime expiration = cu.isPermanent()
+                            ? LocalDateTime.MAX
+                            : Optional.ofNullable(cu.getExpirationDate()).orElse(LocalDateTime.MAX);
+
+                    // 두 구간 [delivered, expiration] 과 [from, to] 의 겹침 판정:
+                    // delivered <= to && expiration >= from  (== !delivered.isAfter(to) && !expiration.isBefore(from))
+                    return !delivered.isAfter(to) && !expiration.isBefore(from);
+                  })
+                  .sorted(Comparator.comparing(
+                          CouponUsage::getExpirationDate,
+                          Comparator.nullsLast(Comparator.naturalOrder())))
+                  .collect(Collectors.toList());
+
+          // 탭에 맞춰 한쪽 비우기
+          if (tabAvailable) usedFiltered = Collections.emptyList();
+          if (tabUsed)      unusedFiltered = Collections.emptyList();
+
+          // total 탭이면 양쪽 다 유지
+          if (tabAvailable && unusedFiltered.isEmpty()) continue;
+          if (tabUsed      && usedFiltered.isEmpty())   continue;
+          if (!tabAvailable && !tabUsed /* total */ && usedFiltered.isEmpty() && unusedFiltered.isEmpty()) continue;
+
+          result.add(new CouponResponseDto(coupon, usedFiltered, unusedFiltered));
+      }
+
+      return result;
+  }
+    public CouponUsagePage getCouponsWithUsagePage(Long accountId,
+                                                   UserCouponUsageRequest req,
+                                                   Pageable pageable) {
+      // 1) 테이블(페이지네이션)용: 탭/기간이 적용된 데이터
+      List<CouponResponseDto> pageRows = getCouponsWithUsageByAccountId(accountId, req);
+
+      // 1.5) 요약 합계용: 탭/기간 무관한 전역 데이터
+      List<CouponResponseDto> globalRows = getCouponsWithUsageByAccountId(accountId);
+
+      // 2) 합계 계산 (전역 기준)
+      final LocalDateTime now = LocalDateTime.now();
+      final LocalDateTime in30d = now.plusDays(30);
+
+      long totalCoupons = globalRows.stream()
+              .mapToLong(row -> {
+                List<CouponUsageDto> unused = row.getUnusedCoupons();
+                if (unused == null) return 0L;
+
+                return unused.stream()
+                        .filter(cu -> !cu.isExpired())
+                        .count();
+              })
+              .sum();
+
+      long expiringCoupons = globalRows.stream()
+              .mapToLong(row -> {
+                List<CouponUsageDto> unused = row.getUnusedCoupons();
+                if (unused == null) return 0L;
+                return unused.stream()
+                        .filter(cu -> !cu.isPermanent())
+                        .filter(cu -> {
+                          var exp = cu.getExpirationDate();
+                          return exp != null && (exp.isAfter(now) || exp.isEqual(now))
+                                  && (exp.isBefore(in30d) || exp.isEqual(in30d));
+                        })
+                        .count();
+              })
+              .sum();
+
+      // 3) 메모리 슬라이스 페이징 (페이지용 리스트 기준)
+      int totalElements = pageRows.size();
+      int size   = pageable.getPageSize();
+      int number = pageable.getPageNumber();
+      int from   = Math.min(number * size, totalElements);
+      int to     = Math.min(from + size, totalElements);
+      List<CouponResponseDto> content = pageRows.subList(from, to);
+      int totalPages = (int) Math.ceil(totalElements / (double) size);
+
+      // 4) 응답
+      CouponUsagePage resp = new CouponUsagePage();
+      resp.setContent(content);
+      resp.setTotalElements(totalElements);
+      resp.setTotalPages(totalPages);
+      resp.setNumber(number);
+      resp.setSize(size);
+      resp.setFirst(number == 0);
+      resp.setLast(totalPages == 0 || number >= totalPages - 1);
+
+      // 전역 합계 세팅 (탭/기간과 독립)
+      resp.setTotalCoupons(totalCoupons);
+      resp.setExpiringCoupons(expiringCoupons);
+      return resp;
+    }
 
   @Transactional(rollbackFor = Exception.class)
   public void assignCoupons(final long couponId, @NonNull List<Long> accountIds) {
@@ -306,7 +452,6 @@ public class CouponUsageService {
     return saved;
 
   }
-
 
   @NonNull
   private MembershipRegistration findMembershipRegistration(@NonNull final Account account) {
