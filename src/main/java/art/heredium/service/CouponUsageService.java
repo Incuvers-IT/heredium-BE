@@ -123,37 +123,37 @@ public class CouponUsageService {
 
           // 사용 탭: usedDate 기준
           List<CouponUsage> usedFiltered = usedRaw.stream()
+                  .filter(cu -> !cu.isPermanent())
                   .filter(cu -> overlaps(cu.getDeliveredDate(), cu.getExpirationDate(), from, to))
                   .collect(Collectors.toList());
 
           // 보유/전체: deliveredDate(발급일) 기준
           List<CouponUsage> unusedFiltered = unusedRaw.stream()
                   .filter(cu -> {
-                    LocalDateTime delivered  = cu.getDeliveredDate();         // 시작
-                    if (delivered == null) return false;
+                      LocalDateTime delivered = cu.getDeliveredDate();
+                      if (delivered == null) return false;
 
-                    // 만료: 상시(isPermanent)거나 null이면 '무한대'로 취급
-                    LocalDateTime expiration = cu.isPermanent()
-                            ? LocalDateTime.MAX
-                            : Optional.ofNullable(cu.getExpirationDate()).orElse(LocalDateTime.MAX);
+                      // 만료일 값이 있으면 그대로, 없으면 무한대
+                      LocalDateTime expiration = Optional.ofNullable(cu.getExpirationDate())
+                              .orElse(LocalDateTime.MAX);
 
-                    // 두 구간 [delivered, expiration] 과 [from, to] 의 겹침 판정:
-                    // delivered <= to && expiration >= from  (== !delivered.isAfter(to) && !expiration.isBefore(from))
-                    return !delivered.isAfter(to) && !expiration.isBefore(from);
+                      // [delivered, expiration] 과 [from, to] 겹치면 포함
+                      return !delivered.isAfter(to) && !expiration.isBefore(from);
                   })
                   .sorted(Comparator.comparing(
-                          CouponUsage::getExpirationDate,
-                          Comparator.nullsLast(Comparator.naturalOrder())))
+                          CouponUsage::getExpirationDate, Comparator.nullsLast(Comparator.naturalOrder())))
                   .collect(Collectors.toList());
 
           // 탭에 맞춰 한쪽 비우기
-          if (tabAvailable) usedFiltered = Collections.emptyList();
-          if (tabUsed)      unusedFiltered = Collections.emptyList();
-
-          // total 탭이면 양쪽 다 유지
-          if (tabAvailable && unusedFiltered.isEmpty()) continue;
-          if (tabUsed      && usedFiltered.isEmpty())   continue;
-          if (!tabAvailable && !tabUsed /* total */ && usedFiltered.isEmpty() && unusedFiltered.isEmpty()) continue;
+          if (tabAvailable) {
+            if (unusedFiltered.isEmpty()) continue;
+            usedFiltered = Collections.emptyList();
+          } else if (tabUsed) {
+            if (usedFiltered.isEmpty()) continue;
+            unusedFiltered = Collections.emptyList();
+          } else { // total
+            if (usedFiltered.isEmpty() && unusedFiltered.isEmpty()) continue;
+          }
 
           result.add(new CouponResponseDto(coupon, usedFiltered, unusedFiltered));
       }
