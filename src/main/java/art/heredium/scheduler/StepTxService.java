@@ -57,6 +57,26 @@ public class StepTxService {
                 final Account acc = t.getAccount();
                 if (acc == null) continue;
 
+                // ─── [NEW] 멤버십3(미성년자)면 적립 스킵 ─────────────────────
+                // 최신 등록 하나만 보고, 만료 안 된 경우에만 유효로 판단
+                // (expirationDate가 null이거나 now 이후면 유효)
+                Optional<MembershipRegistration> optReg = membershipRegistrationRepository.findLatestForAccount(acc.getId());
+                if (optReg.isPresent()) {
+                    MembershipRegistration reg = optReg.get();
+                    boolean active = reg.getExpirationDate() == null || reg.getExpirationDate().isAfter(now);
+                    if (active && reg.getMembership() != null
+                            && reg.getMembership().getCode() == 3) {
+                        // 중복 적립/상태 변경 흐름 보호를 위해 "적립만" 스킵하고 만료 처리는 계속 진행
+                        if (log.isDebugEnabled()) {
+                            log.debug("[TicketExpire] skip accrual for minor (accountId={}, ticketId={})",
+                                    acc.getId(), t.getId());
+                        }
+                        // 적립만 건너뛰고 아래 만료 일괄 처리 구간으로 진행하도록 continue
+                        continue;
+                    }
+                }
+                // ─────────────────────────────────────────────────────────────
+
                 final Long originBoxed   = t.getOriginPrice();                 // BIGINT → Long 매핑 가정
                 final Long discountBoxed = t.getCouponDiscountAmount();        // nullable
                 final long origin   = (originBoxed   == null ? 0L : originBoxed);

@@ -33,6 +33,7 @@ public class GetUserAccountInfoResponse {
   private Boolean isMarketingReceive;
   private Boolean isLocalResident;
   private LocalDateTime marketingAgreedDate;
+  private long totalMileage;
 
   /** 발급된 쿠폰 목록 */
   private List<Coupon> coupons;
@@ -68,6 +69,34 @@ public class GetUserAccountInfoResponse {
     }
   }
 
+  public GetUserAccountInfoResponse(Account entity, MembershipRegistration membershipRegistration, long totalMileage) {
+    AccountInfo accountInfo = entity.getAccountInfo();
+    this.id = accountInfo.getId();
+    this.birthDate = accountInfo.getBirthDate();
+    this.gender = accountInfo.getGender();
+    this.marketingPending = accountInfo.getMarketingPending();
+    this.name = accountInfo.getName();
+    this.email = entity.getEmail();
+    this.provider = entity.getProviderType();
+    this.totalMileage = totalMileage;
+
+    // 추가 정보
+    this.job                    = accountInfo.getJob();
+    this.state                  = accountInfo.getState();
+    this.district               = accountInfo.getDistrict();
+    this.additionalInfoAgreed   = accountInfo.getAdditionalInfoAgreed();
+    this.isMarketingReceive     = accountInfo.getIsMarketingReceive();
+    this.isLocalResident        = accountInfo.getIsLocalResident();
+    this.marketingAgreedDate    = accountInfo.getMarketingAgreedDate();
+
+    if (membershipRegistration != null) {
+      this.accountMembershipRegistrationInfo =
+              new AccountMembershipRegistrationInfo(
+                      membershipRegistration.getId(),
+                      membershipRegistration.getRegistrationDate(),
+                      membershipRegistration.getExpirationDate());
+    }
+  }
 
   public GetUserAccountInfoResponse(Account entity, MembershipRegistration membershipRegistration, List<Coupon> coupons) {
     AccountInfo accountInfo = entity.getAccountInfo();

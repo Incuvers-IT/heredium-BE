@@ -1,6 +1,7 @@
 package art.heredium.service;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Function;
@@ -175,24 +176,47 @@ public class TicketService {
       }
       entity.updateUsedDate();
 
+      // ── [ADD] 멤버십3(미성년자) 적립 스킵 ─────────────────────────────
+      final int MINOR_MEMBERSHIP_CODE = 3;
+
       // 기존 사용완료 적립 로직 유지
       try {
-        if (entity.getAccount() != null && !StringUtils.isBlank(entity.getEmail())) {
-          long origin   = Optional.ofNullable(entity.getOriginPrice()).orElse(0L);
-          long discount = Optional.ofNullable(entity.getCouponDiscountAmount()).orElse(0L);
-          long net      = Math.max(0L, origin - discount);
-          int  points   = (int) Math.floorDiv(net, 1000L);
+        final Account acc = entity.getAccount();
+        if (acc != null && !StringUtils.isBlank(entity.getEmail())) {
 
-          if (points > 0) {
-            int paymentAmount = (net > Integer.MAX_VALUE) ? Integer.MAX_VALUE : (int) net;
-            MembershipMileage saved = mileageService.earnFromTicket(
-                    entity.getAccount().getId(),
-                    points,
-                    0,
-                    paymentAmount,
-                    "티켓 사용완료 적립",
-                    entity
-            );
+          final LocalDateTime now = LocalDateTime.now();
+          boolean minorActive = membershipRegistrationRepository
+                  .findLatestForAccount(acc.getId())
+                  .map(reg -> {
+                    boolean active = reg.getExpirationDate() == null || reg.getExpirationDate().isAfter(now);
+                    return active
+                            && reg.getMembership() != null
+                            && reg.getMembership().getCode() == MINOR_MEMBERSHIP_CODE;
+                  })
+                  .orElse(false);
+
+          if (minorActive) {
+            if (log.isDebugEnabled()) {
+              log.debug("[AdminTicketUpdate] skip accrual for minor (accountId={}, ticketId={})",
+                      acc.getId(), entity.getId());
+            }
+          } else {
+            long origin = Optional.ofNullable(entity.getOriginPrice()).orElse(0L);
+            long discount = Optional.ofNullable(entity.getCouponDiscountAmount()).orElse(0L);
+            long net = Math.max(0L, origin - discount);
+            int points = (int) Math.floorDiv(net, 1000L);
+
+            if (points > 0) {
+              int paymentAmount = (net > Integer.MAX_VALUE) ? Integer.MAX_VALUE : (int) net;
+              MembershipMileage saved = mileageService.earnFromTicket(
+                      entity.getAccount().getId(),
+                      points,
+                      0,
+                      paymentAmount,
+                      "티켓 사용완료 적립",
+                      entity
+              );
+            }
           }
         }
       } catch (Exception e) {

@@ -18,8 +18,8 @@ public enum AlimTalkTemplate {
   TICKET_ISSUANCE_GROUP("단체입장권 발급", "@heredium", "HEREDIUM006", "@heredium", "HEREDIUM006"),
   // 단체 입장권 취소(휴면상태)
   TICKET_REFUND_GROUP("단체입장권 취소", "@heredium", "HEREDIUM007", "@heredium", "HEREDIUM007"),
-  // 초대권 발급(기존 유지)
-  TICKET_INVITE("초대권 발급", "@heredium", "HEREDIUM008", "@heredium", "HEREDIUM008"),
+  // 초대권 발급
+  TICKET_INVITE("", "@heredium", "HEREDIUM040", "@heredium", "HEREDIUM040"),
   // 휴면계정(휴면상태)
   ACCOUNT_SLEEP("휴면계정 안내", "@heredium", "HEREDIUM009", "@heredium", "HEREDIUM009"),
   // 자동탈퇴 안내(휴면)
@@ -43,13 +43,13 @@ public enum AlimTalkTemplate {
           "", "@heredium", "HEREDIUM042", "@heredium", "HEREDIUM042"),
   // 멤버십 기한 만료 안내
   MEMBERSHIP_EXPIRY_REMINDER(
-          "", "@heredium", "HEREDIUM043", "@heredium", "HEREDIUM043"),
+          "", "@heredium", "HEREDIUM049", "@heredium", "HEREDIUM043"),
   // 등급 조정 안내 2>1 환불 또는 결제취소에 의한 멤버십 등급 롤백
   MEMBERSHIP_TIER_REFUND(
-          "", "@heredium", "HEREDIUM045", "@heredium", "HEREDIUM045"),
+          "", "@heredium", "HEREDIUM050", "@heredium", "HEREDIUM045"),
   // 멤버십 등급 전환 3 > 1 || 2 > 1로 전환시
   MEMBERSHIP_TIER_DEMOTED(
-          "", "@heredium", "HEREDIUM044", "@heredium", "HEREDIUM044")
+          "", "@heredium", "HEREDIUM048", "@heredium", "HEREDIUM044")
   ;
 
   private final String prodPlusFriendId;

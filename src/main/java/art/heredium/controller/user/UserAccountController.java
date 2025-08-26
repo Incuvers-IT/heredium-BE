@@ -85,4 +85,9 @@ public class UserAccountController {
   public ResponseEntity delete(@RequestParam("password") String password) {
     return ResponseEntity.ok(accountService.delete(password));
   }
+
+  @PutMapping("/identity")
+  public ResponseEntity updateByAccountIdentity(@RequestBody @Valid PutUserAccountRequest dto) {
+    return ResponseEntity.ok(accountService.updateByAccountIdentity(dto));
+  }
 }

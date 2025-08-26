@@ -483,6 +483,8 @@ public class AccountService {
 
     entity.getAccountInfo().updatePhoneVerification(dto);
 
+    // 테스트
+//    LocalDate birthDate = LocalDate.parse("2008-10-25");
     LocalDate birthDate = LocalDate.parse(dto.getBirthDate());
 
     long age = ChronoUnit.YEARS.between(birthDate, Constants.getNow());
@@ -511,6 +513,8 @@ public class AccountService {
               .plusYears(19)
               .atStartOfDay()
               .minusSeconds(1);
+
+      membershipMileageRepository.softDeleteByAccountId(entity.getId());
     }
 
     MembershipRegistration reg;
@@ -577,6 +581,51 @@ public class AccountService {
     }
 
     return new GetUserAccountInfoResponse(entity, reg);
+  }
+
+  @Transactional
+  public GetUserAccountInfoResponse updateByAccountIdentity(PutUserAccountRequest dto) {
+    // 1) 로그인 사용자 조회
+    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
+    Account entity = accountRepository.findById(userPrincipal.getId())
+            .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND));
+
+    // 2) 입력 정규화
+    // 2-1) gender: 'M' / 'W'만 허용(소문자 등 들어오면 대문자로)
+    String rawGender = dto.getGender();
+    if (rawGender != null && !rawGender.isEmpty()) {
+      char g = Character.toUpperCase(rawGender.charAt(0));
+      dto.setGender((g == 'M' || g == 'W') ? String.valueOf(g) : "M");
+    }
+
+    // 2-2) phone: 숫자만 보존(예: 하이픈 제거)
+    if (dto.getPhone() != null) {
+      dto.setPhone(dto.getPhone().replaceAll("\\D", ""));
+    }
+
+    // 2-3) birthDate 파싱 (yyyy-MM-dd 또는 yyyyMMdd 허용)
+    LocalDate birthDate = LocalDate.parse(dto.getBirthDate());
+
+    // 3) 연령 검증(만 14세 미만 차단)
+    long age = ChronoUnit.YEARS.between(birthDate, Constants.getNow());
+    if (age < 14) {
+      throw new ApiException(ErrorCode.UNDER_FOURTEEN);
+    }
+
+    // 4) "전화·성별·생년월일"만 업데이트
+    //   - 기존에 사용하던 도메인 메서드가 있으면 그것을 사용하세요.
+    entity.getAccountInfo().updatePhoneVerification(dto);
+
+    // 6) 응답
+    //    현재 멤버십 정보를 응답에 포함하고 싶다면 최신 등록만 조회해서 넣습니다.
+    MembershipRegistration latestReg = membershipRegistrationRepository
+            .findLatestForAccount(entity.getId())
+            .orElse(null);
+
+    long totalMileage = membershipMileageRepository.sumActiveMileageByAccount(entity.getId()); // "적립 마일리지: 점수(총합)"이면 이 값을 사용
+
+    return new GetUserAccountInfoResponse(entity, latestReg, totalMileage);
   }
 
   @Transactional
@@ -780,4 +829,5 @@ public class AccountService {
         return "";
     }
   }
+
 }
