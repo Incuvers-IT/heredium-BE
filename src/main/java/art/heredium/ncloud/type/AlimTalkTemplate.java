@@ -43,13 +43,13 @@ public enum AlimTalkTemplate {
           "", "@heredium", "HEREDIUM042", "@heredium", "HEREDIUM042"),
   // 멤버십 기한 만료 안내
   MEMBERSHIP_EXPIRY_REMINDER(
-          "", "@heredium", "HEREDIUM049", "@heredium", "HEREDIUM043"),
+          "", "@heredium", "HEREDIUM049", "@heredium", "HEREDIUM049"),
   // 등급 조정 안내 2>1 환불 또는 결제취소에 의한 멤버십 등급 롤백
   MEMBERSHIP_TIER_REFUND(
-          "", "@heredium", "HEREDIUM050", "@heredium", "HEREDIUM045"),
+          "", "@heredium", "HEREDIUM050", "@heredium", "HEREDIUM050"),
   // 멤버십 등급 전환 3 > 1 || 2 > 1로 전환시
   MEMBERSHIP_TIER_DEMOTED(
-          "", "@heredium", "HEREDIUM048", "@heredium", "HEREDIUM044")
+          "", "@heredium", "HEREDIUM048", "@heredium", "HEREDIUM048")
   ;
 
   private final String prodPlusFriendId;

@@ -234,7 +234,6 @@ public class AccountInfo implements Serializable {
     } else {
       // 동의 철회 시
       this.isMarketingReceive = false;
-      this.marketingAgreedDate = null;
     }
   }
 
