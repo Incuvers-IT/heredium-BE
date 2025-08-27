@@ -11,6 +11,7 @@ import java.util.Optional;
 import java.util.stream.Stream;
 
 import art.heredium.domain.account.entity.UserPrincipal;
+import art.heredium.domain.coupon.entity.CouponType;
 import art.heredium.domain.coupon.model.dto.request.UserCouponUsageRequest;
 import art.heredium.domain.coupon.model.dto.response.*;
 import lombok.NonNull;
@@ -58,10 +59,27 @@ public class CouponUsageService {
   private final HerediumProperties herediumProperties;
   private final HerediumAlimTalk alimTalk;
 
+  private static int typeOrder(Coupon c) {
+    return Optional.ofNullable(c.getCouponType())
+            .map(CouponType::getSortOrder)
+            .orElse(Integer.MAX_VALUE);
+  }
+
+  private static final Comparator<Coupon> COUPON_ORDER =
+          Comparator
+                  // 1) membership_id 있는 쿠폰 먼저 (membership != null → false가 먼저 오므로 우선)
+                  .comparing((Coupon c) -> c.getMembership() == null)
+                  // 2) 타입 순서
+                  .thenComparingInt(CouponUsageService::typeOrder)
+                  // 3) 보조 정렬 (이름)
+                  .thenComparing(Coupon::getName, Comparator.nullsLast(Comparator.naturalOrder()));
+
   public List<CouponResponseDto> getCouponsWithUsageByAccountId(Long accountId) {
     List<Coupon> coupons =
             couponUsageRepository.findDistinctCouponsByAccountIdAndIsNotDeleted(accountId);
     List<CouponResponseDto> responseDtos = new ArrayList<>();
+
+    coupons.sort(COUPON_ORDER);
 
     for (Coupon coupon : coupons) {
       List<CouponUsage> usedCoupons =
@@ -103,6 +121,8 @@ public class CouponUsageService {
 
       List<Coupon> coupons =
               couponUsageRepository.findDistinctCouponsByAccountIdAndIsNotDeleted(accountId);
+
+      coupons.sort(COUPON_ORDER);
 
       List<CouponResponseDto> result = new ArrayList<>(coupons.size());
 
