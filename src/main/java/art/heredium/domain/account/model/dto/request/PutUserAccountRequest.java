@@ -23,4 +23,5 @@ public class PutUserAccountRequest {
   private String job;            // 직업
   @NotNull private Boolean marketingPending;  // 0: false, 1: true(defualt)
   private String marketingAgreedDate;
+  private Boolean issueMembershipCoupons;
 }

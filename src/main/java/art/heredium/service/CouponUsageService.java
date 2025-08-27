@@ -76,7 +76,7 @@ public class CouponUsageService {
 
   public List<CouponResponseDto> getCouponsWithUsageByAccountId(Long accountId) {
     List<Coupon> coupons =
-            couponUsageRepository.findDistinctCouponsByAccountIdAndIsNotDeleted(accountId);
+            couponUsageRepository.findDistinctCouponsByAccountIdAndIsNotDeletedIsUsed(accountId);
     List<CouponResponseDto> responseDtos = new ArrayList<>();
 
     coupons.sort(COUPON_ORDER);

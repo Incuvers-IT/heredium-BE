@@ -666,6 +666,48 @@ public class AccountService {
       );
     }
 
+    // 요청에 쿠폰 발급 플래그가 켜졌다면 멤버십 쿠폰 발급
+    if (Boolean.TRUE.equals(dto.getIssueMembershipCoupons())) {
+      // 2) code 로 멤버십 조회
+      Membership membership = membershipRepository.findByCode(1).orElseThrow(() -> new ApiException(ErrorCode.MEMBERSHIP_NOT_FOUND));
+
+      // 3) 기존 registration 조회 (가장 최신)
+      Optional<MembershipRegistration> optReg =
+              membershipRegistrationRepository.findLatestForAccount(entity.getId());
+
+      MembershipRegistration reg;
+
+      if (optReg.isPresent()) {
+        // ── 업데이트 모드 ───────────────────────────
+        reg = optReg.get();
+        reg.setMembership(membership);
+        reg.setRegistrationType(RegistrationType.MEMBERSHIP_PACKAGE);
+        reg.setPaymentStatus(PaymentStatus.COMPLETED);
+        reg.setRegistrationDate(LocalDateTime.now());
+      } else {
+        // ── 신규등록 모드 ───────────────────────────
+        reg = new MembershipRegistration(
+                entity,
+                membership,
+                LocalDateTime.now(),
+                RegistrationType.MEMBERSHIP_PACKAGE,
+                PaymentStatus.COMPLETED,
+                "SYSTEM",
+                "SYSTEM"
+        );
+      }
+
+      membershipRegistrationRepository.save(reg);
+
+      // 5) 쿠폰발급 (멤버십에 따른 쿠폰발급)
+      couponUsageService.distributeCouponsForMembership(
+              entity,           // Account
+              reg,              // reg
+              false,            // 알림톡 즉시 발송 여부
+              null              // 알림톡 예약
+      );
+    }
+
     // 2) 마케팅 동의 정보 업데이트
     entity.getAccountInfo().updateMarketing(dto);
 
