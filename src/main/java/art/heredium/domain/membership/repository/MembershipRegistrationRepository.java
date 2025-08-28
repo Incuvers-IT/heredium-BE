@@ -108,7 +108,8 @@ public interface MembershipRegistrationRepository
                   "   AND mm.type       = 0 " +
                   "   AND mm.relatedMileage IS NULL " +
                   " WHERE mr.membership.code      = 2 " +
-                  "   AND mr.expirationDate BETWEEN :start AND :end " +
+                  "   AND mr.expirationDate >= :start " +
+                  "   AND mr.expirationDate <  :end " +
                   " GROUP BY mr " +
                   "HAVING COALESCE(SUM(mm.mileageAmount), 0) < :threshold"
   )

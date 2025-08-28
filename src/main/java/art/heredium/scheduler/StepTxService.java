@@ -409,7 +409,7 @@ public class StepTxService {
             LocalDateTime targetStart = now
                     .plusMonths(monthsBefore)
                     .withHour(0).withMinute(0).withSecond(0).withNano(0);
-            LocalDateTime targetEnd   = targetStart.plusDays(1).minusSeconds(1);
+            LocalDateTime targetEnd   = targetStart.plusDays(1);
             LocalDate  targetDay      = targetStart.toLocalDate();
 
             // 2) DB에서 한번에 조회: 만료일 between targetStart / targetEnd,
