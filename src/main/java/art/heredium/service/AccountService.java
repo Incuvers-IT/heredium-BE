@@ -483,9 +483,7 @@ public class AccountService {
 
     entity.getAccountInfo().updatePhoneVerification(dto);
 
-    // 테스트
-    LocalDate birthDate = LocalDate.parse("2008-10-25");
-//    LocalDate birthDate = LocalDate.parse(dto.getBirthDate());
+    LocalDate birthDate = LocalDate.parse(dto.getBirthDate());
 
     long age = ChronoUnit.YEARS.between(birthDate, Constants.getNow());
 

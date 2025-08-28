@@ -246,8 +246,8 @@ public class StepTxService {
         if (regs == null || regs.isEmpty()) return;
 
         LocalDate today = LocalDate.now();
-        LocalDateTime reserveTime = null;
-//        LocalDateTime reserveTime = today.atTime(10, 0); // 오전 10시 예약
+//        LocalDateTime reserveTime = null;
+        LocalDateTime reserveTime = today.atTime(10, 0); // 오전 10시 예약
 
         for (MembershipRegistration reg : regs) {
             try {
