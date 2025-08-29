@@ -35,7 +35,6 @@ import org.springframework.core.env.Profiles;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.File;
@@ -90,7 +89,7 @@ public class Scheduler {
     }
     sleepAccountSendMail();
     sleepAccount();
-    terminateSendMail();
+//    terminateSendMail();
     terminateAccount();
     terminateNonUser();
   }

@@ -411,7 +411,6 @@ public class StepTxService {
                     .plusMonths(monthsBefore)
                     .withHour(0).withMinute(0).withSecond(0).withNano(0);
             LocalDateTime targetEnd   = targetStart.plusDays(1);
-            LocalDate  targetDay      = targetStart.toLocalDate();
 
             // 2) DB에서 한번에 조회: 만료일 between targetStart / targetEnd,
             //    paymentStatus=ACTIVE, membership.code=2, AND mileage < threshold
@@ -421,12 +420,12 @@ public class StepTxService {
 
             if (toNotify.isEmpty()) {
                 log.info("{}-month expiry (tier2, mileage: no targets on {}",
-                        monthsBefore, targetDay);
+                        monthsBefore, LocalDate.now());
                 continue;
             }
 
-            // 3) 예약 발송 시간: targetDay 오전 10시
-            LocalDateTime reserveTime = targetDay.atTime(10, 0);
+            // 3) 예약 발송 시간: 당일 오전 10시
+            LocalDateTime reserveTime = LocalDate.now().atTime(10, 0);
 
             // 3) 테스트용 예약 발송 시간: 지금부터 11분 뒤
 //      LocalDateTime reserveTime = LocalDateTime.now()
@@ -467,7 +466,7 @@ public class StepTxService {
                     reserveTime
             );
             log.info("Scheduled {} expiry reminders for {} at 10:00",
-                    batch.size(), targetDay);
+                    batch.size(), LocalDate.now());
         }
     }
 
