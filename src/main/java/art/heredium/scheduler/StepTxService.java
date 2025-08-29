@@ -196,13 +196,14 @@ public class StepTxService {
         // 7) Retention 대상 마일리지 차감
         String tier2Name = tier2.getName();
         for (MembershipRegistration reg : retentionList) {
+            long mileageSum  = mileageRepository.sumActiveMileageByAccount(reg.getAccount().getId());
             mileageService.createLinkedUpgradeMileage(
                     reg.getAccount().getId(),
-                    retentionThreshold,
+                    (int) mileageSum,
                     tier2Name
             );
             log.info("Deducted {} mileage for retention on account {}",
-                    retentionThreshold, reg.getAccount().getId());
+                    mileageSum, reg.getAccount().getId());
         }
 
         // 9-1) 2→2 유지: 2등급 쿠폰 발급
