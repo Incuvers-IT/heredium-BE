@@ -4,10 +4,7 @@ import java.io.Serializable;
 import java.text.NumberFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import javax.persistence.*;
@@ -362,7 +359,12 @@ public class Ticket implements Serializable {
                 ticketPrice ->
                     String.format("%s %d매", ticketPrice.getType(), ticketPrice.getNumber()))
             .collect(Collectors.joining(", ")));
-    param.put("price", NumberFormat.getInstance().format(this.getPrice()));
+
+    long base     = Optional.ofNullable(this.getPrice()).orElse(0L);
+    long discount = Optional.ofNullable(this.getCouponDiscountAmount()).orElse(0L);
+    long display  = Math.max(0L, base - discount);
+
+    param.put("price", NumberFormat.getInstance(Locale.KOREA).format(display));
     param.put("CSTel", herediumProperties.getTel());
     param.put("CSEmail", herediumProperties.getEmail());
     return param;
