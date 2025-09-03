@@ -211,7 +211,7 @@ public class CouponUsageService {
                 return unused.stream()
                         .filter(cu -> !cu.isPermanent())
                         .filter(cu -> {
-                          var exp = cu.getExpirationDate();
+                          LocalDateTime exp = cu.getExpirationDate();
                           return exp != null && (exp.isAfter(now) || exp.isEqual(now))
                                   && (exp.isBefore(in30d) || exp.isEqual(in30d));
                         })
