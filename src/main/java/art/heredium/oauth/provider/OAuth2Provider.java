@@ -18,6 +18,8 @@ import java.util.*;
 
 import org.bouncycastle.openssl.PEMKeyPair;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
 import org.springframework.util.*;
 import org.springframework.web.util.DefaultUriBuilderFactory;
 import org.springframework.web.util.UriBuilder;
@@ -73,46 +75,90 @@ public enum OAuth2Provider implements PersistableEnum<String> {
       return new KakaoOAuth2UserInfo(attributes);
     }
   },
+  
+  // 여기
   APPLE {
     @Override
     public ClientRegistration getClientRegistration(ClientRegistration clientRegistration) {
-
-      String clientSecret = null;
+      String clientSecret;
       try {
-        ClassPathResource resource = new ClassPathResource(clientRegistration.getPrivateKey());
+        // ✔ 1) 경로 해석(가벼운 방식): classpath:/file: 지원 + 폴백
+        String location = clientRegistration.getPrivateKey();
+        Resource resource = resolveResource(location);
+
+        // ✔ 2) 스트림으로 키 읽기 (fat JAR 안전)
         JcaPEMKeyConverter converter = new JcaPEMKeyConverter();
         PrivateKey privateKey;
         try (InputStream in = resource.getInputStream();
              Reader pemReader = new InputStreamReader(in, StandardCharsets.UTF_8);
              PEMParser pemParser = new PEMParser(pemReader)) {
+
           Object parsed = pemParser.readObject();
+          if (parsed == null) {
+            throw new IllegalStateException("Apple private key is empty or unreadable: " + location);
+          }
           if (parsed instanceof PrivateKeyInfo) {
             privateKey = converter.getPrivateKey((PrivateKeyInfo) parsed);
           } else if (parsed instanceof PEMKeyPair) {
             privateKey = converter.getKeyPair((PEMKeyPair) parsed).getPrivate();
           } else {
-            throw new IllegalStateException("Unsupported key format: " + parsed);
+            throw new IllegalStateException("Unsupported key format: " + parsed.getClass());
           }
         }
 
-        Date expirationDate =
-            Date.from(LocalDateTime.now().plusDays(30).atZone(ZoneId.systemDefault()).toInstant());
-        clientSecret =
-            Jwts.builder()
-                .setHeaderParam("kid", clientRegistration.getKeyId()) // key id
+        Date expirationDate = Date.from(
+                LocalDateTime.now().plusDays(30).atZone(ZoneId.systemDefault()).toInstant()
+        );
+
+        clientSecret = Jwts.builder()
+                .setHeaderParam("kid", clientRegistration.getKeyId())
                 .setHeaderParam("alg", "ES256")
-                .setIssuer(clientRegistration.getTeamId()) // team id
-                .setIssuedAt(new Date(System.currentTimeMillis()))
+                .setIssuer(clientRegistration.getTeamId())
+                .setIssuedAt(new Date())
                 .setExpiration(expirationDate)
                 .setAudience("https://appleid.apple.com")
-                .setSubject(clientRegistration.getClientId()) // client id
+                .setSubject(clientRegistration.getClientId())
                 .signWith(privateKey, SignatureAlgorithm.ES256)
                 .compact();
+
       } catch (IOException e) {
-        throw new RuntimeException(e);
+        throw new RuntimeException("Failed to load Apple private key", e);
       }
+
       clientRegistration.setClientSecret(clientSecret);
       return clientRegistration;
+    }
+
+    // ─────────────────────────────────────────────────────
+    // 가벼운 리졸버: ResourceLoader 주입 없이도 OK
+    // ─────────────────────────────────────────────────────
+    private Resource resolveResource(String location) {
+      if (location == null || location.isEmpty()) {
+        throw new IllegalArgumentException("Apple privateKey location is empty");
+      }
+
+      // 1) 명시 접두사 처리
+      if (location.startsWith("classpath:")) {
+        String path = location.substring("classpath:".length());
+        Resource res = new ClassPathResource(path);
+        if (!res.exists()) throw new IllegalArgumentException("Classpath resource not found: " + location);
+        return res;
+      }
+      if (location.startsWith("file:")) {
+        String path = location.substring("file:".length());
+        Resource res = new FileSystemResource(path);
+        if (!res.exists()) throw new IllegalArgumentException("File resource not found: " + location);
+        return res;
+      }
+
+      // 2) 접두사 없으면: classpath → file 순서로 시도
+      Resource cp = new ClassPathResource(location);
+      if (cp.exists()) return cp;
+
+      Resource fs = new FileSystemResource(location);
+      if (fs.exists()) return fs;
+
+      throw new IllegalArgumentException("Resource not found (tried classpath: and file:): " + location);
     }
 
     @Override
@@ -120,6 +166,7 @@ public enum OAuth2Provider implements PersistableEnum<String> {
       return new AppleOAuth2UserInfo(attributes);
     }
   },
+
   EMAIL {
     @Override
     public ClientRegistration getClientRegistration(ClientRegistration clientRegistration) {
