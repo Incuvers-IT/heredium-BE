@@ -9,12 +9,14 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.security.KeyFactory;
+import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.spec.RSAPublicKeySpec;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.*;
 
+import org.bouncycastle.openssl.PEMKeyPair;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.util.*;
 import org.springframework.web.util.DefaultUriBuilderFactory;
@@ -78,11 +80,20 @@ public enum OAuth2Provider implements PersistableEnum<String> {
       String clientSecret = null;
       try {
         ClassPathResource resource = new ClassPathResource(clientRegistration.getPrivateKey());
-        String privateKey = new String(Files.readAllBytes(Paths.get(resource.getURI())));
-        Reader pemReader = new StringReader(privateKey);
-        PEMParser pemParser = new PEMParser(pemReader);
         JcaPEMKeyConverter converter = new JcaPEMKeyConverter();
-        PrivateKeyInfo object = (PrivateKeyInfo) pemParser.readObject();
+        PrivateKey privateKey;
+        try (InputStream in = resource.getInputStream();
+             Reader pemReader = new InputStreamReader(in, StandardCharsets.UTF_8);
+             PEMParser pemParser = new PEMParser(pemReader)) {
+          Object parsed = pemParser.readObject();
+          if (parsed instanceof PrivateKeyInfo) {
+            privateKey = converter.getPrivateKey((PrivateKeyInfo) parsed);
+          } else if (parsed instanceof PEMKeyPair) {
+            privateKey = converter.getKeyPair((PEMKeyPair) parsed).getPrivate();
+          } else {
+            throw new IllegalStateException("Unsupported key format: " + parsed);
+          }
+        }
 
         Date expirationDate =
             Date.from(LocalDateTime.now().plusDays(30).atZone(ZoneId.systemDefault()).toInstant());
@@ -95,7 +106,7 @@ public enum OAuth2Provider implements PersistableEnum<String> {
                 .setExpiration(expirationDate)
                 .setAudience("https://appleid.apple.com")
                 .setSubject(clientRegistration.getClientId()) // client id
-                .signWith(converter.getPrivateKey(object), SignatureAlgorithm.ES256)
+                .signWith(privateKey, SignatureAlgorithm.ES256)
                 .compact();
       } catch (IOException e) {
         throw new RuntimeException(e);
