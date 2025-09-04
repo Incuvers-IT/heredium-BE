@@ -75,8 +75,6 @@ public enum OAuth2Provider implements PersistableEnum<String> {
       return new KakaoOAuth2UserInfo(attributes);
     }
   },
-  
-  // 여기
   APPLE {
     @Override
     public ClientRegistration getClientRegistration(ClientRegistration clientRegistration) {
