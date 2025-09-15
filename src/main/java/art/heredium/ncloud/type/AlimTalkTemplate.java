@@ -15,9 +15,9 @@ public enum AlimTalkTemplate {
   // 애매 취소 관리자
   TICKET_REFUND_ADMIN("", "@heredium", "HEREDIUM039", "@heredium", "HEREDIUM039"),
   // 단체 입장권 발급(휴면상태)
-  TICKET_ISSUANCE_GROUP("단체입장권 발급", "@heredium", "HEREDIUM006", "@heredium", "HEREDIUM006"),
+  TICKET_ISSUANCE_GROUP("", "@heredium", "HEREDIUM051", "@heredium", "HEREDIUM051"),
   // 단체 입장권 취소(휴면상태)
-  TICKET_REFUND_GROUP("단체입장권 취소", "@heredium", "HEREDIUM007", "@heredium", "HEREDIUM007"),
+  TICKET_REFUND_GROUP("", "@heredium", "HEREDIUM052", "@heredium", "HEREDIUM052"),
   // 초대권 발급
   TICKET_INVITE("", "@heredium", "HEREDIUM040", "@heredium", "HEREDIUM040"),
   // 휴면계정(휴면상태)
