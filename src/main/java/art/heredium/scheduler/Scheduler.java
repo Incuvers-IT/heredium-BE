@@ -87,10 +87,23 @@ public class Scheduler {
     } catch (Exception e) {
       log.error("s3 임시 파일 삭제 스케쥴러 에러", e);
     }
-    sleepAccountSendMail();
-    sleepAccount();
+    // 2025-09-16 정책에 따른 휴면계정/자동탈퇴 기능 주석처리
+    // 이력: 휴면계정관리 진행중 개발 정지, 기능 수행이 안된 상태(알림톡 에러로 인한)
+    //      2025-09-16 휴면계정 기능 삭제 요청
+    //      기존 휴면계정 기능(휴면된 계정) 은 그대로 진행 / 로그인 휴면계정 해제 > 휴대폰 인증 프로세스
+    //      휴면계정 전환X, 자동탈퇴X
+
+    // 기존 계정(휴면/자동탈퇴) 관련 동작정리
+    // 매일 새벽1시 스케줄러 동작
+    // 1. sleepAccountSendMail 휴면안내(d-30) → 메일발송
+    // 2. sleepAccount 휴면전환
+    // 3. terminateSendMail 자동탈퇴안내(d-30) → 메일/알림톡
+    // 4. terminateAccount 자동탈퇴 → 메일/알림톡
+
+//    sleepAccountSendMail();
+//    sleepAccount();
 //    terminateSendMail();
-    terminateAccount();
+//    terminateAccount();
     terminateNonUser();
   }
 

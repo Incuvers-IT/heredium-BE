@@ -27,15 +27,6 @@ version = '0.0.1-SNAPSHOT'
 sourceCompatibility = '1.8'
 ext['tomcat.version'] = '9.0.90';
 
-java {
-    toolchain { languageVersion = JavaLanguageVersion.of(17) } // 컴파일러 JDK
-}
-
-// 모든 Java 컴파일을 8 타깃으로
-tasks.withType(org.gradle.api.tasks.compile.JavaCompile).configureEach {
-    options.release = 8
-}
-
 bootWar {
     archiveBaseName = 'HEREDIUM'
     archiveFileName = 'ROOT.war'
